@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-navy:  #0A1F44;
+  --color-gold:  #C9A961;
+  --color-card:  #F7F8FA;
+  --color-sub:   #5A6478;
+  --color-text:  #1A1A1A;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-text);
+  font-family: 'Pretendard', system-ui, sans-serif;
+}
+
+/* 모바일 컨테이너 — 항상 중앙 정렬, max 480px */
+.mobile-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* 하단 탭바 높이만큼 페이지 하단 여백 */
+.page-body {
+  padding-bottom: 72px;
+}
+
+/* 가로 스크롤 숨김 */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
