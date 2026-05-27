@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db.js';
+import { serverError } from '../utils/apiError.js';
 
 const router = Router();
 
@@ -7,11 +8,13 @@ const router = Router();
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await db.execute(
-      'SELECT * FROM teams ORDER BY championships DESC'
+      `SELECT *,
+              (SELECT COUNT(*) FROM players WHERE players.team_id = teams.id) AS player_count
+       FROM teams ORDER BY championships DESC`
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -37,7 +40,7 @@ router.get('/:slug', async (req, res) => {
 
     res.json({ ...team, players });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 

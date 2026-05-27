@@ -2,29 +2,37 @@ import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = 'kendo_user';
+const TOKEN_KEY = 'kendo_token';
 
-function loadUser() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); }
-  catch { return null; }
+function loadToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function decodeUser(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return { id: payload.userId, nickname: payload.nickname };
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(loadUser);
+  const [token, setToken] = useState(loadToken);
+  const user = token ? decodeUser(token) : null;
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  const login = (newToken) => {
+    setToken(newToken);
+    localStorage.setItem(TOKEN_KEY, newToken);
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-    window.Kakao?.Auth?.logout?.();
+    setToken(null);
+    localStorage.removeItem(TOKEN_KEY);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

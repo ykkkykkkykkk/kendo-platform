@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db.js';
+import { serverError } from '../utils/apiError.js';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get('/', async (_req, res) => {
     );
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -19,12 +20,11 @@ router.get('/', async (_req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const { rows: [tournament] } = await db.execute({
-      sql: 'SELECT * FROM tournaments WHERE slug = ?',
+      sql:  'SELECT * FROM tournaments WHERE slug = ?',
       args: [req.params.slug],
     });
     if (!tournament) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
 
-    // 전체 대진표 (선수 정보 JOIN)
     const { rows: matches } = await db.execute({
       sql: `SELECT
               m.*,
@@ -32,7 +32,13 @@ router.get('/:slug', async (req, res) => {
               ta.name AS team_a_name,   ta.color_primary AS team_a_color,
               pb.name AS player_b_name, pb.slug AS player_b_slug,
               tb.name AS team_b_name,   tb.color_primary AS team_b_color,
-              wp.name AS winner_name,   wt.name AS winner_team_name
+              wp.name AS winner_name,   wt.name AS winner_team_name,
+              (SELECT COUNT(*) FROM predictions pr
+               WHERE pr.match_id = m.id AND pr.predicted_winner_player_id = m.player_a_id
+              ) AS predict_a_count,
+              (SELECT COUNT(*) FROM predictions pr
+               WHERE pr.match_id = m.id AND pr.predicted_winner_player_id = m.player_b_id
+              ) AS predict_b_count
             FROM matches m
             LEFT JOIN players pa ON pa.id = m.player_a_id
             LEFT JOIN players pb ON pb.id = m.player_b_id
@@ -49,7 +55,6 @@ router.get('/:slug', async (req, res) => {
       args: [tournament.id],
     });
 
-    // 라운드별 그룹핑
     const bracket = matches.reduce((acc, m) => {
       (acc[m.round] = acc[m.round] ?? []).push(m);
       return acc;
@@ -57,7 +62,7 @@ router.get('/:slug', async (req, res) => {
 
     res.json({ ...tournament, bracket });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 

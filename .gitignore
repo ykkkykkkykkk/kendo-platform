@@ -1,8 +1,15 @@
 node_modules/
 dist/
+
+# 환경변수 — 절대 커밋 금지
 .env
 .env.local
+.env.development
+.env.production
+.env.staging
 .env.*.local
+.env.*.local
+
 *.log
 .DS_Store
 .turso/

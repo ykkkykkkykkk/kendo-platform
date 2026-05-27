@@ -15,8 +15,8 @@
 }
 
 body {
-  background: #ffffff;
-  color: var(--color-text);
+  background: #050505;
+  color: #ffffff;
   font-family: 'Pretendard', system-ui, sans-serif;
 }
 
@@ -41,4 +41,25 @@ body {
 }
 .scroll-x::-webkit-scrollbar {
   display: none;
+}
+
+/* 관리자 페이지 전체 너비 컨테이너 */
+.admin-container {
+  width: 100%;
+  min-height: 100dvh;
+}
+
+/* 예측 페이지 다크 배경 */
+body.predict-dark {
+  background: #050505;
+}
+
+/* 버튼 누를 때 물리적 피드백 느낌 */
+.pressable {
+  transition: transform 80ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity   80ms ease;
+}
+.pressable:active:not(:disabled) {
+  transform: scale(0.95);
+  opacity: 0.85;
 }

@@ -1,85 +1,160 @@
 import { useParams, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Trophy, Users, TrendingUp, Award, Search } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
-import PageHeader from '../components/PageHeader.jsx';
 import { SkeletonList } from '../components/Skeleton.jsx';
+import PlayerAvatar from '../components/PlayerAvatar.jsx';
+import TeamLogo from '../components/TeamLogo.jsx';
 
 const POSITION_COLOR = {
-  대장: 'bg-navy text-white',
-  부장: 'bg-blue-600 text-white',
-  중견: 'bg-emerald-600 text-white',
-  이봉: 'bg-orange-500 text-white',
-  선봉: 'bg-red-500 text-white',
+  대장: { bg: 'bg-black-700',     text: 'text-orange-500' },
+  부장: { bg: 'bg-blue-600',      text: 'text-white' },
+  중견: { bg: 'bg-emerald-600',   text: 'text-white' },
+  이봉: { bg: 'bg-orange-500',    text: 'text-black' },
+  선봉: { bg: 'bg-red-500',       text: 'text-white' },
 };
 
+function StatCard({ label, value, icon, gold }) {
+  return (
+    <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 flex items-center gap-2.5">
+      <div className={`flex-shrink-0 ${gold ? 'text-amber-300' : 'text-white/70'}`}>
+        {icon}
+      </div>
+      <div>
+        <p className={`text-xl font-black leading-none ${gold ? 'text-amber-300' : 'text-white'}`}>
+          {value ?? '—'}
+        </p>
+        <p className="text-white/50 text-[11px] mt-0.5">{label}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function TeamDetail() {
-  const { slug } = useParams();
+  const { slug }   = useParams();
+  const navigate   = useNavigate();
   const { data: team, loading } = useFetch(() => api.team(slug), [slug]);
+
+  if (loading) return (
+    <main className="page-body px-4 pt-14">
+      <SkeletonList count={4} />
+    </main>
+  );
+
+  if (!team) return (
+    <main className="page-body bg-black px-4 flex flex-col items-center justify-center gap-3 min-h-[60vh]">
+      <p className="text-white/40 text-sm">팀을 찾을 수 없습니다.</p>
+      <button onClick={() => navigate(-1)} className="text-orange-500 text-sm font-semibold">← 뒤로</button>
+    </main>
+  );
+
+  const players = team.players ?? [];
+
+  const withStats = players.filter((p) => p.total_matches > 0);
+  const totalW    = withStats.reduce((s, p) => s + (p.wins ?? 0), 0);
+  const totalM    = withStats.reduce((s, p) => s + (p.total_matches ?? 0), 0);
+  const teamWR    = totalM > 0 ? Math.round((totalW / totalM) * 100) : null;
+  const totalC    = withStats.reduce((s, p) => s + (p.championships_won ?? 0), 0);
 
   return (
     <>
-      <PageHeader title={team?.name ?? '팀'} />
-      <main className="page-body px-4">
-        {loading ? (
-          <SkeletonList />
-        ) : !team ? (
-          <p className="text-sub text-sm">팀을 찾을 수 없습니다.</p>
-        ) : (
-          <>
-            {/* 팀 배너 */}
-            <div
-              className="rounded-xl p-5 mb-5 flex items-center gap-4"
-              style={{ background: team.color_primary }}
-            >
-              <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
-                <span className="text-white font-black text-2xl">{team.name[0]}</span>
-              </div>
-              <div>
-                <p className="text-white font-black text-xl">{team.name}</p>
-                <p className="text-white/70 text-sm">{team.region}</p>
-                <div className="flex gap-3 mt-1">
-                  <span className="text-white/90 text-xs">창단 {team.founded_year}</span>
-                  <span className="text-yellow-300 text-xs font-bold">🏆 {team.championships}회 우승</span>
-                </div>
-              </div>
-            </div>
+      {/* ── 히어로 배너 (팀 색상 유지) ── */}
+      <div
+        className="relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${team.color_primary} 0%, ${team.color_primary}bb 100%)` }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-12 left-4 flex items-center gap-0.5 text-white/80 active:opacity-60 z-10"
+        >
+          <ChevronLeft size={20} />
+          <span className="text-sm">뒤로</span>
+        </button>
+        <button
+          onClick={() => navigate('/search')}
+          className="absolute top-11 right-4 w-9 h-9 flex items-center justify-center rounded-full text-white/80 hover:bg-white/10 active:opacity-60 z-10"
+          aria-label="선수 검색"
+        >
+          <Search size={20} />
+        </button>
 
-            {/* 선수 목록 */}
-            <h2 className="text-sm font-semibold text-sub uppercase tracking-wide mb-3">소속 선수</h2>
-            <div className="flex flex-col gap-3">
-              {team.players?.map((p) => (
+        <div className="px-5 pt-24 pb-6 relative z-10">
+          <TeamLogo
+            name={team.name}
+            color={team.color_primary}
+            size={80}
+            rounded="2xl"
+            className="mb-4 ring-2 ring-white/20"
+          />
+          <h1 className="text-white font-black text-2xl leading-tight">{team.name}</h1>
+          <p className="text-white/60 text-sm mt-0.5">{team.region} · 창단 {team.founded_year}</p>
+
+          <div className="grid grid-cols-2 gap-2 mt-5">
+            <StatCard label="우승"     value={team.championships} icon={<Trophy    size={16} />} gold />
+            <StatCard label="소속 선수" value={players.length}     icon={<Users     size={16} />} />
+            {teamWR !== null && (
+              <StatCard label="팀 승률"  value={`${teamWR}%`}      icon={<TrendingUp size={16} />} />
+            )}
+            {totalC > 0 && (
+              <StatCard label="개인 우승" value={totalC}            icon={<Award     size={16} />} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 선수 목록 ── */}
+      <main className="bg-black px-4 pt-5 pb-6">
+        <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-3">소속 선수</h2>
+
+        {players.length === 0 ? (
+          <p className="text-white/30 text-sm text-center py-8">등록된 선수가 없습니다.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {players.map((p) => {
+              const winRate = p.total_matches > 0
+                ? Math.round((p.wins / p.total_matches) * 100)
+                : null;
+              const pc = POSITION_COLOR[p.position];
+
+              return (
                 <Link
                   key={p.id}
                   to={`/players/${p.slug}`}
-                  className="bg-card rounded-xl p-4 flex items-center gap-3 active:opacity-70"
+                  className="pressable bg-black-900 border border-black-700 rounded-2xl p-4
+                             flex items-center gap-3"
                 >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: team.color_primary }}
-                  >
-                    <span className="text-white font-bold">{p.name[0]}</span>
-                  </div>
+                  <PlayerAvatar slug={p.slug} name={p.name} color={team.color_primary} size={44} />
+
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-navy">{p.name}</p>
-                      {p.position && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${POSITION_COLOR[p.position] ?? 'bg-gray-200 text-gray-600'}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-white">{p.name}</span>
+                      {p.position && pc && (
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${pc.bg} ${pc.text}`}>
                           {p.position}
                         </span>
                       )}
                     </div>
-                    <p className="text-sub text-xs mt-0.5">{p.dan_grade}단 · {p.birth_year}년생</p>
+                    <p className="text-white/40 text-xs mt-0.5">
+                      {p.dan_grade}단 · {p.birth_year}년생
+                    </p>
                   </div>
-                  {p.total_matches > 0 && (
+
+                  {winRate !== null ? (
                     <div className="text-right flex-shrink-0">
-                      <p className="text-navy font-bold text-sm">{p.wins}승</p>
-                      <p className="text-sub text-xs">{p.losses}패</p>
+                      <p className="text-white font-bold text-sm">{winRate}%</p>
+                      <p className="text-white/40 text-xs">{p.wins}승 {p.losses}패</p>
                     </div>
-                  )}
+                  ) : p.championships_won > 0 ? (
+                    <div className="flex items-center gap-1 text-amber-300 flex-shrink-0">
+                      <Trophy size={12} />
+                      <span className="text-xs font-bold">{p.championships_won}회</span>
+                    </div>
+                  ) : null}
                 </Link>
-              ))}
-            </div>
-          </>
+              );
+            })}
+          </div>
         )}
       </main>
     </>

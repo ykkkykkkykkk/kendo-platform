@@ -1,125 +1,319 @@
 -- ============================================================
--- 002_seed.sql  |  검도 팬덤 플랫폼 시드 데이터
+-- 002_seed.sql  |  실업선수 단체전 1부 팀 / 선수 데이터
 -- ============================================================
 
 PRAGMA foreign_keys = ON;
 
 -- ============================================================
--- 팀 5개
+-- 팀 25개 (여자부 9 + 남자부 18, 공통 2개 제외)
 -- ============================================================
-INSERT INTO teams (name, slug, region, founded_year, color_primary, championships) VALUES
-  ('경찰청',   'gyeongchalcheong', '서울',    1946, '#0033A0', 18),
-  ('김천시청', 'gimcheon',         '경북 김천', 2003, '#006B3F', 6),
-  ('구미시청', 'gumi',             '경북 구미', 1998, '#C8102E', 4),
-  ('안산시청', 'ansan',            '경기 안산', 2001, '#FF6600', 3),
-  ('포항시청', 'pohang',           '경북 포항', 2005, '#005BAA', 2);
+INSERT INTO teams (name, slug, region) VALUES
+  ('경주시청',         'gyeongju',      '경북 경주'),
+  ('충청남도체육회',    'chungnam',      '충남'),
+  ('부산광역시체육회',  'busan',         '부산'),
+  ('화성특례시청',     'hwaseong',      '경기 화성'),
+  ('포항시체육회',     'pohang',        '경북 포항'),
+  ('탐솔라',          'tamsola',       NULL),
+  ('충청북도체육회',   'chungbuk',      '충북'),
+  ('세종시검도회',     'sejong',        '세종'),
+  ('김해시체육회',     'gimhae',        '경남 김해'),
+  ('광명시청',        'gwangmyeong',   '경기 광명'),
+  ('달서구청',        'dalseo',        '대구 달서'),
+  ('광주북구청',      'gwangju-buk',   '광주 북구'),
+  ('용인특례시청',     'yongin',        '경기 용인'),
+  ('인제군청',        'inje',          '강원 인제'),
+  ('구미시청',        'gumi',          '경북 구미'),
+  ('울산광역시체육회', 'ulsan',         '울산'),
+  ('청주시청',        'cheongju',      '충북 청주'),
+  ('부천시청',        'bucheon',       '경기 부천'),
+  ('대전광역시체육회', 'daejeon',       '대전'),
+  ('남양주시청',      'namyangju',     '경기 남양주'),
+  ('인천광역시청',     'incheon',       '인천'),
+  ('전북원스포츠단',   'jeonbuk-won',   '전북'),
+  ('창원시청',        'changwon',      '경남 창원'),
+  ('수원특례시청',     'suwon',         '경기 수원'),
+  ('무안군청',        'muan',          '전남 무안');
 
 -- ============================================================
--- 선수 16명 (5명 주요 + 11명 대진용)
+-- 선수 — 여자부 단체전 1부
 -- ============================================================
-INSERT INTO players (team_id, name, name_en, slug, birth_year, height_cm, dan_grade, position, bio) VALUES
-  -- 주요 선수 5명
-  (1, '김정환', 'Kim Jeong-hwan', 'kim-jeonghwan', 1990, 178, 8, '대장',
-   '경찰청 주장. 전국대회 8회 우승. 강렬한 면치기와 압도적인 기세로 팬들에게 "철벽 대장"으로 불림.'),
-  (2, '박성진', 'Park Seong-jin',  'park-seongjin',  1993, 175, 7, '대장',
-   '김천시청 에이스. 빠른 발 움직임과 예리한 손목치기가 특기. 2024 전국체전 개인전 금메달.'),
-  (3, '이승주', 'Lee Seung-ju',    'lee-seungju',    1995, 180, 7, '부장',
-   '구미시청 주력. 장신을 활용한 깊은 머리치기로 정평. 단체전 부장으로 팀의 버팀목 역할.'),
-  (4, '최민호', 'Choi Min-ho',     'choi-minho',     1992, 172, 7, '대장',
-   '안산시청 주장. 연속기 연결이 국내 최고 수준. 공격적인 스타일로 관중 인기 1위.'),
-  (5, '정재원', 'Jeong Jae-won',   'jeong-jaewon',   1997, 177, 6, '중견',
-   '포항시청 차세대 에이스. 6단 최연소 전국대회 입상. 멘탈이 강해 결정적 순간에 빛남.'),
 
-  -- 대진 채우기용 선수 11명
-  (1, '강민준', 'Kang Min-jun',  'kang-minjun',  1994, 176, 6, '부장',   NULL),
-  (1, '윤태양', 'Yoon Tae-yang', 'yoon-taeyang', 1996, 174, 6, '이봉',   NULL),
-  (2, '손동혁', 'Son Dong-hyeok','son-donghyeok',1991, 181, 7, '부장',   NULL),
-  (2, '임재훈', 'Im Jae-hun',    'im-jaehun',    1998, 173, 5, '중견',   NULL),
-  (3, '오세훈', 'Oh Se-hun',     'oh-sehun',     1993, 179, 6, '중견',   NULL),
-  (4, '권혁준', 'Kwon Hyeok-jun','kwon-hyeokjun',1995, 175, 6, '이봉',   NULL),
-  (4, '황성민', 'Hwang Seong-min','hwang-seongmin',1999,170, 5, '선봉',   NULL),
-  (5, '서준영', 'Seo Jun-yeong', 'seo-junyeong', 1996, 178, 6, '부장',   NULL),
-  (1, '나민수', 'Na Min-su',     'na-minsu',     1997, 172, 5, '선봉',   NULL),
-  (3, '조현우', 'Jo Hyeon-u',    'jo-hyeonu',    1994, 177, 6, '대장',   NULL),
-  (2, '변준혁', 'Byeon Jun-hyeok','byeon-junhyeok',1998,174, 5, '이봉',   NULL);
+-- A조 1. 경주시청 (team_id=1)
+INSERT INTO players (team_id, name, slug) VALUES
+  (1, '정현지', 'jeong-hyeonji'),
+  (1, '김유정', 'kim-yujeong'),
+  (1, '백다솜', 'baek-dasom'),
+  (1, '전세영', 'jeon-seyeong'),
+  (1, '김미진', 'kim-mijin'),
+  (1, '차민지', 'cha-minji');
+
+-- A조 2. 충청남도체육회 (team_id=2)
+INSERT INTO players (team_id, name, slug) VALUES
+  (2, '박시은', 'bak-sieun'),
+  (2, '공수빈', 'gong-subin'),
+  (2, '양혜원', 'yang-hyewon'),
+  (2, '지은비', 'ji-eunbi'),
+  (2, '안수현', 'an-suhyeon'),
+  (2, '진소형', 'jin-sohyeong'),
+  (2, '이민경', 'lee-mingyeong');
+
+-- A조 3. 부산광역시체육회 (team_id=3)
+INSERT INTO players (team_id, name, slug) VALUES
+  (3, '신민정', 'shin-minjeong'),
+  (3, '김서연', 'kim-seoyeon');
+
+-- A조 4. 화성특례시청 (team_id=4)
+INSERT INTO players (team_id, name, slug) VALUES
+  (4, '한하늘', 'han-haneul'),
+  (4, '김상흔', 'kim-sangheun'),
+  (4, '김혜원', 'kim-hyewon'),
+  (4, '조유빈', 'jo-yubin'),
+  (4, '김은빈', 'kim-eunbin'),
+  (4, '신동아', 'shin-donga');
+
+-- B조 5. 포항시체육회 (team_id=5)
+INSERT INTO players (team_id, name, slug) VALUES
+  (5, '김민서', 'kim-minseo'),
+  (5, '윤하늘', 'yoon-haneul'),
+  (5, '김민지', 'kim-minji-pohang');
+
+-- B조 6. 탐솔라 (team_id=6)
+INSERT INTO players (team_id, name, slug) VALUES
+  (6, '최주원', 'choi-juwon'),
+  (6, '정서현', 'jeong-seohyeon'),
+  (6, '이지은', 'lee-jieun'),
+  (6, '조희선', 'jo-huiseon');
+
+-- B조 7. 충청북도체육회 (team_id=7)
+INSERT INTO players (team_id, name, slug) VALUES
+  (7, '이찬주', 'lee-chanju'),
+  (7, '박나영', 'bak-nayeong'),
+  (7, '전혜지', 'jeon-hyeji'),
+  (7, '박세연', 'bak-seyeon'),
+  (7, '조은혜', 'jo-eunhye'),
+  (7, '이혜림', 'lee-hyerim');
+
+-- B조 8. 세종시검도회 (team_id=8)
+INSERT INTO players (team_id, name, slug) VALUES
+  (8, '도윤지',   'do-yunji'),
+  (8, '유현지',   'yu-hyeonji'),
+  (8, '강새름이', 'gang-saereumi'),
+  (8, '김민지',   'kim-minji-sejong');
+
+-- B조 9. 김해시체육회 (team_id=9)
+INSERT INTO players (team_id, name, slug) VALUES
+  (9, '최성희', 'choi-seonghui'),
+  (9, '박지윤', 'bak-jiyun'),
+  (9, '남주희', 'nam-juhui'),
+  (9, '황유빈', 'hwang-yubin'),
+  (9, '남지윤', 'nam-jiyun');
 
 -- ============================================================
--- 통산 전적 (주요 선수 5명)
+-- 선수 — 남자부 단체전 1부
 -- ============================================================
-INSERT INTO player_stats (player_id, total_matches, wins, losses, championships_won) VALUES
-  (1, 312, 264, 48,  8),
-  (2, 198, 156, 42,  3),
-  (3, 224, 171, 53,  2),
-  (4, 241, 189, 52,  4),
-  (5, 134, 101, 33,  1);
+
+-- A조 1. 광명시청 (team_id=10)
+INSERT INTO players (team_id, name, slug) VALUES
+  (10, '이호진', 'lee-hojin'),
+  (10, '남우석', 'nam-useok'),
+  (10, '송영준', 'song-yeongjun'),
+  (10, '김종훈', 'kim-jonghun'),
+  (10, '정종현', 'jeong-jonghyeon'),
+  (10, '김배훈', 'kim-baehun'),
+  (10, '김상준', 'kim-sangjun'),
+  (10, '권오규', 'gwon-ogyu'),
+  (10, '김정수', 'kim-jeongsu');
+
+-- A조 2. 달서구청 (team_id=11)
+INSERT INTO players (team_id, name, slug) VALUES
+  (11, '주연우', 'ju-yeonu'),
+  (11, '정송윤', 'jeong-songyun'),
+  (11, '김진옥', 'kim-jinok'),
+  (11, '김재승', 'kim-jaeseung'),
+  (11, '손은기', 'son-eungi'),
+  (11, '이영욱', 'lee-yeonguk'),
+  (11, '문인식', 'mun-insik'),
+  (11, '정지훈', 'jeong-jihun'),
+  (11, '장정영', 'jang-jeongyeong');
+
+-- A조 3. 광주북구청 (team_id=12)
+INSERT INTO players (team_id, name, slug) VALUES
+  (12, '김헌영', 'kim-heonyeong'),
+  (12, '김헌수', 'kim-heonsu'),
+  (12, '김지형', 'kim-jihyeong'),
+  (12, '김현수', 'kim-hyeonsu'),
+  (12, '최다원', 'choi-dawon'),
+  (12, '김영운', 'kim-yeongun'),
+  (12, '안태준', 'an-taejun'),
+  (12, '정우진', 'jeong-ujin');
+
+-- A조 4. 용인특례시청 (team_id=13)
+INSERT INTO players (team_id, name, slug) VALUES
+  (13, '조진용', 'jo-jinyong'),
+  (13, '신왕준', 'shin-wangjun'),
+  (13, '이진혁', 'lee-jinhyeok'),
+  (13, '이환점', 'lee-hwanjeom'),
+  (13, '정용석', 'jeong-yongseok'),
+  (13, '김태연', 'kim-taeyeon'),
+  (13, '김종국', 'kim-jonguk'),
+  (13, '한솔민', 'han-solmin');
+
+-- A조 5. 충청남도체육회 (team_id=2) — 남자부 선수 추가
+INSERT INTO players (team_id, name, slug) VALUES
+  (2, '조성근', 'jo-seonggeun'),
+  (2, '전태훈', 'jeon-taehun'),
+  (2, '김영준', 'kim-yeongjun'),
+  (2, '이지민', 'lee-jimin'),
+  (2, '남현준', 'nam-hyeonjun');
+
+-- A조 6. 부산광역시체육회 (team_id=3) — 남자부 선수 추가
+INSERT INTO players (team_id, name, slug) VALUES
+  (3, '김동은', 'kim-dongeun'),
+  (3, '양상범', 'yang-sangbeom'),
+  (3, '김태근', 'kim-taegeun'),
+  (3, '황성민', 'hwang-seongmin'),
+  (3, '이경태', 'lee-gyeongtae'),
+  (3, '김성구', 'kim-seongu');
+
+-- A조 7. 인제군청 (team_id=14)
+INSERT INTO players (team_id, name, slug) VALUES
+  (14, '김선문', 'kim-seonmun'),
+  (14, '장보운', 'jang-boun'),
+  (14, '이성재', 'lee-seongjae'),
+  (14, '최명환', 'choi-myeonghwan'),
+  (14, '김현세', 'kim-hyeonse'),
+  (14, '배종영', 'bae-jongyeong'),
+  (14, '동한혁', 'dong-hanhyeok');
+
+-- A조 8. 구미시청 (team_id=15)
+INSERT INTO players (team_id, name, slug) VALUES
+  (15, '이주섭', 'lee-juseop'),
+  (15, '이창훈', 'lee-changhun-gumi'),
+  (15, '김도하', 'kim-doha'),
+  (15, '손재혁', 'son-jaehyeok'),
+  (15, '김경수', 'kim-gyeongsu'),
+  (15, '선재우', 'seon-jaeu'),
+  (15, '배진영', 'bae-jinyeong'),
+  (15, '장찬익', 'jang-chanik');
+
+-- A조 9. 울산광역시체육회 (team_id=16)
+INSERT INTO players (team_id, name, slug) VALUES
+  (16, '이지용', 'lee-jiyong'),
+  (16, '박인우', 'bak-inu'),
+  (16, '이종현', 'lee-jonghyeon'),
+  (16, '양옥',   'yang-ok'),
+  (16, '김채윤', 'kim-chaeyun'),
+  (16, '김우주', 'kim-uju'),
+  (16, '양재균', 'yang-jaegyun');
+
+-- B조 10. 청주시청 (team_id=17)
+INSERT INTO players (team_id, name, slug) VALUES
+  (17, '김다용', 'kim-dayong'),
+  (17, '정형준', 'jeong-hyeongjun'),
+  (17, '방준호', 'bang-junho'),
+  (17, '하태효', 'ha-taehyo'),
+  (17, '임형석', 'im-hyeongseok'),
+  (17, '장재선', 'jang-jaeseon'),
+  (17, '박찬민', 'bak-chanmin'),
+  (17, '이대영', 'lee-daeyeong'),
+  (17, '김인성', 'kim-inseong');
+
+-- B조 11. 부천시청 (team_id=18)
+INSERT INTO players (team_id, name, slug) VALUES
+  (18, '이진영', 'lee-jinyeong'),
+  (18, '선현관', 'seon-hyeongwan'),
+  (18, '박윤서', 'bak-yunseo'),
+  (18, '박인거', 'bak-ingeo'),
+  (18, '남기호', 'nam-giho'),
+  (18, '김승겸', 'kim-seunggyeom'),
+  (18, '송자용', 'song-jayong'),
+  (18, '김은우', 'kim-eunu');
+
+-- B조 12. 대전광역시체육회 (team_id=19)
+INSERT INTO players (team_id, name, slug) VALUES
+  (19, '고현준', 'go-hyeonjun'),
+  (19, '조민진', 'jo-minjin'),
+  (19, '김규민', 'kim-gyumin'),
+  (19, '김범규', 'kim-beomgyu'),
+  (19, '김준성', 'kim-junseong'),
+  (19, '조인영', 'jo-inyeong'),
+  (19, '조재혁', 'jo-jaehyeok');
+
+-- B조 13. 남양주시청 (team_id=20)
+INSERT INTO players (team_id, name, slug) VALUES
+  (20, '김다온', 'kim-daon'),
+  (20, '최강',   'choi-gang'),
+  (20, '노진수', 'no-jinsu'),
+  (20, '남현호', 'nam-hyeonho'),
+  (20, '김경진', 'kim-gyeongjin'),
+  (20, '김회찬', 'kim-hoechan'),
+  (20, '김용하', 'kim-yongha'),
+  (20, '이민재', 'lee-minjae');
+
+-- B조 14. 인천광역시청 (team_id=21)
+INSERT INTO players (team_id, name, slug) VALUES
+  (21, '윤범열', 'yun-beomnyeol'),
+  (21, '박효준', 'bak-hyojun'),
+  (21, '송건',   'song-geon'),
+  (21, '원건희', 'won-geonhui'),
+  (21, '정준호', 'jeong-junho'),
+  (21, '최경재', 'choi-gyeongjae'),
+  (21, '이마루', 'lee-maru');
+
+-- B조 15. 전북원스포츠단 (team_id=22)
+INSERT INTO players (team_id, name, slug) VALUES
+  (22, '이창훈', 'lee-changhun-jeonbuk'),
+  (22, '서민영', 'seo-minyeong'),
+  (22, '권수민', 'gwon-sumin'),
+  (22, '장지원', 'jang-jiwon'),
+  (22, '위성진', 'wi-seongjin'),
+  (22, '황선우', 'hwang-seonu'),
+  (22, '김경운', 'kim-gyeongun');
+
+-- B조 16. 창원시청 (team_id=23)
+INSERT INTO players (team_id, name, slug) VALUES
+  (23, '차석환', 'cha-seokhwan'),
+  (23, '이상호', 'lee-sangho-changwon'),
+  (23, '박상준', 'bak-sangjun'),
+  (23, '장종렬', 'jang-jongyeol'),
+  (23, '박현진', 'bak-hyeonjin'),
+  (23, '이수준', 'lee-sujun'),
+  (23, '최원기', 'choi-wongi'),
+  (23, '유승우', 'yu-seungu'),
+  (23, '이준혁', 'lee-junhyeok');
+
+-- B조 17. 수원특례시청 (team_id=24)
+INSERT INTO players (team_id, name, slug) VALUES
+  (24, '홍성훈', 'hong-seonghun'),
+  (24, '이상호', 'lee-sangho-suwon'),
+  (24, '권병진', 'gwon-byeongjin'),
+  (24, '박승준', 'bak-seungjun'),
+  (24, '최민선', 'choi-minseon'),
+  (24, '김수호', 'kim-suho'),
+  (24, '최시연', 'choi-siyeon'),
+  (24, '장지민', 'jang-jimin');
+
+-- B조 18. 무안군청 (team_id=25)
+INSERT INTO players (team_id, name, slug) VALUES
+  (25, '유하늘', 'yu-haneul'),
+  (25, '송인준', 'song-injun'),
+  (25, '이후성', 'lee-huseong'),
+  (25, '정경인', 'jeong-gyeongin'),
+  (25, '이해솔', 'lee-haesol'),
+  (25, '김현서', 'kim-hyeonseo'),
+  (25, '이승헌', 'lee-seungheon');
 
 -- ============================================================
--- 선수 애용 장비 (김정환 예시)
--- ============================================================
-INSERT INTO player_gear (player_id, category, brand, model_name, price_krw, display_order) VALUES
-  (1, '죽도', '미야코', '39 탄소죽도 프로',   85000,  1),
-  (1, '호구', '도요',   '도요 방호 EX-III', 980000, 2),
-  (1, '도복', '동양도',  '하이브리드 도복 A2', 75000,  3),
-  (2, '죽도', '천도',   '39 경량 천도竹刀',  72000,  1),
-  (2, '호구', '야마토', '야마토 챔피언',     1200000,2),
-  (4, '죽도', '미야코', '39 탄소 라이트',    79000,  1),
-  (4, '호구', '공수도', '퍼펙트 가드 V',    890000, 2);
-
--- ============================================================
--- 대회 1개
+-- 대회
 -- ============================================================
 INSERT INTO tournaments
   (name, slug, start_date, end_date, venue, host_organization, tournament_type, status)
 VALUES
-  ('2026 전국검도선수권대회',
+  ('2026 전국실업검도선수권대회',
    '2026-national-championship',
    '2026-06-14',
    '2026-06-15',
    '충무체육관 (창원)',
    '대한검도회',
-   '개인전',
+   '단체전',
    '예정');
-
--- ============================================================
--- 16강 대진 (8경기)
--- bracket_position: 위→아래 순서 1~8
--- 4강 연결용 8강 슬롯(status=예정, 선수 미정)도 미리 생성
--- ============================================================
-
--- 8강 슬롯 먼저 (parent_match_id로 참조하기 위해)
-INSERT INTO matches (tournament_id, match_type, round, bracket_position, status) VALUES
-  (1, '개인전', '8강', 1, '예정'),   -- id = 1
-  (1, '개인전', '8강', 2, '예정'),   -- id = 2
-  (1, '개인전', '8강', 3, '예정'),   -- id = 3
-  (1, '개인전', '8강', 4, '예정');   -- id = 4
-
--- 4강 슬롯
-INSERT INTO matches (tournament_id, match_type, round, bracket_position, status) VALUES
-  (1, '개인전', '4강', 1, '예정'),   -- id = 5
-  (1, '개인전', '4강', 2, '예정');   -- id = 6
-
--- 결승 슬롯
-INSERT INTO matches (tournament_id, match_type, round, bracket_position, status) VALUES
-  (1, '개인전', '결승', 1, '예정');  -- id = 7
-
--- 16강 본 경기 8경기 (scheduled_at: 2026-06-14)
-INSERT INTO matches
-  (tournament_id, match_type, round, bracket_position,
-   player_a_id, player_b_id,
-   scheduled_at, status, parent_match_id)
-VALUES
-  -- 왼쪽 블록 (→ 8강 1)
-  (1,'개인전','16강', 1,  1,  6,  '2026-06-14T09:00:00', '예정', 1),  -- 김정환 vs 강민준
-  (1,'개인전','16강', 2,  8,  4,  '2026-06-14T09:30:00', '예정', 1),  -- 손동혁 vs 최민호
-
-  -- 왼쪽 블록 (→ 8강 2)
-  (1,'개인전','16강', 3,  2, 11,  '2026-06-14T10:00:00', '예정', 2),  -- 박성진 vs 권혁준
-  (1,'개인전','16강', 4,  3, 10,  '2026-06-14T10:30:00', '예정', 2),  -- 이승주 vs 오세훈
-
-  -- 오른쪽 블록 (→ 8강 3)
-  (1,'개인전','16강', 5,  5, 13,  '2026-06-14T13:00:00', '예정', 3),  -- 정재원 vs 서준영
-  (1,'개인전','16강', 6,  7,  9,  '2026-06-14T13:30:00', '예정', 3),  -- 윤태양 vs 임재훈
-
-  -- 오른쪽 블록 (→ 8강 4)
-  (1,'개인전','16강', 7, 12, 14,  '2026-06-14T14:00:00', '예정', 4),  -- 황성민 vs 나민수
-  (1,'개인전','16강', 8, 15, 16,  '2026-06-14T14:30:00', '예정', 4);  -- 조현우 vs 변준혁

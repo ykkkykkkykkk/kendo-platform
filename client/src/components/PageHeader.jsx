@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 
 export default function PageHeader({ title, right }) {
   const navigate = useNavigate();
@@ -13,6 +14,13 @@ export default function PageHeader({ title, right }) {
         </svg>
       </button>
       <h1 className="flex-1 text-lg font-bold text-navy">{title}</h1>
+      <button
+        onClick={() => navigate('/search')}
+        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-ink-50 text-ink-600"
+        aria-label="선수 검색"
+      >
+        <Search size={18} />
+      </button>
       {right}
     </header>
   );
