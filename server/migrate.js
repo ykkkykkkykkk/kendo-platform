@@ -55,5 +55,6 @@ await run('002_seed.sql');
 await run('003_enrich.sql');
 await run('004_clinics_sponsors.sql');
 await run('005_pick_system.sql');
+await run('006_data_enrich.sql');
 console.log('마이그레이션 완료!');
 process.exit(0);
