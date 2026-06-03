@@ -17,6 +17,25 @@ npm install
 npm run dev        # client(5173) + server(4000) 동시 실행
 ```
 
+## 환경변수
+
+`server/.env.example`을 복사해 `server/.env`를 만든 뒤 값을 채웁니다.
+
+```bash
+cp server/.env.example server/.env
+```
+
+| 변수 | 필수 | 설명 |
+|---|---|---|
+| `TURSO_URL` | ✅ | Turso 콘솔 > Database > Connect |
+| `TURSO_AUTH_TOKEN` | ✅ | Turso 콘솔 > Database > Connect |
+| `JWT_SECRET` | ✅ | 랜덤 64자 base64 (`node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`) |
+| `ADMIN_TOKEN` | ✅ | 랜덤 32자 base64 (`node -e "console.log(require('crypto').randomBytes(24).toString('base64'))"`) |
+| `ALLOWED_ORIGINS` | ✅ | 허용할 프론트엔드 URL (예: `https://your-app.vercel.app`) |
+| `PORT` | — | 기본값 `4000` (Render는 `10000` 권장) |
+
+카카오 로그인을 활성화하려면 `client/.env.example`을 참고해 `client/.env`를 만드세요.
+
 ## 배포
 
 ### 1. Render (백엔드)

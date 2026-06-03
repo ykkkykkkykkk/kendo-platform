@@ -1,5 +1,6 @@
 node_modules/
 dist/
+build/
 
 # 환경변수 — 절대 커밋 금지
 .env
@@ -7,7 +8,6 @@ dist/
 .env.development
 .env.production
 .env.staging
-.env.*.local
 .env.*.local
 
 *.log
