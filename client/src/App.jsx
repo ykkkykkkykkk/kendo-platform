@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
 import NickLoginModal  from './components/NickLoginModal.jsx';
+import IOSInstallBanner from './components/IOSInstallBanner.jsx';
 import PageTransition  from './components/PageTransition.jsx';
 import Toaster         from './components/Toaster.jsx';
 import { Navigate }       from 'react-router-dom';
@@ -83,6 +84,7 @@ export default function App() {
 
       <BottomTabBar />
       <Toaster />
+      <IOSInstallBanner />
 
       <AnimatePresence>
         {showLogin && !user && (
