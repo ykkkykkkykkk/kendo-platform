@@ -10,6 +10,7 @@ export default function NickLoginModal({ onClose }) {
   const { showToast } = useToast();
   const [nickname, setNickname] = useState('');
   const [phone,    setPhone]    = useState('');
+  const [dojo,     setDojo]     = useState('');
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState(null);
 
@@ -24,7 +25,7 @@ export default function NickLoginModal({ onClose }) {
       const res = await fetch('/api/auth/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nickname: nickname.trim(), phone }),
+        body:    JSON.stringify({ nickname: nickname.trim(), phone, home_dojo: dojo.trim() || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -50,10 +51,8 @@ export default function NickLoginModal({ onClose }) {
       transition={{ duration: 0.2 }}
       onClick={onClose}
     >
-      {/* 딤 배경 */}
       <div className="absolute inset-0 bg-black/70" />
 
-      {/* 바텀 시트 */}
       <motion.div
         className="relative w-full max-w-mobile bg-black-800 rounded-t-2xl px-6 pt-5 pb-10 border-t border-black-700"
         initial={{ y: '100%' }}
@@ -62,7 +61,7 @@ export default function NickLoginModal({ onClose }) {
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 핸들 + X 버튼 */}
+        {/* 핸들 + X */}
         <div className="relative flex items-center justify-center mb-6">
           <div className="w-10 h-1 bg-black-700 rounded-full" />
           <button
@@ -114,6 +113,21 @@ export default function NickLoginModal({ onClose }) {
               onChange={handlePhoneChange}
               className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
                          placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors tracking-widest"
+            />
+          </div>
+          <div className="group">
+            <label className="text-xs font-medium mb-1 block text-white/40
+                              group-focus-within:text-orange-500 transition-colors">
+              소속 도장 <span className="text-white/25">(선택)</span>
+            </label>
+            <input
+              type="text"
+              maxLength={20}
+              placeholder="예: 강남검도관"
+              value={dojo}
+              onChange={(e) => setDojo(e.target.value)}
+              className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
+                         placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
             />
           </div>
         </div>

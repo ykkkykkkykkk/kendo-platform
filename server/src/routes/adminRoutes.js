@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { requireAdmin } from '../middleware/adminAuth.js';
 import { serverError } from '../utils/apiError.js';
 import { checkUrls } from '../utils/validateUrl.js';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 router.use(requireAdmin);
@@ -692,6 +693,90 @@ router.put('/matches/:id/result', async (req, res) => {
     const { rows: [updated] } = await db.execute({ sql: 'SELECT * FROM matches WHERE id = ?', args: [matchId] });
     const { rows: [parent]  } = await db.execute({ sql: 'SELECT * FROM matches WHERE id = ?', args: [match.parent_match_id] });
     res.json({ match: updated, advanced: { matchId: match.parent_match_id, slot, parent } });
+  } catch (e) { serverError(res, e); }
+});
+
+/* ════════════════════════════════════════
+   선수 계정 관리
+════════════════════════════════════════ */
+
+// GET /api/admin/player-accounts — 선수 계정 목록
+router.get('/player-accounts', async (_req, res) => {
+  try {
+    const { rows } = await db.execute(`
+      SELECT u.id, u.username, u.nickname, u.created_at,
+             p.name AS player_name, p.slug AS player_slug,
+             t.name AS team_name
+      FROM users u
+      LEFT JOIN players p ON p.id = u.player_id
+      LEFT JOIN teams   t ON t.id = p.team_id
+      WHERE u.role = 'player'
+      ORDER BY u.created_at DESC
+    `);
+    res.json(rows);
+  } catch (e) { serverError(res, e); }
+});
+
+// POST /api/admin/player-accounts — 선수 계정 생성
+// body: { player_id, username, password }
+router.post('/player-accounts', async (req, res) => {
+  try {
+    const { player_id, username, password } = req.body;
+    if (!player_id || !username?.trim() || !password)
+      return res.status(400).json({ error: '선수, 아이디, 비밀번호를 모두 입력해주세요.' });
+    if (password.length < 6)
+      return res.status(400).json({ error: '비밀번호는 6자 이상이어야 합니다.' });
+
+    const { rows: [player] } = await db.execute({
+      sql: 'SELECT id, name FROM players WHERE id = ?', args: [player_id],
+    });
+    if (!player) return res.status(404).json({ error: '선수를 찾을 수 없습니다.' });
+
+    const { rows: [dup] } = await db.execute({
+      sql: 'SELECT id FROM users WHERE username = ?', args: [username.trim()],
+    });
+    if (dup) return res.status(409).json({ error: '이미 사용 중인 아이디입니다.' });
+
+    const { rows: [dupPlayer] } = await db.execute({
+      sql: "SELECT id FROM users WHERE player_id = ? AND role = 'player'", args: [player_id],
+    });
+    if (dupPlayer) return res.status(409).json({ error: '이미 계정이 있는 선수입니다.' });
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    await db.execute({
+      sql:  `INSERT INTO users (nickname, username, password_hash, role, player_id)
+             VALUES (?, ?, ?, 'player', ?)`,
+      args: [player.name, username.trim(), password_hash, player_id],
+    });
+
+    res.status(201).json({ success: true, username: username.trim(), player_name: player.name });
+  } catch (e) { serverError(res, e); }
+});
+
+// DELETE /api/admin/player-accounts/:id — 선수 계정 삭제
+router.delete('/player-accounts/:id', async (req, res) => {
+  try {
+    await db.execute({
+      sql:  "DELETE FROM users WHERE id = ? AND role = 'player'",
+      args: [req.params.id],
+    });
+    res.json({ success: true });
+  } catch (e) { serverError(res, e); }
+});
+
+// PATCH /api/admin/player-accounts/:id/password — 비밀번호 재설정
+router.patch('/player-accounts/:id/password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6)
+      return res.status(400).json({ error: '비밀번호는 6자 이상이어야 합니다.' });
+    const password_hash = await bcrypt.hash(password, 10);
+    await db.execute({
+      sql:  "UPDATE users SET password_hash = ? WHERE id = ? AND role = 'player'",
+      args: [password_hash, req.params.id],
+    });
+    res.json({ success: true });
   } catch (e) { serverError(res, e); }
 });
 

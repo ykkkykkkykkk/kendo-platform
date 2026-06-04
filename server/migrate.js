@@ -23,8 +23,9 @@ function parseStatements(sql) {
 // FK 의존 순서대로 DROP
 const DROP_ORDER = [
   'clinic_bookings','clinics','sponsorships','predictions',
-  'follows','users',
+  'follows',
   'division_results','tournament_picks','division_participants','tournament_divisions',
+  'users',
   'matches','tournaments',
   'player_gear','player_stats','players','teams',
 ];
@@ -56,5 +57,6 @@ await run('003_enrich.sql');
 await run('004_clinics_sponsors.sql');
 await run('005_pick_system.sql');
 await run('006_data_enrich.sql');
+await run('007_player_accounts.sql');
 console.log('마이그레이션 완료!');
 process.exit(0);

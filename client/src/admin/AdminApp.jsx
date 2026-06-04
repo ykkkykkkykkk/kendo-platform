@@ -14,6 +14,7 @@ import ClinicList        from './pages/clinics/ClinicList.jsx';
 import ClinicForm        from './pages/clinics/ClinicForm.jsx';
 import SponsorshipList   from './pages/sponsorships/SponsorshipList.jsx';
 import SponsorshipForm   from './pages/sponsorships/SponsorshipForm.jsx';
+import PlayerAccounts    from './pages/player-accounts/PlayerAccounts.jsx';
 
 const TOKEN_KEY = 'kendo_admin_token';
 
@@ -50,6 +51,8 @@ export default function AdminApp() {
         <Route path="sponsorships"                 element={<SponsorshipList />} />
         <Route path="sponsorships/new"             element={<SponsorshipForm />} />
         <Route path="sponsorships/:id/edit"        element={<SponsorshipForm />} />
+
+        <Route path="player-accounts"              element={<PlayerAccounts />} />
       </Routes>
     </AdminLayout>
   );
