@@ -1,36 +1,36 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { haptic } from '../utils/haptic.js';
 
-export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
+export default function PlayerLoginModal({ onClose, onSwitchToFan }) {
   const { login }     = useAuth();
   const { showToast } = useToast();
-  const [nickname, setNickname] = useState('');
-  const [phone,    setPhone]    = useState('');
-  const [dojo,     setDojo]     = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw,   setShowPw]   = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState(null);
 
   const handleSubmit = async () => {
-    if (!nickname.trim()) { setError('닉네임을 입력해주세요.'); return; }
-    if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
+    if (!username.trim()) { setError('아이디를 입력해주세요.'); return; }
+    if (!password)        { setError('비밀번호를 입력해주세요.'); return; }
 
     haptic();
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res  = await fetch('/api/auth/player-login', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nickname: nickname.trim(), phone, home_dojo: dojo.trim() || null }),
+        body:    JSON.stringify({ username: username.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       login(data.token);
-      showToast(`환영합니다, ${nickname.trim()}님! 🎋`, 'success');
+      showToast(`환영합니다, ${data.user.nickname} 선수님!`, 'success');
       onClose();
     } catch (e) {
       setError(e.message);
@@ -39,8 +39,9 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
     }
   };
 
-  const handlePhoneChange = (e) =>
-    setPhone(e.target.value.replace(/\D/g, '').slice(0, 4));
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSubmit();
+  };
 
   return (
     <motion.div
@@ -78,8 +79,8 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           <div className="w-14 h-14 bg-black-700 border border-orange-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <span className="text-orange-500 font-black text-2xl">검</span>
           </div>
-          <h2 className="text-white font-black text-lg">검도 팬덤 시작하기</h2>
-          <p className="text-white/40 text-sm mt-1">닉네임과 휴대폰 끝 4자리로 시작하세요</p>
+          <h2 className="text-white font-black text-lg">선수 로그인</h2>
+          <p className="text-white/40 text-sm mt-1">관리자로부터 받은 아이디/비밀번호로 로그인하세요</p>
         </div>
 
         {/* 입력 필드 */}
@@ -87,14 +88,16 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           <div className="group">
             <label className="text-xs font-medium mb-1 block text-white/40
                               group-focus-within:text-orange-500 transition-colors">
-              닉네임
+              아이디
             </label>
             <input
               type="text"
-              maxLength={10}
-              placeholder="최대 10자"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="아이디 입력"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
                          placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
             />
@@ -102,33 +105,26 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           <div className="group">
             <label className="text-xs font-medium mb-1 block text-white/40
                               group-focus-within:text-orange-500 transition-colors">
-              휴대폰 끝 4자리
+              비밀번호
             </label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="0000"
-              value={phone}
-              onChange={handlePhoneChange}
-              className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
-                         placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors tracking-widest"
-            />
-          </div>
-          <div className="group">
-            <label className="text-xs font-medium mb-1 block text-white/40
-                              group-focus-within:text-orange-500 transition-colors">
-              소속 도장 <span className="text-white/25">(선택)</span>
-            </label>
-            <input
-              type="text"
-              maxLength={20}
-              placeholder="예: 강남검도관"
-              value={dojo}
-              onChange={(e) => setDojo(e.target.value)}
-              className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
-                         placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
-            />
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                placeholder="비밀번호 입력"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
+                           placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors pr-11"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,16 +138,17 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           className="pressable w-full bg-orange-500 text-black font-bold py-3.5 rounded-xl
                      text-sm disabled:opacity-60 mb-4"
         >
-          {loading ? '처리 중...' : '시작하기'}
+          {loading ? '로그인 중...' : '로그인'}
         </button>
 
+        {/* 팬 로그인으로 전환 */}
         <p className="text-center text-white/30 text-xs">
-          선수이신가요?{' '}
+          선수가 아니신가요?{' '}
           <button
-            onClick={onSwitchToPlayer}
+            onClick={onSwitchToFan}
             className="text-orange-500 font-semibold"
           >
-            선수 로그인
+            팬 가입하기
           </button>
         </p>
       </motion.div>
