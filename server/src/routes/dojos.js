@@ -155,11 +155,12 @@ router.get('/dojos/ranking', async (req, res) => {
 
     // 5명 이상 도장만 랭킹
     const { rows: ranked } = await db.execute({
-      sql: `SELECT d.id, d.name, d.member_count, d.total_score
-            FROM dojos d
-            WHERE d.member_count >= 5
-            ORDER BY d.total_score DESC, d.member_count DESC
-            LIMIT 50`,
+      sql:  `SELECT d.id, d.name, d.member_count, d.total_score
+             FROM dojos d
+             WHERE d.member_count >= 5
+             ORDER BY d.total_score DESC, d.member_count DESC
+             LIMIT 50`,
+      args: [],
     });
 
     const ranking = await Promise.all(ranked.map(async (d, i) => {
