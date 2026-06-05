@@ -66,7 +66,7 @@ export default function RankingPage() {
 
       {/* 상단 메인 토글: INDIVIDUAL / DOJO */}
       <div className="flex gap-1 mx-5 mb-4 bg-black-900 p-1 rounded-2xl">
-        {[['individual', 'INDIVIDUAL'], ['dojo', 'DOJO']].map(([key, label]) => (
+        {[['individual', '개인 랭킹'], ['dojo', '도장 랭킹']].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setMainTab(key)}
