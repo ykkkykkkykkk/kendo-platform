@@ -10,7 +10,10 @@ function loadToken() {
 
 function decodeUser(token) {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(new TextDecoder().decode(
+      Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    ));
     return { id: payload.userId, nickname: payload.nickname, role: payload.role ?? 'fan', playerId: payload.playerId ?? null };
   } catch {
     return null;
