@@ -14,6 +14,8 @@ import debugRouter       from './routes/debug.js';
 import adminRouter       from './routes/adminRoutes.js';
 import picksRouter       from './routes/picks.js';
 import adminPicksRouter  from './routes/admin-picks.js';
+import dojosRouter       from './routes/dojos.js';
+import adminDojosRouter  from './routes/adminDojos.js';
 
 import { authLimiter, predictionLimiter, adminLimiter } from './middleware/rateLimits.js';
 
@@ -48,6 +50,8 @@ app.use('/api/shop',        shopRouter);
 app.use('/api/debug',       debugRouter);
 app.use('/api/admin',       adminLimiter,      adminRouter);
 app.use('/api/admin',       adminLimiter,      adminPicksRouter);
+app.use('/api/admin',       adminLimiter,      adminDojosRouter);
+app.use('/api',             dojosRouter);
 app.use('/api',             picksRouter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
