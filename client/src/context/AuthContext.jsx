@@ -11,7 +11,7 @@ function loadToken() {
 function decodeUser(token) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return { id: payload.userId, nickname: payload.nickname };
+    return { id: payload.userId, nickname: payload.nickname, role: payload.role ?? 'fan', playerId: payload.playerId ?? null };
   } catch {
     return null;
   }

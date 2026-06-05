@@ -4,6 +4,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
+import DojoRankingTab from '../components/DojoRankingTab.jsx';
 
 function useDarkBody() {
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function RankingPage() {
   const { user } = useAuth();
   const myUserId = user?.id ?? null;
 
+  const [mainTab, setMainTab] = useState('individual'); // 'individual' | 'dojo'
   const { data, loading } = useFetch(api.tournamentsWithDivisions);
   const [tab, setTab] = useState('ongoing');
   const [selectedId, setSelectedId] = useState(null);
@@ -54,20 +56,26 @@ export default function RankingPage() {
   return (
     <main className="page-body bg-black min-h-screen">
       {/* 헤더 */}
-      <header className="px-5 pt-12 pb-6">
+      <header className="px-5 pt-12 pb-4">
         <p className="text-[10px] text-orange-500 font-semibold tracking-[0.25em] uppercase">RANKING</p>
         <h1 className="text-[32px] font-bold text-white leading-tight tracking-tight mt-0.5">랭킹</h1>
-        <p className="text-sm text-white/40 mt-1">픽 예측 순위</p>
+        <p className="text-sm text-white/40 mt-1">
+          {mainTab === 'individual' ? '픽 예측 순위' : '도장 시즌 순위'}
+        </p>
       </header>
 
-      {/* 탭 스위처 */}
-      <div className="flex gap-1 mx-5 mb-6 bg-black-900 p-1 rounded-2xl">
-        {[['ongoing', '진행 대회'], ['past', '종료 대회']].map(([key, label]) => (
+      {/* 상단 메인 토글: INDIVIDUAL / DOJO */}
+      <div className="flex gap-1 mx-5 mb-4 bg-black-900 p-1 rounded-2xl">
+        {[['individual', 'INDIVIDUAL'], ['dojo', 'DOJO']].map(([key, label]) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
-              tab === key ? 'bg-black-700 text-white' : 'text-white/35'
+            onClick={() => setMainTab(key)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all ${
+              mainTab === key
+                ? key === 'dojo'
+                  ? 'bg-orange-500 text-black'
+                  : 'bg-black-700 text-white'
+                : 'text-white/35'
             }`}
           >
             {label}
@@ -75,24 +83,45 @@ export default function RankingPage() {
         ))}
       </div>
 
-      {loading ? (
-        <LoadingSkeleton />
-      ) : tab === 'ongoing' ? (
-        <OngoingTab
-          ongoing={ongoing}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          selectedTournament={selectedTournament}
-          ranking={ranking}
-          myRank={myRank}
-          myScore={myScore}
-          myUserId={myUserId}
-          myNickname={user?.nickname}
-          total={total}
-          rankingLoading={rankingLoading}
-        />
+      {mainTab === 'dojo' ? (
+        <DojoRankingTab />
       ) : (
-        <PastTab past={past} />
+        <>
+          {/* 개인 랭킹 서브탭 */}
+          <div className="flex gap-1 mx-5 mb-5 bg-black-900 p-1 rounded-2xl">
+            {[['ongoing', '진행 대회'], ['past', '종료 대회']].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  tab === key ? 'bg-black-700 text-white' : 'text-white/35'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <LoadingSkeleton />
+          ) : tab === 'ongoing' ? (
+            <OngoingTab
+              ongoing={ongoing}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              selectedTournament={selectedTournament}
+              ranking={ranking}
+              myRank={myRank}
+              myScore={myScore}
+              myUserId={myUserId}
+              myNickname={user?.nickname}
+              total={total}
+              rankingLoading={rankingLoading}
+            />
+          ) : (
+            <PastTab past={past} />
+          )}
+        </>
       )}
     </main>
   );
