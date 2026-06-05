@@ -12,6 +12,7 @@ import clinicsRouter     from './routes/clinics.js';
 import shopRouter        from './routes/shop.js';
 import debugRouter       from './routes/debug.js';
 import adminRouter       from './routes/adminRoutes.js';
+import commentsRouter    from './routes/comments.js';
 import picksRouter       from './routes/picks.js';
 import adminPicksRouter  from './routes/admin-picks.js';
 
@@ -47,6 +48,7 @@ app.use('/api/clinics',     clinicsRouter);
 app.use('/api/shop',        shopRouter);
 app.use('/api/debug',       debugRouter);
 app.use('/api/admin',       adminLimiter,      adminRouter);
+app.use('/api',             commentsRouter);
 app.use('/api/admin',       adminLimiter,      adminPicksRouter);
 app.use('/api',             picksRouter);
 

@@ -11,7 +11,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { haptic } from '../utils/haptic.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
-import PlayerAvatar from '../components/PlayerAvatar.jsx';
+import PlayerAvatar    from '../components/PlayerAvatar.jsx';
+import PlayerComments  from '../components/PlayerComments.jsx';
 
 const GEAR_ICON = { 죽도: '🎋', 호구: '🛡️', 도복: '👘', 하카마: '🥋', 기타: '📦' };
 
@@ -466,12 +467,15 @@ export default function PlayerProfile({ onLoginRequest }) {
         </div>
 
         {/* ── 7. 최근 경기 ── */}
-        <div className="mt-4 mb-6">
+        <div className="mt-4">
           <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-3">최근 경기</h2>
           <div className="bg-black-900 border border-black-700 rounded-xl p-4 text-center">
             <p className="text-white/40 text-sm">최근 경기 정보가 없습니다.</p>
           </div>
         </div>
+
+        {/* ── 8. 댓글 ── */}
+        <PlayerComments slug={player.slug} playerId={player.id} />
 
       </div>
     </>
