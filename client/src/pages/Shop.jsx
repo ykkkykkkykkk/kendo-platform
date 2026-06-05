@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, MessageCircle } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { useFetch } from '../hooks/useFetch.js';
+import InquiryModal from '../components/InquiryModal.jsx';
 
 const CATEGORIES = ['전체', '죽도', '호구', '도복', '하카마', '기타'];
 const GEAR_ICON  = { 죽도: '🎋', 호구: '🛡️', 도복: '👘', 하카마: '🥋', 기타: '📦' };
@@ -78,7 +80,8 @@ function GearCard({ g }) {
 export default function Shop() {
   useDarkBody();
   const navigate = useNavigate();
-  const [tab, setTab] = useState('전체');
+  const [tab,         setTab]         = useState('전체');
+  const [showInquiry, setShowInquiry] = useState(false);
 
   const { data: gear, loading } = useFetch(
     () => fetch('/api/shop/gear').then((r) => r.json()),
@@ -140,19 +143,37 @@ export default function Shop() {
       </div>
 
       {/* ── 입점 배너 ── */}
-      <div className="mx-4 mb-6 rounded-2xl overflow-hidden border border-orange-500/20"
+      <div className="mx-4 rounded-2xl overflow-hidden border border-orange-500/20"
            style={{ background: 'linear-gradient(135deg, #150F00 0%, #1C1400 100%)' }}>
         <div className="p-5 flex items-center gap-4">
           <div className="flex-1">
             <p className="text-white font-bold text-sm">장비 입점 문의</p>
             <p className="text-white/50 text-xs mt-0.5">검도 브랜드라면 누구든 환영합니다</p>
-            <button className="mt-3 bg-orange-500 text-black text-xs font-bold px-4 py-1.5 rounded-full active:opacity-80">
+            <button
+              onClick={() => setShowInquiry(true)}
+              className="mt-3 bg-orange-500 text-black text-xs font-bold px-4 py-1.5 rounded-full active:opacity-80"
+            >
               문의하기 →
             </button>
           </div>
           <div className="text-5xl select-none opacity-30">🥋</div>
         </div>
       </div>
+
+      {/* ── 고객센터 버튼 ── */}
+      <button
+        onClick={() => setShowInquiry(true)}
+        className="mx-4 mt-3 mb-6 w-[calc(100%-2rem)] flex items-center justify-center gap-2
+                   bg-black-900 border border-black-700 rounded-2xl py-3.5 text-white/50 text-sm
+                   hover:border-orange-500/30 hover:text-white/70 transition-colors"
+      >
+        <MessageCircle size={15} />
+        고객센터 / 문의하기
+      </button>
+
+      <AnimatePresence>
+        {showInquiry && <InquiryModal onClose={() => setShowInquiry(false)} />}
+      </AnimatePresence>
 
     </main>
   );

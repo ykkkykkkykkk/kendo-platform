@@ -27,6 +27,7 @@ const DROP_ORDER = [
   'division_results','tournament_picks','division_participants','tournament_divisions',
   'player_comments',
   'dojo_invitations',
+  'inquiries',
   'users',
   'dojos',
   'seasons',
@@ -64,5 +65,6 @@ await run('006_data_enrich.sql');
 await run('007_player_accounts.sql');
 await run('008_comments.sql');
 await run('009_dojo_invitations.sql');
+await run('010_inquiries.sql');
 console.log('마이그레이션 완료!');
 process.exit(0);
