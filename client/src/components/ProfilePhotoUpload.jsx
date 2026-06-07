@@ -57,13 +57,22 @@ export default function ProfilePhotoUpload({ onSuccess }) {
         ? <><Loader size={12} className="animate-spin" />업로드 중...</>
         : <><Camera size={12} />사진 변경</>
       }
-      {/* 투명 input이 버튼 위에 겹쳐서 직접 터치 이벤트 받음 */}
+      {/* opacity-0은 일부 모바일에서 터치 차단 → 0.001 사용 */}
       {!loading && (
         <input
           type="file"
           accept="image/*"
           onChange={handleFile}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0.001,
+            cursor: 'pointer',
+            zIndex: 10,
+            fontSize: '100px',
+          }}
         />
       )}
     </div>
