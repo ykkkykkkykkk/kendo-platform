@@ -10,11 +10,28 @@ function loadToken() {
 
 function decodeUser(token) {
   try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(new TextDecoder().decode(
-      Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-    ));
-    return { id: payload.userId, nickname: payload.nickname, role: payload.role ?? 'fan', playerId: payload.playerId ?? null };
+    const part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(part);
+
+    let payload;
+    try {
+      // TextDecoder 방식 (한글 닉네임 포함)
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      payload = JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      // 폴백: 기본 파싱 (ASCII 필드는 정확, 한글은 깨질 수 있음)
+      payload = JSON.parse(decodeURIComponent(
+        binary.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      ));
+    }
+
+    return {
+      id:       payload.userId,
+      nickname: payload.nickname,
+      role:     payload.role     ?? 'fan',
+      playerId: payload.playerId ?? null,
+    };
   } catch {
     return null;
   }
