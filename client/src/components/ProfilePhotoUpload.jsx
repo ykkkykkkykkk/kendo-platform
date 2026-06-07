@@ -52,7 +52,10 @@ export default function ProfilePhotoUpload({ onSuccess }) {
   if (!CLOUD_NAME || !UPLOAD_PRESET) return null;
 
   return (
-    <div className="relative inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-400 text-xs font-semibold">
+    <div
+      className="relative inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-400 text-xs font-semibold"
+      onClick={() => alert('사진 변경 클릭됨 - 파일 선택창이 떠야 합니다')}
+    >
       {loading
         ? <><Loader size={12} className="animate-spin" />업로드 중...</>
         : <><Camera size={12} />사진 변경</>
