@@ -269,14 +269,6 @@ export default function PlayerProfile({ onLoginRequest }) {
                 className="border-2 border-white/20 shadow-lg"
                 profileImageUrl={currentPhoto}
               />
-              {isMyProfile && (
-                <div className="absolute -bottom-1 -right-1">
-                  <ProfilePhotoUpload
-                    currentUrl={currentPhoto}
-                    onSuccess={(url) => setProfilePhoto(url)}
-                  />
-                </div>
-              )}
             </div>
             <div>
               {player.position && (
@@ -312,6 +304,14 @@ export default function PlayerProfile({ onLoginRequest }) {
           2. 팔로우 + SNS 액션 바
       ════════════════════════════════════════ */}
       <div className="bg-black px-4 py-4 border-b border-black-700">
+        {isMyProfile && (
+          <div className="mb-3">
+            <ProfilePhotoUpload
+              currentUrl={currentPhoto}
+              onSuccess={(url) => setProfilePhoto(url)}
+            />
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleFollow}
