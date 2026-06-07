@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 import { serverError } from '../utils/apiError.js';
 
 const router = Router();
@@ -58,6 +59,35 @@ router.get('/:slug', async (req, res) => {
   } catch (e) {
     serverError(res, e);
   }
+});
+
+// PATCH /api/players/my/photo — 선수 계정 본인 프로필 사진 변경
+router.patch('/my/photo', requireAuth, async (req, res) => {
+  try {
+    const { profile_image_url } = req.body;
+    if (!profile_image_url?.trim())
+      return res.status(400).json({ error: '이미지 URL이 필요합니다.' });
+
+    // 선수 계정인지 확인
+    const { rows: [user] } = await db.execute({
+      sql: "SELECT role, player_id FROM users WHERE id = ?",
+      args: [req.user.userId],
+    });
+    if (!user || user.role !== 'player' || !user.player_id)
+      return res.status(403).json({ error: '선수 계정만 사용할 수 있습니다.' });
+
+    await db.execute({
+      sql:  'UPDATE players SET profile_image_url = ? WHERE id = ?',
+      args: [profile_image_url.trim(), user.player_id],
+    });
+
+    const { rows: [player] } = await db.execute({
+      sql: 'SELECT profile_image_url FROM players WHERE id = ?',
+      args: [user.player_id],
+    });
+
+    res.json({ success: true, profile_image_url: player.profile_image_url });
+  } catch (e) { serverError(res, e); }
 });
 
 export default router;

@@ -11,7 +11,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { haptic } from '../utils/haptic.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
-import PlayerAvatar    from '../components/PlayerAvatar.jsx';
+import PlayerAvatar         from '../components/PlayerAvatar.jsx';
+import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
 
 const GEAR_ICON = { 죽도: '🎋', 호구: '🛡️', 도복: '👘', 하카마: '🥋', 기타: '📦' };
 
@@ -120,6 +121,10 @@ export default function PlayerProfile({ onLoginRequest }) {
   const [followLoading, setFollowLoading] = useState(false);
   const [clinics,       setClinics]       = useState([]);
   const [myBookings,    setMyBookings]    = useState(new Set());
+  const [profilePhoto,  setProfilePhoto]  = useState(null);
+
+  // 선수 본인 여부
+  const isMyProfile = user?.role === 'player' && user?.playerId === player?.id;
 
   useEffect(() => {
     if (!user || !player?.id) return;
@@ -206,6 +211,7 @@ export default function PlayerProfile({ onLoginRequest }) {
     ? Math.round((stats.wins / stats.total_matches) * 100)
     : null;
   const fanCount    = player.fan_count ?? 0;
+  const currentPhoto = profilePhoto ?? player.profile_image_url ?? null;
   const clinicCount = player.clinic_count ?? 0;
 
   return (
@@ -223,6 +229,7 @@ export default function PlayerProfile({ onLoginRequest }) {
             color="transparent"
             size={200}
             className="opacity-15"
+            profileImageUrl={currentPhoto}
           />
         </div>
 
@@ -253,13 +260,24 @@ export default function PlayerProfile({ onLoginRequest }) {
 
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 z-10">
           <div className="flex items-end gap-3 mb-2">
-            <PlayerAvatar
-              slug={player.slug}
-              name={player.name}
-              color={player.color_primary}
-              size={56}
-              className="border-2 border-white/20 shadow-lg flex-shrink-0"
-            />
+            <div className="relative flex-shrink-0">
+              <PlayerAvatar
+                slug={player.slug}
+                name={player.name}
+                color={player.color_primary}
+                size={56}
+                className="border-2 border-white/20 shadow-lg"
+                profileImageUrl={currentPhoto}
+              />
+              {isMyProfile && (
+                <div className="absolute -bottom-1 -right-1">
+                  <ProfilePhotoUpload
+                    currentUrl={currentPhoto}
+                    onSuccess={(url) => setProfilePhoto(url)}
+                  />
+                </div>
+              )}
+            </div>
             <div>
               {player.position && (
                 <span className="inline-flex items-center gap-1 bg-orange-500 text-black font-bold text-[11px] px-2.5 py-0.5 rounded-full mb-1">
