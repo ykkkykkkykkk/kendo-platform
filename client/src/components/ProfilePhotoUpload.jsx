@@ -6,6 +6,15 @@ import { useToast } from '../context/ToastContext.jsx';
 const CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+function Row({ label, value }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-white/30 text-xs">{label}</span>
+      <span className="text-white/60 text-xs">{value}</span>
+    </div>
+  );
+}
+
 export default function ProfilePhotoUpload({ onSuccess }) {
   const { showToast } = useToast();
   const [open,    setOpen]    = useState(false);
@@ -74,12 +83,12 @@ export default function ProfilePhotoUpload({ onSuccess }) {
           >
             <div className="absolute inset-0 bg-black/70" />
             <motion.div
-              className="relative w-full max-w-mobile bg-[#111] rounded-t-2xl border-t border-white/10 p-6"
+              className="relative w-full max-w-mobile bg-[#111] rounded-t-2xl border-t border-white/10 p-6 pb-10"
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5">
                 <h3 className="text-white font-bold text-base">프로필 사진 변경</h3>
                 <button onClick={() => setOpen(false)} className="text-white/40">
                   <X size={18} />
@@ -92,17 +101,27 @@ export default function ProfilePhotoUpload({ onSuccess }) {
                   <p className="text-white/50 text-sm">업로드 중...</p>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full py-10 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer active:bg-white/5 transition-colors">
-                  <ImagePlus size={40} className="text-orange-500 mb-3" />
-                  <p className="text-white font-semibold text-sm">사진을 선택하세요</p>
-                  <p className="text-white/30 text-xs mt-1">JPG, PNG, HEIF · 최대 5MB</p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFile}
-                    className="sr-only"
-                  />
-                </label>
+                <>
+                  <label className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer active:bg-white/5 transition-colors mb-4">
+                    <ImagePlus size={40} className="text-orange-500 mb-3" />
+                    <p className="text-white font-semibold text-sm">사진을 선택하세요</p>
+                    <p className="text-white/40 text-xs mt-1">탭하여 갤러리에서 선택</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFile}
+                      className="sr-only"
+                    />
+                  </label>
+
+                  <div className="bg-white/5 rounded-xl p-4 space-y-2.5">
+                    <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wider mb-1">권장 규격</p>
+                    <Row label="크기" value="1:1 정방형 (예: 500×500px)" />
+                    <Row label="형식" value="JPG · PNG · HEIF · WEBP" />
+                    <Row label="용량" value="최대 5MB" />
+                    <Row label="내용" value="얼굴이 잘 보이는 선명한 사진" />
+                  </div>
+                </>
               )}
             </motion.div>
           </motion.div>
