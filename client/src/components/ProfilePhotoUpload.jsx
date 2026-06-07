@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Camera, Loader } from 'lucide-react';
 import { useToast } from '../context/ToastContext.jsx';
 
@@ -8,6 +8,7 @@ const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 export default function ProfilePhotoUpload({ onSuccess }) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -45,39 +46,40 @@ export default function ProfilePhotoUpload({ onSuccess }) {
       showToast(err.message || '업로드 오류', 'error');
     } finally {
       setLoading(false);
-      e.target.value = '';
+      if (e.target) e.target.value = '';
     }
   };
 
   if (!CLOUD_NAME || !UPLOAD_PRESET) return null;
 
   return (
-    <div
-      className="relative inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-400 text-xs font-semibold"
-      onClick={() => alert('사진 변경 클릭됨 - 파일 선택창이 떠야 합니다')}
-    >
-      {loading
-        ? <><Loader size={12} className="animate-spin" />업로드 중...</>
-        : <><Camera size={12} />사진 변경</>
-      }
-      {/* opacity-0은 일부 모바일에서 터치 차단 → 0.001 사용 */}
-      {!loading && (
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFile}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            opacity: 0.001,
-            cursor: 'pointer',
-            zIndex: 10,
-            fontSize: '100px',
-          }}
-        />
-      )}
-    </div>
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        style={{
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+          opacity: 0,
+        }}
+      />
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => inputRef.current && inputRef.current.click()}
+        className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-400 text-xs font-semibold disabled:opacity-50"
+      >
+        {loading
+          ? <><Loader size={12} className="animate-spin" />업로드 중...</>
+          : <><Camera size={12} />사진 변경</>
+        }
+      </button>
+    </>
   );
 }
