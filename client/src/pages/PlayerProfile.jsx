@@ -346,7 +346,7 @@ export default function PlayerProfile({ onLoginRequest }) {
       {/* ════════════════════════════════════════
           이하 본문
       ════════════════════════════════════════ */}
-      <div className="bg-black px-4">
+      <div className="bg-black px-4 pb-24">
 
 
         {/* ── 4. 소개 ── */}
@@ -445,7 +445,7 @@ export default function PlayerProfile({ onLoginRequest }) {
         </div>
 
         {/* ── 장비 입점 문의 배너 ── */}
-        <div className="mt-4 mb-24 rounded-2xl overflow-hidden border border-orange-500/20"
+        <div className="mt-4 rounded-2xl overflow-hidden border border-orange-500/20"
              style={{ background: 'linear-gradient(135deg, #150F00 0%, #1C1400 100%)' }}>
           <div className="p-5 flex items-center gap-4">
             <div className="flex-1">
