@@ -21,6 +21,7 @@ import RankingPage               from './pages/RankingPage.jsx';
 import SearchPage                from './pages/SearchPage.jsx';
 import Shop                from './pages/Shop.jsx';
 import Debug               from './pages/Debug.jsx';
+import MyPage              from './pages/MyPage.jsx';
 
 export default function App() {
   const { user }   = useAuth();
@@ -80,6 +81,9 @@ export default function App() {
           } />
           <Route path="/debug" element={
             <PageTransition><Debug /></PageTransition>
+          } />
+          <Route path="/me" element={
+            <PageTransition><MyPage /></PageTransition>
           } />
         </Routes>
       </AnimatePresence>

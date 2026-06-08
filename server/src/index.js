@@ -15,6 +15,7 @@ import adminRouter       from './routes/adminRoutes.js';
 import picksRouter       from './routes/picks.js';
 import adminPicksRouter  from './routes/admin-picks.js';
 import dojosRouter       from './routes/dojos.js';
+import meRouter          from './routes/me.js';
 import adminDojosRouter  from './routes/adminDojos.js';
 import inquiriesRouter   from './routes/inquiries.js';
 
@@ -53,6 +54,7 @@ app.use('/api/admin',       adminLimiter,      adminRouter);
 app.use('/api/admin',       adminLimiter,      adminPicksRouter);
 app.use('/api/admin',       adminLimiter,      adminDojosRouter);
 app.use('/api',             dojosRouter);
+app.use('/api/me',          meRouter);
 app.use('/api',             inquiriesRouter);
 app.use('/api',             picksRouter);
 

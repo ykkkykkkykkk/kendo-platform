@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { SkeletonCard } from '../components/Skeleton.jsx';
@@ -82,9 +83,10 @@ function ReasonCard({ icon, title, desc }) {
 }
 
 /* ── 메인 ──────────────────────────────────────────────── */
-export default function Home() {
+export default function Home({ onLoginRequest }) {
   useDarkBody();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: tournaments, loading: tLoad } = useFetch(api.tournaments);
   const { data: players,     loading: pLoad } = useFetch(api.players);
 
@@ -116,9 +118,15 @@ export default function Home() {
             >
               <Search size={18} />
             </button>
-            <div className="w-9 h-9 rounded-full bg-black-800 border border-black-700 flex items-center justify-center">
-              <span className="text-orange-500 text-xs font-bold">검</span>
-            </div>
+            <button
+              onClick={() => user ? navigate('/me') : onLoginRequest?.()}
+              className="w-9 h-9 rounded-full bg-black-800 border border-black-700 flex items-center justify-center pressable"
+              aria-label="마이페이지"
+            >
+              <span className="text-orange-500 text-xs font-bold">
+                {user?.nickname?.[0] ?? '검'}
+              </span>
+            </button>
           </div>
         </div>
         <div className="border-b border-black-700 mt-4" />

@@ -48,6 +48,14 @@ export const api = {
   submitPick: (divId, body)      => authPost(`/divisions/${divId}/pick`, body),
   lockPick:   (divId)            => authPost(`/divisions/${divId}/pick/lock`, {}),
 
+  // 마이페이지
+  me:           ()          => authGet('/me'),
+  updateMe:     (body)      => authPost('/me', body),
+  myFollows:    ()          => authGet('/me/follows'),
+  myPicks:      ()          => authGet('/me/picks'),
+  unfollow:     (playerId)  => authDelete(`/me/follows/${playerId}`),
+  withdraw:     ()          => authPost('/me/withdraw', {}),
+
   // 도장 시스템
   dojoSearch:   (q)   => get(`/dojos/search?q=${encodeURIComponent(q)}`),
   dojoRanking:  ()    => authGet('/dojos/ranking'),

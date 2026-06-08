@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Trophy, Users, TrendingUp, Award, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Users, Search } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
@@ -51,11 +51,6 @@ export default function TeamDetail() {
 
   const players = team.players ?? [];
 
-  const withStats = players.filter((p) => p.total_matches > 0);
-  const totalW    = withStats.reduce((s, p) => s + (p.wins ?? 0), 0);
-  const totalM    = withStats.reduce((s, p) => s + (p.total_matches ?? 0), 0);
-  const teamWR    = totalM > 0 ? Math.round((totalW / totalM) * 100) : null;
-  const totalC    = withStats.reduce((s, p) => s + (p.championships_won ?? 0), 0);
 
   return (
     <>
@@ -91,14 +86,8 @@ export default function TeamDetail() {
           <p className="text-white/60 text-sm mt-0.5">{team.region} · 창단 {team.founded_year}</p>
 
           <div className="grid grid-cols-2 gap-2 mt-5">
-            <StatCard label="우승"     value={team.championships} icon={<Trophy    size={16} />} gold />
-            <StatCard label="소속 선수" value={players.length}     icon={<Users     size={16} />} />
-            {teamWR !== null && (
-              <StatCard label="팀 승률"  value={`${teamWR}%`}      icon={<TrendingUp size={16} />} />
-            )}
-            {totalC > 0 && (
-              <StatCard label="개인 우승" value={totalC}            icon={<Award     size={16} />} />
-            )}
+            <StatCard label="우승"     value={team.championships} icon={<Trophy size={16} />} gold />
+            <StatCard label="소속 선수" value={players.length}    icon={<Users  size={16} />} />
           </div>
         </div>
       </div>
@@ -112,11 +101,7 @@ export default function TeamDetail() {
         ) : (
           <div className="flex flex-col gap-3">
             {players.map((p) => {
-              const winRate = p.total_matches > 0
-                ? Math.round((p.wins / p.total_matches) * 100)
-                : null;
               const pc = POSITION_COLOR[p.position];
-
               return (
                 <Link
                   key={p.id}
@@ -125,7 +110,6 @@ export default function TeamDetail() {
                              flex items-center gap-3"
                 >
                   <PlayerAvatar slug={p.slug} name={p.name} color={team.color_primary} size={44} />
-
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-white">{p.name}</span>
@@ -136,21 +120,10 @@ export default function TeamDetail() {
                       )}
                     </div>
                     <p className="text-white/40 text-xs mt-0.5">
-                      {p.dan_grade}단 · {p.birth_year}년생
+                      {p.dan_grade}단{p.birth_year ? ` · ${p.birth_year}년생` : ''}
                     </p>
                   </div>
-
-                  {winRate !== null ? (
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-white font-bold text-sm">{winRate}%</p>
-                      <p className="text-white/40 text-xs">{p.wins}승 {p.losses}패</p>
-                    </div>
-                  ) : p.championships_won > 0 ? (
-                    <div className="flex items-center gap-1 text-amber-300 flex-shrink-0">
-                      <Trophy size={12} />
-                      <span className="text-xs font-bold">{p.championships_won}회</span>
-                    </div>
-                  ) : null}
+                  <ChevronRight size={15} className="text-white/20 flex-none" />
                 </Link>
               );
             })}
