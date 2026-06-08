@@ -104,10 +104,10 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
 
         {/* 로고 + 타이틀 */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-black-700 border border-orange-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-orange-500 font-black text-2xl">검</span>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden">
+            <img src="/logo.svg" alt="마이너스타" className="w-full h-full" />
           </div>
-          <h2 className="text-white font-black text-lg">검도 팬덤 시작하기</h2>
+          <h2 className="text-white font-black text-lg">마이너스타 시작하기</h2>
           <p className="text-white/40 text-sm mt-1">닉네임과 휴대폰 끝 4자리로 시작하세요</p>
         </div>
 

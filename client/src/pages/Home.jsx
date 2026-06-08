@@ -105,8 +105,8 @@ export default function Home() {
       <header className="px-4 pt-12 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-orange-500 font-semibold tracking-[0.2em] uppercase">Kendo</p>
-            <h1 className="text-3xl font-bold text-white leading-tight">검도 팬덤</h1>
+            <p className="text-[10px] text-orange-500 font-semibold tracking-[0.2em] uppercase">MINOR STAR</p>
+            <h1 className="text-3xl font-bold text-white leading-tight">마이너스타</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -271,7 +271,7 @@ export default function Home() {
       {/* ── 왜 검도 팬덤? ─────────────────────────────── */}
       <section className="mt-6 px-4 pb-4">
         <h3 className="text-[10px] font-semibold text-white/35 mb-3 uppercase tracking-[0.18em]">
-          왜 검도 팬덤?
+          왜 마이너스타?
         </h3>
         <div className="flex flex-col gap-2">
           <ScrollReveal delay={0.0}><ReasonCard icon="🏯" title="선수 응원"   desc="좋아하는 선수에게 직접 닿는다" /></ScrollReveal>

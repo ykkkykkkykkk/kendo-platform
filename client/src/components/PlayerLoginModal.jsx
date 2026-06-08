@@ -76,8 +76,8 @@ export default function PlayerLoginModal({ onClose, onSwitchToFan }) {
 
         {/* 로고 + 타이틀 */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-black-700 border border-orange-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-orange-500 font-black text-2xl">검</span>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden">
+            <img src="/logo.svg" alt="마이너스타" className="w-full h-full" />
           </div>
           <h2 className="text-white font-black text-lg">선수 로그인</h2>
           <p className="text-white/40 text-sm mt-1">관리자로부터 받은 아이디/비밀번호로 로그인하세요</p>
