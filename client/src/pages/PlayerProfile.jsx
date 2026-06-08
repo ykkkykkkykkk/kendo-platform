@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, Share2, Heart, Search,
-  Trophy, Calendar,
+  Calendar,
   AtSign, PlayCircle,
 } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
@@ -13,6 +14,7 @@ import { haptic } from '../utils/haptic.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
 import PlayerAvatar         from '../components/PlayerAvatar.jsx';
 import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
+import InquiryModal        from '../components/InquiryModal.jsx';
 
 const GEAR_ICON = { 죽도: '🎋', 호구: '🛡️', 도복: '👘', 하카마: '🥋', 기타: '📦' };
 
@@ -122,6 +124,7 @@ export default function PlayerProfile({ onLoginRequest }) {
   const [clinics,       setClinics]       = useState([]);
   const [myBookings,    setMyBookings]    = useState(new Set());
   const [profilePhoto,  setProfilePhoto]  = useState(null);
+  const [showInquiry,   setShowInquiry]   = useState(false);
 
   // 선수 본인 여부
   const isMyProfile = user?.role === 'player' && user?.playerId === player?.id;
@@ -345,48 +348,6 @@ export default function PlayerProfile({ onLoginRequest }) {
       ════════════════════════════════════════ */}
       <div className="bg-black px-4">
 
-        {/* ── 3. 통산 전적 ── */}
-        <div className="bg-black-900 border border-black-700 rounded-2xl p-5 mt-4">
-          <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-4">통산 전적</h2>
-
-          {stats ? (
-            <>
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {[
-                  { label: '총경기', value: stats.total_matches,      gold: false },
-                  { label: '승',     value: stats.wins,               gold: false },
-                  { label: '패',     value: stats.losses,             gold: false },
-                  { label: '우승',   value: stats.championships_won,  gold: true  },
-                ].map(({ label, value, gold }) => (
-                  <div key={label} className="relative text-center">
-                    {gold && <Trophy size={12} className="text-amber-300 absolute top-0 right-0" />}
-                    <p className={`text-3xl font-black leading-none ${gold ? 'text-amber-300' : 'text-white'}`}>
-                      {value}
-                    </p>
-                    <p className="text-[11px] text-white/40 mt-1">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {winRate !== null && (
-                <>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-xs font-bold text-white/50">승률</span>
-                    <span className="text-xs font-bold text-white">{winRate}%</span>
-                  </div>
-                  <div className="h-2 bg-black-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all"
-                      style={{ width: `${winRate}%` }}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <p className="text-white/40 text-sm text-center py-2">아직 등록된 전적 정보 없음</p>
-          )}
-        </div>
 
         {/* ── 4. 소개 ── */}
         {player.bio && (
@@ -483,13 +444,27 @@ export default function PlayerProfile({ onLoginRequest }) {
           )}
         </div>
 
-        {/* ── 7. 최근 경기 ── */}
-        <div className="mt-4 mb-6">
-          <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-3">최근 경기</h2>
-          <div className="bg-black-900 border border-black-700 rounded-xl p-4 text-center">
-            <p className="text-white/40 text-sm">최근 경기 정보가 없습니다.</p>
+        {/* ── 장비 입점 문의 배너 ── */}
+        <div className="mt-4 mb-6 rounded-2xl overflow-hidden border border-orange-500/20"
+             style={{ background: 'linear-gradient(135deg, #150F00 0%, #1C1400 100%)' }}>
+          <div className="p-5 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm">장비 입점 문의</p>
+              <p className="text-white/50 text-xs mt-0.5">검도 브랜드라면 누구든 환영합니다</p>
+              <button
+                onClick={() => setShowInquiry(true)}
+                className="mt-3 bg-orange-500 text-black text-xs font-bold px-4 py-1.5 rounded-full active:opacity-80"
+              >
+                문의하기 →
+              </button>
+            </div>
+            <div className="text-5xl select-none opacity-30">🥋</div>
           </div>
         </div>
+
+        <AnimatePresence>
+          {showInquiry && <InquiryModal onClose={() => setShowInquiry(false)} />}
+        </AnimatePresence>
 
       </div>
     </>
