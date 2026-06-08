@@ -5,7 +5,7 @@ const tabs = [
   { to: '/predictions', label: 'PICK', icon: TargetIcon, end: false },
   { to: '/ranking',     label: 'RANK', icon: TrophyIcon, end: false },
   { to: '/teams',       label: 'TEAM', icon: ShieldIcon, end: false },
-  { to: '/shop',        label: 'SHOP', icon: BagIcon,    end: false },
+  // { to: '/shop', label: 'SHOP', icon: BagIcon, end: false },
 ];
 
 export default function BottomTabBar() {
