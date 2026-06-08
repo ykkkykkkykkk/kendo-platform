@@ -93,7 +93,7 @@ export default function TeamDetail() {
       </div>
 
       {/* ── 선수 목록 ── */}
-      <main className="bg-black px-4 pt-5 pb-6">
+      <main className="bg-black px-4 pt-5 pb-24">
         <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-3">소속 선수</h2>
 
         {players.length === 0 ? (

@@ -209,10 +209,7 @@ export default function PlayerProfile({ onLoginRequest }) {
     </main>
   );
 
-  const { stats, gear = [] } = player;
-  const winRate     = stats?.total_matches > 0
-    ? Math.round((stats.wins / stats.total_matches) * 100)
-    : null;
+  const { gear = [] } = player;
   const fanCount    = player.fan_count ?? 0;
   const currentPhoto = profilePhoto ?? player.profile_image_url ?? null;
   const clinicCount = player.clinic_count ?? 0;

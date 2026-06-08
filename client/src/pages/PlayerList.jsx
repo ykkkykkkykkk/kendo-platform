@@ -50,42 +50,31 @@ export default function PlayerList() {
         <SkeletonList count={6} />
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((p) => {
-            const winRate = p.total_matches > 0
-              ? Math.round((p.wins / p.total_matches) * 100)
-              : null;
-            return (
-              <Link
-                key={p.id}
-                to={`/players/${p.slug}`}
-                className="bg-card rounded-xl p-4 flex items-center gap-3 active:opacity-70"
-              >
-                <PlayerAvatar
-                  slug={p.slug}
-                  name={p.name}
-                  color={p.color_primary}
-                  size={44}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-navy">{p.name}</span>
-                    {p.position && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${POSITION_COLOR[p.position] ?? 'bg-gray-200'}`}>
-                        {p.position}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sub text-xs mt-0.5 truncate">{p.team_name} · {p.dan_grade}단</p>
+          {filtered.map((p) => (
+            <Link
+              key={p.id}
+              to={`/players/${p.slug}`}
+              className="bg-card rounded-xl p-4 flex items-center gap-3 active:opacity-70"
+            >
+              <PlayerAvatar
+                slug={p.slug}
+                name={p.name}
+                color={p.color_primary}
+                size={44}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-navy">{p.name}</span>
+                  {p.position && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${POSITION_COLOR[p.position] ?? 'bg-gray-200'}`}>
+                      {p.position}
+                    </span>
+                  )}
                 </div>
-                {winRate !== null && (
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-navy font-bold text-sm">{winRate}%</p>
-                    <p className="text-sub text-xs">승률</p>
-                  </div>
-                )}
-              </Link>
-            );
-          })}
+                <p className="text-sub text-xs mt-0.5 truncate">{p.team_name} · {p.dan_grade}단</p>
+              </div>
+            </Link>
+          ))}
           {filtered.length === 0 && (
             <EmptyState
               icon="🔍"
