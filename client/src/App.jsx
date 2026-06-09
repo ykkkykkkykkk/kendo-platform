@@ -22,6 +22,7 @@ import SearchPage                from './pages/SearchPage.jsx';
 import Shop                from './pages/Shop.jsx';
 import Debug               from './pages/Debug.jsx';
 import MyPage              from './pages/MyPage.jsx';
+import MyFollows           from './pages/MyFollows.jsx';
 
 export default function App() {
   const { user }   = useAuth();
@@ -84,6 +85,9 @@ export default function App() {
           } />
           <Route path="/me" element={
             <PageTransition><MyPage /></PageTransition>
+          } />
+          <Route path="/me/follows" element={
+            <PageTransition><MyFollows /></PageTransition>
           } />
         </Routes>
       </AnimatePresence>

@@ -325,7 +325,7 @@ export default function MyPage() {
 
       {/* ── ACTIVITY ── */}
       <Section label="ACTIVITY" delay={0.12}>
-        <Row label="나의 픽 기록" value={`${data?.pick_count ?? 0}회`} onClick={() => navigate('/me/picks')} />
+        <Row label="나의 픽 기록" value={`${data?.pick_count ?? 0}회`} disabled sub="상세 기록은 곧 공개" />
         <Row label="시즌 점수" value={`${(data?.season_score ?? 0).toLocaleString()}점`}
           sub={data?.season?.name} onClick={() => navigate('/ranking')} />
       </Section>
