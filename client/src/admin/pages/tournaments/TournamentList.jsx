@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Trophy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Trophy, Star } from 'lucide-react';
 import { adminGet, adminDelete } from '../../adminApi.js';
 
 const STATUS_TABS = ['전체', '예정', '진행', '종료'];
@@ -23,7 +23,7 @@ export default function TournamentList() {
 
   useEffect(() => {
     adminGet('/tournaments')
-      .then(setList)
+      .then((d) => setList(Array.isArray(d) ? d : []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -117,6 +117,14 @@ export default function TournamentList() {
                       >
                         <Trophy size={12} />
                         대진표
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/tournaments/${t.id}/picks`)}
+                        className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50
+                                   hover:bg-amber-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Star size={12} />
+                        픽 결과
                       </button>
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/edit`)}

@@ -9,6 +9,42 @@ router.use(requireAdmin);
 
 const VALID_DIVISION_TYPES = ['male_individual', 'male_team', 'female_individual', 'female_team'];
 
+// ─── B-0. 대회 부문 목록 + 참가자 + 현재 결과 조회 ──────────────
+// GET /api/admin/tournaments/:id/divisions
+router.get('/tournaments/:id/divisions', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { rows: divisions } = await db.execute({
+      sql: `SELECT td.id, td.division_type, td.participant_count,
+                   dr.rank_1st, dr.rank_2nd, dr.rank_3rd_a, dr.rank_3rd_b,
+                   dr.is_finalized, dr.finalized_at
+            FROM tournament_divisions td
+            LEFT JOIN division_results dr ON dr.division_id = td.id
+            WHERE td.tournament_id = ?
+            ORDER BY td.id`,
+      args: [id],
+    });
+
+    for (const div of divisions) {
+      const { rows: participants } = await db.execute({
+        sql: `SELECT dp.id, dp.seed_number,
+                     p.name  AS player_name,
+                     t.name  AS team_name
+              FROM division_participants dp
+              LEFT JOIN players p ON p.id = dp.player_id
+              LEFT JOIN teams   t ON t.id = dp.team_id
+              WHERE dp.division_id = ?
+              ORDER BY dp.seed_number`,
+        args: [div.id],
+      });
+      div.participants = participants;
+    }
+
+    res.json(divisions);
+  } catch (e) { serverError(res, e, 'B-0'); }
+});
+
 // ─── B-1. 대회에 부문 추가 ───────────────────────────────────────
 // POST /api/admin/tournaments/:id/divisions
 router.post('/tournaments/:id/divisions', async (req, res) => {
