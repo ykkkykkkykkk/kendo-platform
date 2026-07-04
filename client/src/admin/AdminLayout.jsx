@@ -32,7 +32,7 @@ export default function AdminLayout({ children, onLogout }) {
               <span className="text-slate-900 font-black text-sm">검</span>
             </div>
             <div>
-              <p className="text-white font-bold text-sm leading-tight">검도 팬덤</p>
+              <p className="text-white font-bold text-sm leading-tight">마이너스타</p>
               <p className="text-slate-400 text-[11px]">관리자</p>
             </div>
           </div>

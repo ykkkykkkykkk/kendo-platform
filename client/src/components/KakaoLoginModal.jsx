@@ -58,7 +58,7 @@ export default function KakaoLoginModal({ onClose }) {
           <div className="w-14 h-14 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-3">
             <span className="text-gold font-black text-2xl">검</span>
           </div>
-          <h2 className="text-navy font-black text-lg">검도 팬덤 시작하기</h2>
+          <h2 className="text-navy font-black text-lg">마이너스타 시작하기</h2>
           <p className="text-sub text-sm mt-1">로그인하고 경기 예측에 참여하세요</p>
         </div>
 
