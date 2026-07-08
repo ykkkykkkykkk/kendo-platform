@@ -22,18 +22,18 @@ export default function AdminLayout({ children, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* 사이드바 */}
-      <aside className="w-56 bg-slate-900 flex flex-col flex-shrink-0">
+    <div className="flex min-h-screen bg-paper">
+      {/* 사이드바 — 잉크 블록 */}
+      <aside className="w-56 bg-block flex flex-col flex-shrink-0">
         {/* 로고 */}
-        <div className="px-5 py-5 border-b border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
-              <span className="text-slate-900 font-black text-sm">검</span>
-            </div>
+        <div className="px-5 py-5 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.svg" alt="마이너스타" className="w-8 h-8 rounded-lg" />
             <div>
-              <p className="text-white font-bold text-sm leading-tight">마이너스타</p>
-              <p className="text-slate-400 text-[11px]">관리자</p>
+              <p className="text-white font-bold text-sm leading-tight tracking-tight">
+                MINOR—STAR<span className="align-super text-[8px] font-medium">®</span>
+              </p>
+              <p className="text-white/40 text-[10px] tracking-[0.2em] mt-0.5">ADMIN</p>
             </div>
           </div>
         </div>
@@ -46,10 +46,10 @@ export default function AdminLayout({ children, onLogout }) {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-amber-400/20 text-amber-400'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-lime text-ink'
+                    : 'text-white/50 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
@@ -60,11 +60,11 @@ export default function AdminLayout({ children, onLogout }) {
         </nav>
 
         {/* 로그아웃 */}
-        <div className="px-3 py-4 border-t border-slate-700">
+        <div className="px-3 py-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg
-                       text-slate-400 hover:bg-slate-800 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-full
+                       text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors"
           >
             <LogOut size={16} />
             로그아웃

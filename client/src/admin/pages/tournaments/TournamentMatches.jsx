@@ -53,8 +53,8 @@ function BracketLines({ rounds, bracket, selectedId }) {
   return (
     <svg className="absolute inset-0 pointer-events-none"
          width={bracketW(rounds)} height={bracketH(rounds)}>
-      {paths.map((d, i)     => <path key={`d${i}`} d={d} fill="none" stroke="#E2E5EC" strokeWidth="1.5" />)}
-      {goldPaths.map((d, i) => <path key={`g${i}`} d={d} fill="none" stroke="#6366f1" strokeWidth="2" />)}
+      {paths.map((d, i)     => <path key={`d${i}`} d={d} fill="none" stroke="#E5E5E5" strokeWidth="1.5" />)}
+      {goldPaths.map((d, i) => <path key={`g${i}`} d={d} fill="none" stroke="#D8FF3E" strokeWidth="2.5" />)}
     </svg>
   );
 }
@@ -69,39 +69,39 @@ function MatchBox({ match: m, selected, onClick }) {
 
   const rowCls = (isWinner) =>
     `flex-1 flex items-center px-3 gap-1.5 text-[13px] font-medium truncate
-     ${isDone && isWinner ? 'text-amber-600 font-bold bg-amber-50' : ''}
-     ${isDone && !isWinner && m.winner_player_id ? 'opacity-30' : 'text-gray-700'}`;
+     ${isDone && isWinner ? 'text-ink font-bold bg-lime' : ''}
+     ${isDone && !isWinner && m.winner_player_id ? 'opacity-30' : 'text-ink-600'}`;
 
   return (
     <div
       onClick={() => onClick(m)}
-      className={`absolute cursor-pointer rounded-lg overflow-hidden flex flex-col
-                  shadow-sm transition-all border-2
-                  ${isSelected ? 'border-indigo-500 shadow-indigo-100 shadow-md' : 'border-transparent'}
-                  ${isDone ? 'bg-white' : noPlayers ? 'bg-gray-50' : 'bg-white hover:border-gray-200'}`}
+      className={`absolute cursor-pointer overflow-hidden flex flex-col
+                  transition-colors border-2
+                  ${isSelected ? 'border-ink' : 'border-transparent'}
+                  ${isDone ? 'bg-white' : noPlayers ? 'bg-ink-200/10' : 'bg-white hover:border-ink-200'}`}
       style={{ width: MW, height: MH }}
     >
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-3 border-b border-gray-100 flex-shrink-0"
+      <div className="flex items-center justify-between px-3 border-b border-ink-200 flex-shrink-0"
            style={{ height: 22 }}>
-        <span className="text-[10px] text-gray-400">
+        <span className="text-[10px] text-ink-400">
           {m.round} #{m.bracket_position}
           {m.scheduled_at ? ` · ${m.scheduled_at.slice(11,16)}` : ''}
         </span>
-        {isDone && <Trophy size={10} className="text-amber-500" />}
+        {isDone && <Trophy size={10} className="text-ink" />}
         {!isDone && m.status === '진행중' && (
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-lime animate-pulse" />
         )}
       </div>
 
       {/* 선수 A */}
       <div className={rowCls(m.winner_player_id === m.player_a_id)}>
-        {m.player_a_name ?? <span className="italic text-gray-300">TBD</span>}
+        {m.player_a_name ?? <span className="italic text-ink-400">TBD</span>}
       </div>
-      <div className="border-t border-gray-100 mx-3 flex-shrink-0" />
+      <div className="border-t border-ink-200 mx-3 flex-shrink-0" />
       {/* 선수 B */}
       <div className={rowCls(m.winner_player_id === m.player_b_id)}>
-        {m.player_b_name ?? <span className="italic text-gray-300">TBD</span>}
+        {m.player_b_name ?? <span className="italic text-ink-400">TBD</span>}
       </div>
     </div>
   );
@@ -115,15 +115,14 @@ function ChampBox({ rounds, bracket }) {
   const winner = final?.winner_name;
   return (
     <div
-      className="absolute flex flex-col items-center justify-center rounded-xl overflow-hidden"
+      className="absolute flex flex-col items-center justify-center overflow-hidden bg-lime"
       style={{
         left: CHAMP_LX(rounds), top: ty(rounds.length - 1, 0),
         width: CHAMP_W, height: MH,
-        background: 'linear-gradient(135deg, #C9A961 0%, #E8D9A8 100%)',
       }}
     >
-      <Trophy size={20} className="text-slate-800 mb-1" />
-      <span className="text-slate-800 font-black text-[12px] text-center px-2 leading-tight">
+      <Trophy size={20} className="text-ink mb-1" />
+      <span className="text-ink font-black text-[12px] text-center px-2 leading-tight">
         {winner ?? '우승'}
       </span>
     </div>
@@ -164,24 +163,24 @@ function GenerateModal({ tournamentId, players, onClose, onGenerated }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white border border-ink-200 w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900 text-lg">대진표 생성</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ink-200">
+          <h2 className="font-bold text-ink text-lg">대진표 생성</h2>
+          <button onClick={onClose} className="text-ink-400 hover:text-ink"><X size={20} /></button>
         </div>
 
         {/* 타입 선택 */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-ink-200">
           <div className="flex gap-3">
             {['16강', '8강'].map((t) => (
               <button
                 key={t}
                 onClick={() => { setType(t); setSlots(Array(16).fill('')); setError(''); }}
-                className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-colors ${
                   type === t
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-ink bg-ink text-white'
+                    : 'border-ink-200 text-ink-600 hover:border-ink'
                 }`}
               >
                 {t} ({t === '16강' ? 16 : 8}명)
@@ -192,18 +191,18 @@ function GenerateModal({ tournamentId, players, onClose, onGenerated }) {
 
         {/* 선수 선택 */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase mb-3">
             시드 순서대로 선수 선택 (1번이 첫 경기 선수 A)
           </p>
           <div className="grid grid-cols-2 gap-2">
             {Array.from({ length: count }).map((_, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-400 w-5 text-right">{i+1}</span>
+                <span className="text-xs font-bold text-ink-400 w-5 text-right">{i+1}</span>
                 <select
                   value={currentSlots[i] ?? ''}
                   onChange={(e) => setSlot(i, e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-sm
-                             focus:outline-none focus:border-indigo-400"
+                  className="flex-1 border border-ink-200 px-2.5 py-2 text-sm text-ink
+                             focus:outline-none focus:border-ink transition-colors"
                 >
                   <option value="">— 선택 —</option>
                   {players.map((p) => (
@@ -216,20 +215,20 @@ function GenerateModal({ tournamentId, players, onClose, onGenerated }) {
         </div>
 
         {/* 푸터 */}
-        <div className="px-6 py-4 border-t border-gray-100">
-          {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+        <div className="px-6 py-4 border-t border-ink-200">
+          {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
           <div className="flex gap-3">
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5
-                         rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
+              className="flex items-center gap-2 bg-ink text-white px-6 py-2.5
+                         rounded-full text-sm font-medium hover:bg-ink/90 disabled:opacity-50 transition-colors"
             >
               <Zap size={15} />
               {loading ? '생성 중...' : `${type} 대진표 생성`}
             </button>
             <button onClick={onClose}
-              className="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm hover:bg-gray-200">
+              className="px-6 py-2.5 text-ink border border-ink-200 hover:border-ink rounded-full text-sm transition-colors">
               취소
             </button>
           </div>
@@ -294,16 +293,16 @@ function MatchPanel({ match, players, onClose, onSave }) {
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-      className="fixed right-0 top-0 bottom-0 w-[400px] bg-white shadow-2xl z-40
-                 flex flex-col border-l border-gray-200"
+      className="fixed right-0 top-0 bottom-0 w-[400px] bg-white z-40
+                 flex flex-col border-l border-ink-200"
     >
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-ink-200">
         <div>
-          <p className="font-bold text-gray-900">{match.round} · 경기 {match.bracket_position}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Match ID: {match.id}</p>
+          <p className="font-bold text-ink">{match.round} · 경기 {match.bracket_position}</p>
+          <p className="text-xs text-ink-400 mt-0.5">Match ID: {match.id}</p>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+        <button onClick={onClose} className="text-ink-400 hover:text-ink p-1">
           <X size={18} />
         </button>
       </div>
@@ -312,34 +311,34 @@ function MatchPanel({ match, players, onClose, onSave }) {
         {/* 상태 + 일시 */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">상태</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">상태</label>
             <select value={form.status} onChange={set('status')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400">
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
               {['예정','진행중','종료'].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">경기 일시</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">경기 일시</label>
             <input type="datetime-local" value={form.scheduled_at} onChange={set('scheduled_at')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400" />
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors" />
           </div>
         </div>
 
         {/* 선수 선택 */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold text-gray-500">선수</p>
+          <p className="text-xs font-medium text-ink-600">선수</p>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">선수 A</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">선수 A</label>
             <select value={form.player_a_id} onChange={set('player_a_id')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400">
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
               <option value="">— TBD —</option>
               {players.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.team_name})</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">선수 B</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">선수 B</label>
             <select value={form.player_b_id} onChange={set('player_b_id')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400">
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
               <option value="">— TBD —</option>
               {players.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.team_name})</option>)}
             </select>
@@ -347,16 +346,16 @@ function MatchPanel({ match, players, onClose, onSave }) {
         </div>
 
         <button onClick={handleSaveInfo} disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-slate-700 text-white
-                     py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-600 disabled:opacity-50">
+          className="w-full flex items-center justify-center gap-2 bg-ink text-white
+                     py-2.5 rounded-full text-sm font-medium hover:bg-ink/90 disabled:opacity-50 transition-colors">
           <Save size={14} />
           {saving ? '저장 중...' : '정보 저장'}
         </button>
 
         {/* 결과 입력 */}
         {(form.player_a_id && form.player_b_id) && (
-          <div className="pt-4 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 mb-3">결과 입력</p>
+          <div className="pt-4 border-t border-ink-200">
+            <p className="text-xs font-medium text-ink-600 mb-3">결과 입력</p>
 
             {/* 승자 선택 버튼 */}
             <div className="flex gap-2 mb-4">
@@ -367,10 +366,10 @@ function MatchPanel({ match, players, onClose, onSave }) {
                 <button
                   key={p.id}
                   onClick={() => setForm((f) => ({ ...f, winner_player_id: p.id }))}
-                  className={`flex-1 py-3 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  className={`flex-1 py-3 rounded-full text-sm font-semibold border transition-colors ${
                     form.winner_player_id === p.id
-                      ? 'border-amber-400 bg-amber-50 text-amber-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-lime bg-lime text-ink'
+                      : 'border-ink-200 text-ink-600 hover:border-ink'
                   }`}
                 >
                   {form.winner_player_id === p.id && '🏆 '}{p.name}
@@ -381,22 +380,22 @@ function MatchPanel({ match, players, onClose, onSave }) {
             {/* 점수 */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">{playerA?.name ?? '선수 A'} 점수</label>
+                <label className="text-xs font-medium text-ink-600 mb-1 block">{playerA?.name ?? '선수 A'} 점수</label>
                 <input type="number" min="0" max="5" value={form.score_a} onChange={set('score_a')}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center font-bold
-                             focus:outline-none focus:border-indigo-400" />
+                  className="w-full border border-ink-200 px-4 py-3 text-sm text-ink text-center font-bold
+                             focus:outline-none focus:border-ink transition-colors" />
               </div>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">{playerB?.name ?? '선수 B'} 점수</label>
+                <label className="text-xs font-medium text-ink-600 mb-1 block">{playerB?.name ?? '선수 B'} 점수</label>
                 <input type="number" min="0" max="5" value={form.score_b} onChange={set('score_b')}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center font-bold
-                             focus:outline-none focus:border-indigo-400" />
+                  className="w-full border border-ink-200 px-4 py-3 text-sm text-ink text-center font-bold
+                             focus:outline-none focus:border-ink transition-colors" />
               </div>
             </div>
 
             <button onClick={handleSaveResult} disabled={saving || !form.winner_player_id}
-              className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white
-                         py-2.5 rounded-xl text-sm font-semibold hover:bg-amber-600
+              className="w-full flex items-center justify-center gap-2 bg-lime text-ink
+                         py-2.5 rounded-full text-sm font-semibold hover:bg-lime/80
                          disabled:opacity-40 transition-colors">
               <Trophy size={14} />
               {saving ? '저장 중...' : '결과 저장 + 다음 라운드 자동 진출'}
@@ -404,7 +403,7 @@ function MatchPanel({ match, players, onClose, onSave }) {
           </div>
         )}
 
-        {error && <p className="text-red-500 text-xs">{error}</p>}
+        {error && <p className="text-red-600 text-xs">{error}</p>}
       </div>
     </motion.div>
   );
@@ -479,22 +478,22 @@ export default function TournamentMatches() {
     if (res.ok) { setMatches([]); setSelected(null); showToast('삭제 완료'); }
   };
 
-  if (loading) return <div className="p-8 text-gray-400 text-sm">로딩 중...</div>;
-  if (!tournament) return <div className="p-8 text-red-400 text-sm">대회를 찾을 수 없습니다.</div>;
+  if (loading) return <div className="p-8 text-ink-400 text-sm">로딩 중...</div>;
+  if (!tournament) return <div className="p-8 text-red-600 text-sm">대회를 찾을 수 없습니다.</div>;
 
   const hasMatches = matches.length > 0;
 
   return (
     <div className="flex flex-col h-full">
       {/* 상단 바 */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-ink-200 bg-white flex-shrink-0">
         <button onClick={() => navigate('/admin/tournaments')}
-          className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
+          className="flex items-center gap-1 text-ink-400 hover:text-ink text-sm transition-colors">
           <ChevronLeft size={16} />목록
         </button>
         <div className="flex-1">
-          <h1 className="font-bold text-gray-900">{tournament.name}</h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h1 className="font-bold text-ink">{tournament.name}</h1>
+          <p className="text-xs text-ink-400 mt-0.5">
             {tournament.tournament_type} · {tournament.status} · 매치 {matches.length}개
           </p>
         </div>
@@ -502,8 +501,8 @@ export default function TournamentMatches() {
           {!hasMatches ? (
             <button
               onClick={() => setShowGen(true)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5
-                         rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 bg-ink text-white px-4 py-2.5
+                         rounded-full text-sm font-medium hover:bg-ink/90 transition-colors"
             >
               <Zap size={15} />
               대진표 생성
@@ -511,13 +510,13 @@ export default function TournamentMatches() {
           ) : (
             <>
               <button onClick={() => setShowGen(true)}
-                className="flex items-center gap-1.5 text-xs bg-indigo-50 text-indigo-600
-                           hover:bg-indigo-100 px-3 py-2 rounded-lg font-medium transition-colors">
+                className="flex items-center gap-1.5 text-xs text-ink border border-ink-200
+                           hover:border-ink px-2.5 py-1.5 rounded-full transition-colors">
                 <Zap size={13} />재생성
               </button>
               <button onClick={handleDeleteAll}
-                className="flex items-center gap-1.5 text-xs bg-red-50 text-red-600
-                           hover:bg-red-100 px-3 py-2 rounded-lg font-medium transition-colors">
+                className="flex items-center gap-1.5 text-xs text-red-600 border border-red-200
+                           hover:bg-red-50 px-2.5 py-1.5 rounded-full transition-colors">
                 <Trash2 size={13} />전체 삭제
               </button>
             </>
@@ -530,11 +529,11 @@ export default function TournamentMatches() {
         <div className="flex-1 flex items-center justify-center text-center">
           <div>
             <div className="text-5xl mb-4">🏆</div>
-            <p className="text-gray-600 font-semibold mb-2">아직 대진표가 없습니다</p>
-            <p className="text-gray-400 text-sm mb-6">상단 "대진표 생성" 버튼으로 시작하세요</p>
+            <p className="text-ink font-semibold mb-2">아직 대진표가 없습니다</p>
+            <p className="text-ink-400 text-sm mb-6">상단 "대진표 생성" 버튼으로 시작하세요</p>
             <button onClick={() => setShowGen(true)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3
-                         rounded-xl text-sm font-semibold hover:bg-indigo-700 mx-auto">
+              className="flex items-center gap-2 bg-ink text-white px-6 py-3
+                         rounded-full text-sm font-medium hover:bg-ink/90 mx-auto transition-colors">
               <Zap size={15} />대진표 생성
             </button>
           </div>
@@ -549,12 +548,12 @@ export default function TournamentMatches() {
               {/* 라운드 레이블 */}
               {rounds.map((round, r) => (
                 <div key={round}
-                     className="absolute text-[11px] font-semibold text-gray-400 uppercase tracking-widest"
+                     className="absolute text-[11px] font-semibold text-ink-400 uppercase tracking-widest"
                      style={{ top: 10, left: lx(r), width: MW, textAlign: 'left', paddingLeft: 4 }}>
                   {round}
                 </div>
               ))}
-              <div className="absolute text-[11px] font-semibold text-amber-500 uppercase tracking-widest"
+              <div className="absolute text-[11px] font-semibold text-ink uppercase tracking-widest"
                    style={{ top: 10, left: CHAMP_LX(rounds), width: CHAMP_W, textAlign: 'center' }}>
                 우승
               </div>
@@ -616,8 +615,8 @@ export default function TournamentMatches() {
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl
-                       text-sm font-medium shadow-xl z-50"
+            className="fixed bottom-6 right-6 bg-ink text-white px-5 py-3 rounded-full
+                       text-sm font-medium z-50"
           >
             {toast}
           </motion.div>

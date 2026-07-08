@@ -75,16 +75,16 @@ export default function TournamentForm() {
 
   const Field = ({ label, name, type = 'text', required, ...props }) => (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 mb-1">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      <label className="text-xs font-medium text-ink-600 mb-1 block">
+        {label}{required && <span className="text-red-600 ml-0.5">*</span>}
       </label>
       <input
         type={type}
         value={form[name]}
         onChange={set(name)}
         required={required}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm
-                   focus:outline-none focus:border-slate-400 transition-colors"
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink
+                   placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
         {...props}
       />
     </div>
@@ -95,25 +95,25 @@ export default function TournamentForm() {
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => navigate('/admin/tournaments')}
-          className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm"
+          className="flex items-center gap-1 text-ink-400 hover:text-ink text-sm transition-colors"
         >
           <ChevronLeft size={16} />목록으로
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-ink tracking-[-0.03em]">
           {isEdit ? '대회 수정' : '새 대회 등록'}
         </h1>
       </div>
 
       <form onSubmit={handleSave}>
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="font-semibold text-gray-700 mb-5 pb-2 border-b border-gray-100">기본 정보</h2>
+        <div className="border border-ink-200 p-6 mb-6">
+          <h2 className="font-semibold text-ink mb-5 pb-2 border-b border-ink-200">기본 정보</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Field label="대회명" name="name" placeholder="2026 전국검도선수권대회" required />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">
-                슬러그<span className="text-red-400 ml-0.5">*</span>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">
+                슬러그<span className="text-red-600 ml-0.5">*</span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -121,19 +121,19 @@ export default function TournamentForm() {
                   onChange={set('slug')}
                   required
                   placeholder="2026-national-championship"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm
-                             focus:outline-none focus:border-slate-400 font-mono"
+                  className="flex-1 border border-ink-200 px-4 py-3 text-sm text-ink
+                             placeholder:text-ink-400/60 focus:outline-none focus:border-ink font-mono transition-colors"
                 />
                 <button type="button" onClick={autoSlug}
-                  className="px-3 py-2.5 bg-gray-100 text-gray-600 text-xs rounded-lg hover:bg-gray-200">
+                  className="px-3 py-3 text-ink-600 border border-ink-200 hover:border-ink text-xs rounded-full transition-colors">
                   자동생성
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">종목</label>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">종목</label>
               <select value={form.tournament_type} onChange={set('tournament_type')}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400">
+                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
                 {['개인전','단체전','혼합'].map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
@@ -142,9 +142,9 @@ export default function TournamentForm() {
             <Field label="장소"   name="venue"       placeholder="충무체육관 (창원)" />
             <Field label="주최"   name="host_organization" placeholder="대한검도회" />
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">상태</label>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">상태</label>
               <select value={form.status} onChange={set('status')}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400">
+                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
                 {['예정','진행','종료'].map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
@@ -154,12 +154,12 @@ export default function TournamentForm() {
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
         <button
           type="submit" disabled={saving}
-          className="flex items-center gap-2 bg-slate-800 text-white px-6 py-3
-                     rounded-xl text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 bg-ink text-white px-6 py-3
+                     rounded-full text-sm font-medium hover:bg-ink/90 disabled:opacity-50 transition-colors"
         >
           <Save size={16} />
           {saving ? '저장 중...' : isEdit ? '수정 저장' : '등록하고 대진표 설정 →'}

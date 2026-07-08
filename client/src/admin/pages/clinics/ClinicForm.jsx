@@ -68,9 +68,9 @@ export default function ClinicForm() {
 
   const Field = ({ label, name, type = 'text', ...props }) => (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">{label}</label>
       <input type={type} value={form[name]} onChange={set(name)}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400"
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
         {...props} />
     </div>
   );
@@ -79,22 +79,22 @@ export default function ClinicForm() {
     <div className="p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-8">
         <button onClick={() => navigate('/admin/clinics')}
-          className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
+          className="flex items-center gap-1 text-ink-400 hover:text-ink text-sm transition-colors">
           <ChevronLeft size={16} />목록으로
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{isEdit ? '클리닉 수정' : '새 클리닉 등록'}</h1>
+        <h1 className="text-2xl font-bold text-ink tracking-[-0.03em]">{isEdit ? '클리닉 수정' : '새 클리닉 등록'}</h1>
       </div>
 
       <form onSubmit={handleSave}>
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="font-semibold text-gray-700 mb-5 pb-2 border-b border-gray-100">기본 정보</h2>
+        <div className="border border-ink-200 p-6 mb-6">
+          <h2 className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-5 pb-2 border-b border-ink-200">기본 정보</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-500 mb-1">
-                강사 선수<span className="text-red-400 ml-0.5">*</span>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">
+                강사 선수<span className="text-red-500 ml-0.5">*</span>
               </label>
               <select value={form.player_id} onChange={set('player_id')} required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400">
+                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
                 <option value="">선수 선택</option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>{p.name} ({p.team_name})</option>
@@ -110,25 +110,25 @@ export default function ClinicForm() {
             <Field label="잔여 자리" name="remaining_slots" type="number" placeholder="정원과 동일하게 자동" />
             <Field label="가격 (원)" name="price_krw" type="number" placeholder="70000" />
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">상태</label>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">상태</label>
               <select value={form.status} onChange={set('status')}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400">
+                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors">
                 {['모집중','마감','종료'].map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-500 mb-1">설명</label>
+              <label className="text-xs font-medium text-ink-600 mb-1 block">설명</label>
               <textarea value={form.description} onChange={set('description')} rows={3}
                 placeholder="클리닉 소개 및 내용..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 resize-none" />
+                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors resize-none" />
             </div>
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
         <button type="submit" disabled={saving}
-          className="flex items-center gap-2 bg-slate-800 text-white px-6 py-3 rounded-xl
-                     text-sm font-semibold hover:bg-slate-700 disabled:opacity-50">
+          className="flex items-center gap-2 bg-ink text-white px-6 py-3 rounded-full
+                     text-sm font-medium hover:bg-ink/90 transition-colors disabled:opacity-50">
           <Save size={16} />
           {saving ? '저장 중...' : isEdit ? '수정 저장' : '클리닉 등록'}
         </button>

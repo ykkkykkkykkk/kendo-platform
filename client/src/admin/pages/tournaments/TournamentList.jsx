@@ -5,14 +5,9 @@ import { adminGet, adminDelete } from '../../adminApi.js';
 
 const STATUS_TABS = ['전체', '예정', '진행', '종료'];
 const STATUS_BADGE = {
-  예정: 'bg-blue-100 text-blue-700',
-  진행: 'bg-green-100 text-green-700',
-  종료: 'bg-gray-100 text-gray-500',
-};
-const TYPE_BADGE = {
-  개인전: 'bg-amber-50 text-amber-700',
-  단체전: 'bg-purple-50 text-purple-700',
-  혼합:   'bg-pink-50 text-pink-700',
+  예정: 'border border-ink-200 text-ink-600',
+  진행: 'bg-lime text-ink',
+  종료: 'border border-ink-200 text-ink-400',
 };
 
 export default function TournamentList() {
@@ -39,15 +34,16 @@ export default function TournamentList() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">대회 관리</h1>
-          <p className="text-gray-500 text-sm mt-0.5">총 {list.length}개</p>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">TOURNAMENTS</p>
+          <h1 className="text-3xl font-bold text-ink tracking-[-0.03em] mt-1">대회 관리</h1>
+          <p className="text-ink-400 text-sm mt-1">총 {list.length}개</p>
         </div>
         <button
           onClick={() => navigate('/admin/tournaments/new')}
-          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5
-                     rounded-xl text-sm font-semibold hover:bg-slate-700 transition-colors"
+          className="flex items-center gap-2 bg-ink text-white px-4 py-2.5
+                     rounded-full text-sm font-medium hover:bg-ink/90 transition-colors"
         >
           <Plus size={16} />
           새 대회 등록
@@ -60,10 +56,10 @@ export default function TournamentList() {
           <button
             key={s}
             onClick={() => setTab(s)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               tab === s
-                ? 'bg-slate-800 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+                ? 'bg-ink text-white'
+                : 'border border-ink-200 text-ink-600 hover:border-ink'
             }`}
           >
             {s}
@@ -76,15 +72,15 @@ export default function TournamentList() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="border border-ink-200 overflow-x-auto">
         {loading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">로딩 중...</div>
+          <div className="p-8 text-center text-ink-400 text-sm">로딩 중...</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
+              <tr style={{ borderBottom: '1.5px solid #111111' }}>
                 {['ID','대회명','시작일','종료일','종목','상태','매치 수',''].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-ink-400 uppercase tracking-[0.15em] whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -92,52 +88,52 @@ export default function TournamentList() {
             </thead>
             <tbody>
               {filtered.map((t) => (
-                <tr key={t.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-400 text-xs">{t.id}</td>
-                  <td className="px-4 py-3 font-semibold text-gray-900">{t.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{t.start_date ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{t.end_date ?? '—'}</td>
+                <tr key={t.id} className="border-b border-ink-200 last:border-0 hover:bg-ink-200/20">
+                  <td className="px-4 py-3 text-ink-400 text-xs tabular-nums">{t.id}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">{t.name}</td>
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{t.start_date ?? '—'}</td>
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{t.end_date ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_BADGE[t.tournament_type] ?? ''}`}>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium border border-ink-200 text-ink-600">
                       {t.tournament_type}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[t.status] ?? ''}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[t.status] ?? 'border border-ink-200 text-ink-600'}`}>
                       {t.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{t.match_count}</td>
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{t.match_count}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/matches`)}
-                        className="flex items-center gap-1 text-xs text-purple-600 bg-purple-50
-                                   hover:bg-purple-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs text-ink border border-ink-200
+                                   hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
                       >
                         <Trophy size={12} />
                         대진표
                       </button>
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/picks`)}
-                        className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50
-                                   hover:bg-amber-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs text-ink border border-ink-200
+                                   hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
                       >
                         <Star size={12} />
                         픽 결과
                       </button>
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/edit`)}
-                        className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50
-                                   hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs text-ink border border-ink-200
+                                   hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
                       >
                         <Pencil size={12} />
                         수정
                       </button>
                       <button
                         onClick={() => handleDelete(t)}
-                        className="flex items-center gap-1 text-xs text-red-600 bg-red-50
-                                   hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs text-red-600 border border-red-200
+                                   hover:bg-red-50 px-2.5 py-1.5 rounded-full transition-colors"
                       >
                         <Trash2 size={12} />
                         삭제
@@ -148,7 +144,7 @@ export default function TournamentList() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">
+                  <td colSpan={8} className="px-4 py-8 text-center text-ink-400 text-sm">
                     {tab === '전체' ? '등록된 대회가 없습니다.' : `${tab} 상태의 대회가 없습니다.`}
                   </td>
                 </tr>

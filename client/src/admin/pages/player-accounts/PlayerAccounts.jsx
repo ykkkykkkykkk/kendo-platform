@@ -77,20 +77,23 @@ export default function PlayerAccounts() {
   };
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">선수 계정 관리</h1>
+    <div className="p-8 max-w-2xl">
+      <div className="mb-6">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">PLAYER ACCOUNTS</p>
+        <h1 className="text-3xl font-bold text-ink tracking-[-0.03em] mt-1">선수 계정 관리</h1>
+      </div>
 
       {/* 생성 폼 */}
-      <div className="bg-white border rounded-xl p-5 mb-8 shadow-sm">
-        <h2 className="font-bold text-lg mb-4">새 선수 계정 생성</h2>
+      <div className="border border-ink-200 p-5 mb-8">
+        <h2 className="font-bold text-lg text-ink mb-4">새 선수 계정 생성</h2>
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">선수 선택</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">선수 선택</label>
             <select
               required
               value={form.player_id}
               onChange={(e) => setForm({ ...form, player_id: e.target.value })}
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors"
             >
               <option value="">-- 선수 선택 --</option>
               {players.map((p) => (
@@ -101,40 +104,40 @@ export default function PlayerAccounts() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">아이디</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">아이디</label>
             <input
               required
               type="text"
               placeholder="영문+숫자 조합"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">임시 비밀번호</label>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">임시 비밀번호</label>
             <div className="flex gap-2">
               <input
                 required
                 type="text"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono"
+                className="flex-1 border border-ink-200 px-4 py-3 text-sm text-ink font-mono placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setForm({ ...form, password: generatePassword() })}
-                className="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200"
+                className="px-4 py-3 text-ink border border-ink-200 hover:border-ink rounded-full text-sm transition-colors"
               >
                 재생성
               </button>
             </div>
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-orange-500 text-white font-bold py-2.5 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+            className="w-full bg-ink text-white font-medium py-3 rounded-full text-sm hover:bg-ink/90 transition-colors disabled:opacity-50"
           >
             {saving ? '생성 중...' : '계정 생성'}
           </button>
@@ -143,40 +146,40 @@ export default function PlayerAccounts() {
 
       {/* 생성 완료 알림 */}
       {created && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-          <p className="font-bold text-green-800 mb-2">✅ {created.player_name} 계정 생성 완료</p>
-          <p className="text-sm text-green-700">아이디: <span className="font-mono font-bold">{created.username}</span></p>
-          <p className="text-sm text-green-700">비밀번호: <span className="font-mono font-bold">{created.password}</span></p>
-          <p className="text-xs text-green-600 mt-2">위 정보를 선수에게 카톡으로 전달하세요.</p>
-          <button onClick={() => setCreated(null)} className="mt-2 text-xs text-green-600 underline">닫기</button>
+        <div className="border border-ink-200 p-4 mb-6">
+          <p className="font-bold text-ink mb-2">✅ <span className="bg-lime px-1">{created.player_name} 계정 생성 완료</span></p>
+          <p className="text-sm text-ink-600">아이디: <span className="font-mono font-bold text-ink">{created.username}</span></p>
+          <p className="text-sm text-ink-600">비밀번호: <span className="font-mono font-bold text-ink">{created.password}</span></p>
+          <p className="text-xs text-ink-400 mt-2">위 정보를 선수에게 카톡으로 전달하세요.</p>
+          <button onClick={() => setCreated(null)} className="mt-2 text-xs text-ink-600 hover:text-ink underline">닫기</button>
         </div>
       )}
 
       {/* 계정 목록 */}
-      <h2 className="font-bold text-lg mb-3">등록된 선수 계정 ({accounts.length})</h2>
+      <h2 className="font-bold text-lg text-ink mb-3">등록된 선수 계정 ({accounts.length})</h2>
       {loading ? (
-        <p className="text-gray-400 text-sm">불러오는 중...</p>
+        <p className="text-ink-400 text-sm">불러오는 중...</p>
       ) : accounts.length === 0 ? (
-        <p className="text-gray-400 text-sm">등록된 선수 계정이 없습니다.</p>
+        <p className="text-ink-400 text-sm">등록된 선수 계정이 없습니다.</p>
       ) : (
         <div className="space-y-3">
           {accounts.map((a) => (
-            <div key={a.id} className="bg-white border rounded-xl p-4 shadow-sm">
+            <div key={a.id} className="border border-ink-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold">{a.player_name ?? a.nickname}</p>
-                  <p className="text-sm text-gray-500">{a.team_name} · 아이디: <span className="font-mono">{a.username}</span></p>
+                  <p className="font-bold text-ink">{a.player_name ?? a.nickname}</p>
+                  <p className="text-sm text-ink-400">{a.team_name} · 아이디: <span className="font-mono text-ink-600">{a.username}</span></p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setResetId(a.id); setNewPw(generatePassword()); }}
-                    className="text-xs px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="text-xs px-2.5 py-1.5 text-ink border border-ink-200 hover:border-ink rounded-full transition-colors"
                   >
                     비번 재설정
                   </button>
                   <button
                     onClick={() => handleDelete(a.id)}
-                    className="text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                    className="text-xs px-2.5 py-1.5 text-red-600 border border-red-200 hover:bg-red-50 rounded-full transition-colors"
                   >
                     삭제
                   </button>
@@ -188,17 +191,17 @@ export default function PlayerAccounts() {
                     type="text"
                     value={newPw}
                     onChange={(e) => setNewPw(e.target.value)}
-                    className="flex-1 border rounded-lg px-3 py-1.5 text-sm font-mono"
+                    className="flex-1 border border-ink-200 px-3 py-1.5 text-sm text-ink font-mono placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
                   />
                   <button
                     onClick={() => handleResetPassword(a.id)}
-                    className="px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg"
+                    className="px-3 py-1.5 bg-ink text-white text-sm rounded-full hover:bg-ink/90 transition-colors"
                   >
                     변경
                   </button>
                   <button
                     onClick={() => setResetId(null)}
-                    className="px-3 py-1.5 bg-gray-100 text-sm rounded-lg"
+                    className="px-3 py-1.5 text-ink border border-ink-200 hover:border-ink text-sm rounded-full transition-colors"
                   >
                     취소
                   </button>

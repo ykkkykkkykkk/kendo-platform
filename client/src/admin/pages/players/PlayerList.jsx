@@ -47,26 +47,19 @@ export default function PlayerList() {
     p.team_name?.includes(filter.query)
   );
 
-  const POSITION_COLOR = {
-    대장: 'bg-slate-700 text-white',
-    부장: 'bg-blue-600 text-white',
-    중견: 'bg-emerald-600 text-white',
-    이봉: 'bg-orange-500 text-white',
-    선봉: 'bg-red-500 text-white',
-  };
-
   return (
     <div className="p-8">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">선수 관리</h1>
-          <p className="text-gray-500 text-sm mt-0.5">총 {players.length}명</p>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">PLAYERS</p>
+          <h1 className="text-3xl font-bold text-ink tracking-[-0.03em] mt-1">선수 관리</h1>
+          <p className="text-ink-400 text-sm mt-1">총 {players.length}명</p>
         </div>
         <button
           onClick={() => navigate('/admin/players/new')}
-          className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5
-                     rounded-xl text-sm font-semibold hover:bg-slate-700 transition-colors"
+          className="flex items-center gap-2 bg-ink text-white px-4 py-2.5
+                     rounded-full text-sm font-medium hover:bg-ink/90 transition-colors"
         >
           <Plus size={16} />
           새 선수 등록
@@ -74,21 +67,21 @@ export default function PlayerList() {
       </div>
 
       {/* 필터 바 */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-4 flex gap-3 items-center">
+      <div className="border border-ink-200 p-4 mb-5 flex gap-3 items-center">
         <div className="relative flex-1 max-w-xs">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
           <input
             value={filter.query}
             onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
             placeholder="이름 또는 팀 검색"
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm
-                       focus:outline-none focus:border-slate-400"
+            className="w-full pl-9 pr-4 py-2.5 border border-ink-200 text-sm text-ink
+                       placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
           />
         </div>
         <select
           value={filter.team}
           onChange={(e) => setFilter((f) => ({ ...f, team: e.target.value }))}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+          className="border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors"
         >
           <option value="">전체 팀</option>
           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -96,7 +89,7 @@ export default function PlayerList() {
         <select
           value={filter.dan}
           onChange={(e) => setFilter((f) => ({ ...f, dan: e.target.value }))}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+          className="border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors"
         >
           <option value="">전체 단증</option>
           {[5,6,7,8,9].map((d) => <option key={d} value={d}>{d}단</option>)}
@@ -104,15 +97,15 @@ export default function PlayerList() {
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="border border-ink-200 overflow-x-auto">
         {loading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">로딩 중...</div>
+          <div className="p-8 text-center text-ink-400 text-sm">로딩 중...</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
+              <tr style={{ borderBottom: '1.5px solid #111111' }}>
                 {['ID','이름','소속팀','단증','포지션','출생연도','신장','전적',''].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-ink-400 uppercase tracking-[0.15em] whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -120,29 +113,28 @@ export default function PlayerList() {
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-400 text-xs">{p.id}</td>
-                  <td className="px-4 py-3 font-semibold text-gray-900">{p.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.team_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.dan_grade}단</td>
+                <tr key={p.id} className="border-b border-ink-200 last:border-0 hover:bg-ink-200/20">
+                  <td className="px-4 py-3 text-ink-400 text-xs tabular-nums">{p.id}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">{p.name}</td>
+                  <td className="px-4 py-3 text-ink-600">{p.team_name}</td>
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{p.dan_grade}단</td>
                   <td className="px-4 py-3">
                     {p.position && (
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${POSITION_COLOR[p.position] ?? 'bg-gray-200 text-gray-600'}`}>
+                      <span className="text-[11px] px-2 py-0.5 border border-ink-200 text-ink-600 font-medium">
                         {p.position}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{p.birth_year ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.height_cm ? `${p.height_cm}cm` : '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{p.birth_year ?? '—'}</td>
+                  <td className="px-4 py-3 text-ink-600 tabular-nums">{p.height_cm ? `${p.height_cm}cm` : '—'}</td>
+                  <td className="px-4 py-3 text-ink-600 text-xs tabular-nums">
                     {p.total_matches > 0 ? `${p.wins}승 ${p.losses}패` : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/admin/players/${p.id}/edit`)}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700
-                                   bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs text-ink border border-ink-200 hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
                       >
                         <Pencil size={12} />
                         수정
@@ -150,9 +142,8 @@ export default function PlayerList() {
                       <button
                         onClick={() => handleDelete(p)}
                         disabled={deleting === p.id}
-                        className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700
-                                   bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-colors
-                                   disabled:opacity-40"
+                        className="flex items-center gap-1 text-xs text-red-600 border border-red-200 hover:bg-red-50
+                                   px-2.5 py-1.5 rounded-full transition-colors disabled:opacity-40"
                       >
                         <Trash2 size={12} />
                         삭제
@@ -163,7 +154,7 @@ export default function PlayerList() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-sm">
+                  <td colSpan={9} className="px-4 py-8 text-center text-ink-400 text-sm">
                     검색 결과가 없습니다.
                   </td>
                 </tr>
