@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { db } from '../db.js';
 import { requireAdmin } from '../middleware/adminAuth.js';
 import { serverError } from '../utils/apiError.js';
@@ -6,6 +7,45 @@ import { checkUrls } from '../utils/validateUrl.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
+
+/* ════════════════════════════════════════
+   관리자 로그인 (아이디/비밀번호)  ※ 인증 미들웨어 앞에 위치
+════════════════════════════════════════ */
+
+// 타이밍 공격 방지용 상수 시간 비교
+function safeEqual(a, b) {
+  const ab = Buffer.from(String(a ?? ''));
+  const bb = Buffer.from(String(b ?? ''));
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
+}
+
+// POST /api/admin/login  body: { username, password }
+// 성공 시 내부 admin 토큰을 반환 → 이후 요청은 x-admin-token 헤더로 인증
+router.post('/login', (req, res) => {
+  const { username, password } = req.body ?? {};
+  if (!password) return res.status(400).json({ error: '아이디와 비밀번호를 입력해주세요.' });
+
+  const U = process.env.ADMIN_USERNAME;
+  const P = process.env.ADMIN_PASSWORD;
+  let ok = false;
+
+  if (U && P) {
+    // 정식 아이디/비밀번호 검증
+    ok = safeEqual(username, U) && safeEqual(password, P);
+  } else if (process.env.ADMIN_TOKEN) {
+    // 아이디/비밀번호 미설정 시: 기존 ADMIN_TOKEN을 비밀번호로 허용 (락아웃 방지)
+    ok = safeEqual(password, process.env.ADMIN_TOKEN);
+  }
+
+  if (!ok) return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+  if (!process.env.ADMIN_TOKEN)
+    return res.status(500).json({ error: '서버에 ADMIN_TOKEN이 설정되지 않았습니다.' });
+
+  return res.json({ token: process.env.ADMIN_TOKEN });
+});
+
+// 이하 모든 라우트는 관리자 인증 필요
 router.use(requireAdmin);
 
 /* ════════════════════════════════════════
