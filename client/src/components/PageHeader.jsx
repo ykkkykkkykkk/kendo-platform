@@ -13,7 +13,7 @@ export default function PageHeader({ title, right }) {
           <path d="M15 19l-7-7 7-7" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      <h1 className="flex-1 text-lg font-bold text-navy">{title}</h1>
+      <h1 className="flex-1 text-lg font-bold text-ink tracking-tight">{title}</h1>
       <button
         onClick={() => navigate('/search')}
         className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-ink-50 text-ink-600"

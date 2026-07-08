@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
@@ -15,22 +15,14 @@ const DIV_LABELS = {
 };
 
 const RANK_SLOTS = [
-  { pickKey: 'pick_1st',   resultKey: 'rank_1st',   label: '1등',  emoji: '🥇', score: 50 },
-  { pickKey: 'pick_2nd',   resultKey: 'rank_2nd',   label: '2등',  emoji: '🥈', score: 30 },
-  { pickKey: 'pick_3rd_a', resultKey: 'rank_3rd_a', label: '3등A', emoji: '🥉', score: 10 },
-  { pickKey: 'pick_3rd_b', resultKey: 'rank_3rd_b', label: '3등B', emoji: '🥉', score: 10 },
+  { pickKey: 'pick_1st',   resultKey: 'rank_1st',   label: '1등',  no: '01', score: 50 },
+  { pickKey: 'pick_2nd',   resultKey: 'rank_2nd',   label: '2등',  no: '02', score: 30 },
+  { pickKey: 'pick_3rd_a', resultKey: 'rank_3rd_a', label: '3등A', no: '03', score: 10 },
+  { pickKey: 'pick_3rd_b', resultKey: 'rank_3rd_b', label: '3등B', no: '03', score: 10 },
 ];
-
-function useDarkBody() {
-  useEffect(() => {
-    document.body.classList.add('predict-dark');
-    return () => document.body.classList.remove('predict-dark');
-  }, []);
-}
 
 /* ── 메인 페이지 ───────────────────────────────────────────── */
 export default function PredictionTournamentPage() {
-  useDarkBody();
   const { tournament_id } = useParams();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -44,19 +36,19 @@ export default function PredictionTournamentPage() {
   /* 로딩 */
   if (loading) {
     return (
-      <main className="page-body bg-black min-h-screen animate-pulse">
+      <main className="page-body bg-paper min-h-screen animate-pulse">
         <div className="px-5 pt-12 flex items-center justify-between mb-4">
-          <div className="w-9 h-9 bg-black-900 rounded-full" />
-          <div className="w-16 h-7 bg-black-900 rounded-full" />
+          <div className="w-9 h-9 bg-ink-200/40 rounded-full" />
+          <div className="w-16 h-7 bg-ink-200/40 rounded-full" />
         </div>
         <div className="px-5">
-          <div className="h-3 bg-black-900 rounded w-32 mb-2" />
-          <div className="h-7 bg-black-900 rounded w-24 mb-6" />
+          <div className="h-3 bg-ink-200/40 w-32 mb-2" />
+          <div className="h-7 bg-ink-200/40 w-24 mb-6" />
           <div className="flex gap-2 mb-6">
-            {[1, 2].map((i) => <div key={i} className="h-9 w-20 bg-black-900 rounded-full" />)}
+            {[1, 2].map((i) => <div key={i} className="h-9 w-20 bg-ink-200/40 rounded-full" />)}
           </div>
-          <div className="h-40 bg-black-900 rounded-3xl mb-3" />
-          <div className="h-20 bg-black-900 rounded-2xl" />
+          <div className="h-40 bg-ink-200/40 mb-3" />
+          <div className="h-20 bg-ink-200/40" />
         </div>
       </main>
     );
@@ -65,10 +57,10 @@ export default function PredictionTournamentPage() {
   /* 에러 */
   if (!tournament || tournament.error) {
     return (
-      <main className="page-body bg-black min-h-screen flex flex-col items-center justify-center gap-3">
-        <p className="text-white/30 text-sm">대회를 찾을 수 없습니다</p>
-        <button onClick={() => navigate(-1)} className="text-orange-500 text-sm pressable">
-          돌아가기
+      <main className="page-body bg-paper min-h-screen flex flex-col items-center justify-center gap-3">
+        <p className="text-ink-400 text-sm">대회를 찾을 수 없습니다</p>
+        <button onClick={() => navigate(-1)} className="text-ink text-sm font-semibold pressable">
+          돌아가기 →
         </button>
       </main>
     );
@@ -87,31 +79,30 @@ export default function PredictionTournamentPage() {
   const activeDivision = tournament.divisions.find((d) => String(d.id) === activeTab) ?? null;
 
   return (
-    <main className="page-body bg-black min-h-screen">
+    <main className="page-body bg-paper min-h-screen">
       {/* ── 헤더 ───────────────────────────────────────── */}
       <div className="px-5 pt-12 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-black-900 pressable"
+          className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 pressable"
           aria-label="뒤로"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M15 19l-7-7 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 19l-7-7 7-7" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
 
         {tournament.pick_deadline && (
-          <span className="inline-flex items-center gap-1 bg-orange-500/15 text-orange-500
-                           text-[11px] font-bold px-3 py-1.5 rounded-full">
-            ⏱&nbsp;<CountdownTimer deadline={tournament.pick_deadline} />
+          <span className="text-[11px] font-bold text-ink">
+            <CountdownTimer deadline={tournament.pick_deadline} />
           </span>
         )}
       </div>
 
       {/* ── 타이틀 ─────────────────────────────────────── */}
-      <div className="px-5 pt-3 pb-5">
-        <p className="text-white/40 text-[13px] tracking-tight leading-none">{tournament.name}</p>
-        <h1 className="text-[26px] font-bold text-white tracking-tight mt-1">
+      <div className="px-5 pt-4 pb-5">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase">{tournament.name}</p>
+        <h1 className="text-4xl font-bold text-ink tracking-[-0.04em] leading-[0.95] mt-1.5">
           {tournament.status === '종료' ? '결산' : '픽 입력'}
         </h1>
       </div>
@@ -122,11 +113,11 @@ export default function PredictionTournamentPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-none px-4 py-2.5 rounded-full text-[13px] font-semibold
-                        transition-all pressable ${
+            className={`flex-none px-4 py-2 rounded-full text-[13px] font-medium
+                        transition-all pressable border ${
               activeTab === tab.id
-                ? 'bg-orange-500 text-black'
-                : 'bg-black-700 text-white/55 hover:bg-black-700'
+                ? 'bg-ink text-white border-ink'
+                : 'bg-paper text-ink-600 border-ink-200'
             }`}
           >
             {tab.label}
@@ -164,29 +155,29 @@ function SummaryTab({ tournament, onDivClick }) {
   const firstUnpicked = divisions.find((d) => !d.my_pick);
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* 진행도 카드 */}
-      <div className="bg-black-900 border border-black-700 rounded-3xl p-5">
-        <p className="text-white/35 text-[10px] font-semibold tracking-[0.18em] uppercase mb-3">
-          현재 픽 진행도
+    <div className="flex flex-col gap-6">
+      {/* 진행도 — 반전 블록 */}
+      <div className="bg-block rounded-2xl p-5">
+        <p className="text-[10px] tracking-[0.2em] font-medium" style={{ color: '#D8FF3E' }}>
+          MY PROGRESS
         </p>
-        <div className="flex items-end gap-2 mb-1">
-          <span className="text-[52px] font-bold text-white leading-none tracking-tight">
+        <div className="flex items-end gap-2 mt-3 mb-1">
+          <span className="text-[52px] font-bold text-white leading-none tracking-[-0.04em] tabular-nums">
             {done}
           </span>
-          <span className="text-white/35 text-xl mb-1.5">/ {total} 부문</span>
+          <span className="text-white/40 text-xl mb-1.5">/ {total} 부문</span>
         </div>
-        <p className="text-white/25 text-xs">최대 {total * 100}점</p>
+        <p className="text-white/30 text-xs">최대 {total * 100}점</p>
       </div>
 
-      {/* 부문 카드 목록 */}
+      {/* 부문 목록 — 룰 테이블 */}
       {total === 0 ? (
         <div className="py-8 text-center">
-          <p className="text-white/25 text-sm">아직 등록된 부문이 없어요</p>
+          <p className="text-ink-400 text-sm">아직 등록된 부문이 없어요</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {divisions.map((d) => {
+        <div style={{ borderTop: '1.5px solid #111111' }}>
+          {divisions.map((d, i) => {
             const myPick   = d.my_pick;
             const isLocked = myPick?.is_locked;
             const isPicked = !!myPick && !isLocked;
@@ -195,38 +186,24 @@ function SummaryTab({ tournament, onDivClick }) {
               <button
                 key={d.id}
                 onClick={() => onDivClick(d.id)}
-                className="pressable w-full text-left"
+                className={`pressable w-full text-left flex items-center gap-3 py-4 ${i > 0 ? 'border-t border-ink-200' : ''}`}
               >
-                <div className={`rounded-2xl p-4 flex items-center gap-3 border ${
-                  isLocked ? 'bg-black-900 border-green-500/25' :
-                  isPicked ? 'bg-black-900 border-orange-500/25' :
-                  'bg-[#0E0E0E] border-dashed border-[#252525]'
+                <span className={`w-5 text-center text-sm font-bold flex-none ${
+                  isLocked ? 'text-ink' : isPicked ? 'text-ink-600' : 'text-ink-200'
                 }`}>
-                  {/* 상태 아이콘 */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-none text-base ${
-                    isLocked ? 'bg-green-500/12 text-green-400' :
-                    isPicked ? 'bg-orange-500/12 text-orange-500' :
-                    'bg-black-700 text-white/20'
-                  }`}>
-                    {isLocked ? '✓' : isPicked ? '✎' : '+'}
-                  </div>
+                  {isLocked ? '✓' : isPicked ? '✎' : '+'}
+                </span>
 
-                  {/* 정보 */}
-                  <div className="flex-1 min-w-0">
-                    <DivisionTypeBadge type={d.division_type} dark />
-                    <p className={`text-[11px] mt-1 ${
-                      isLocked ? 'text-green-400' :
-                      isPicked ? 'text-orange-500' :
-                      'text-white/25'
-                    }`}>
-                      {isLocked ? `${myPick.score}점 획득 예정` :
-                       isPicked ? '저장됨 · 확정 전' :
-                       '아직 픽 안 함'}
-                    </p>
-                  </div>
-
-                  <span className="text-white/25 text-lg">›</span>
+                <div className="flex-1 min-w-0">
+                  <DivisionTypeBadge type={d.division_type} />
+                  <p className="text-[11px] mt-1 text-ink-400">
+                    {isLocked ? (
+                      <>확정 · <span className="bg-lime text-ink px-1 font-semibold">{myPick.score}점 획득 예정</span></>
+                    ) : isPicked ? '저장됨 · 확정 전' : '아직 픽 안 함'}
+                  </p>
                 </div>
+
+                <span className="text-ink-400 text-lg">→</span>
               </button>
             );
           })}
@@ -237,7 +214,7 @@ function SummaryTab({ tournament, onDivClick }) {
       {firstUnpicked && (
         <button
           onClick={() => onDivClick(firstUnpicked.id)}
-          className="w-full bg-orange-500 text-black font-bold py-4 rounded-2xl pressable mt-1"
+          className="w-full bg-lime hover:bg-lime-dark text-ink font-medium py-3.5 rounded-full pressable"
         >
           남은 부문 픽하기 →
         </button>
@@ -267,7 +244,7 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
       const res = await api.lockPick(division.id);
       const json = await res.json();
       if (!res.ok) { showToast(json.error ?? '확정 실패', 'error'); return; }
-      showToast('픽이 확정됐습니다! 🔒', 'success');
+      showToast('픽이 확정됐습니다!', 'success');
       setShowConfirm(false);
       onRefresh();
     } catch {
@@ -295,28 +272,25 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
     <div className="flex flex-col gap-4">
       {/* 부문 헤더 정보 */}
       <div className="flex items-center gap-2">
-        <DivisionTypeBadge type={division.division_type} dark />
+        <DivisionTypeBadge type={division.division_type} />
         {division.participant_count != null && (
-          <span className="text-white/30 text-xs">{division.participant_count}명 참가</span>
+          <span className="text-ink-400 text-xs">{division.participant_count}명 참가</span>
         )}
       </div>
 
       {/* ① 픽 없음 */}
       {!myPick && (
-        <div className="bg-black-900 border border-dashed border-[#252525] rounded-3xl
-                        p-8 flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-black-700 flex items-center justify-center text-2xl">
-            🎯
-          </div>
-          <p className="text-white/30 text-sm text-center leading-relaxed">
+        <div className="border border-ink-200 p-8 flex flex-col items-center gap-4">
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">NO PICK YET</p>
+          <p className="text-ink-600 text-sm text-center leading-relaxed">
             아직 픽을 입력하지 않았어요
           </p>
           {deadlinePassed ? (
-            <p className="text-white/20 text-xs">픽 마감이 지났습니다</p>
+            <p className="text-ink-400 text-xs">픽 마감이 지났습니다</p>
           ) : (
             <Link
               to={`/predictions/${tournamentId}/pick/${division.id}${deadlineParam}`}
-              className="bg-orange-500 text-black font-bold px-7 py-3 rounded-xl pressable text-sm"
+              className="bg-lime hover:bg-lime-dark text-ink font-medium px-7 py-3 rounded-full pressable text-sm"
             >
               픽 입력하기 →
             </Link>
@@ -327,28 +301,28 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
       {/* ② 픽 있음 / 미확정 */}
       {myPick && !isLocked && (
         <div className="flex flex-col gap-3">
-          <PickCard title="내 픽 (미확정)" borderCls="border-orange-500/20">
-            {RANK_SLOTS.map(({ pickKey, label, emoji, score }) => (
+          <PickTable title="MY PICK — 미확정">
+            {RANK_SLOTS.map(({ pickKey, label, no, score }) => (
               <PickRow
                 key={pickKey}
-                emoji={emoji}
+                no={no}
                 label={label}
                 score={score}
                 name={getName(myPick[pickKey])}
               />
             ))}
-          </PickCard>
+          </PickTable>
 
           <div className="flex gap-2">
             <Link
               to={`/predictions/${tournamentId}/pick/${division.id}${deadlineParam}`}
-              className="flex-1 bg-black-700 text-white/80 font-semibold
-                         py-3.5 rounded-xl text-center text-sm pressable"
+              className="flex-1 border border-ink text-ink font-medium
+                         py-3 rounded-full text-center text-sm pressable"
             >
               수정하기
             </Link>
             <button
-              className="flex-1 bg-orange-500 text-black font-bold py-3.5 rounded-xl text-sm pressable"
+              className="flex-1 bg-lime hover:bg-lime-dark text-ink font-medium py-3 rounded-full text-sm pressable"
               onClick={() => setShowConfirm(true)}
             >
               확정하기
@@ -357,24 +331,24 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
 
           {/* 인라인 확정 확인 */}
           {showConfirm && (
-            <div className="bg-black-700 border border-orange-500/20 rounded-2xl p-4 flex flex-col gap-3">
-              <p className="text-white/80 text-sm font-semibold text-center">
+            <div className="border border-ink p-4 flex flex-col gap-3">
+              <p className="text-ink text-sm font-bold text-center">
                 픽을 확정할까요?
               </p>
-              <p className="text-white/35 text-xs text-center leading-relaxed">
+              <p className="text-ink-400 text-xs text-center leading-relaxed">
                 확정 후에는 수정할 수 없어요.<br />4개 슬롯이 모두 채워져 있어야 합니다.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 bg-[#252525] text-white/55 font-semibold py-3 rounded-xl text-sm pressable"
+                  className="flex-1 border border-ink-200 text-ink-600 font-medium py-3 rounded-full text-sm pressable"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleLock}
                   disabled={locking}
-                  className="flex-1 bg-orange-500 text-black font-bold py-3 rounded-xl text-sm pressable disabled:opacity-50"
+                  className="flex-1 bg-lime hover:bg-lime-dark text-ink font-medium py-3 rounded-full text-sm pressable disabled:opacity-50"
                 >
                   {locking ? '확정 중…' : '확정하기'}
                 </button>
@@ -387,18 +361,19 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
       {/* ③ 픽 확정됨 */}
       {myPick && isLocked && (
         <div className="flex flex-col gap-3">
-          <PickCard
-            title="내 픽"
-            badge={<span className="text-green-400 text-[10px] font-semibold bg-green-500/10 px-2 py-1 rounded-full">🔒 확정</span>}
-            borderCls="border-green-500/20"
+          <PickTable
+            title="MY PICK"
+            badge={
+              <span className="text-[10px] font-semibold bg-lime text-ink px-2 py-0.5">확정</span>
+            }
           >
-            {RANK_SLOTS.map(({ pickKey, label, emoji, score }, i) => {
+            {RANK_SLOTS.map(({ pickKey, label, no, score }, i) => {
               const pid     = myPick[pickKey];
               const correct = isCorrect(pid, i);
               return (
                 <PickRow
                   key={pickKey}
-                  emoji={emoji}
+                  no={no}
                   label={label}
                   score={score}
                   name={getName(pid)}
@@ -406,25 +381,25 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
                 />
               );
             })}
-          </PickCard>
+          </PickTable>
 
           {myPick.score > 0 && (
-            <div className="bg-black-700 rounded-2xl p-4 text-center">
-              <p className="text-white/35 text-xs mb-1">이번 부문 점수</p>
-              <p className="text-orange-500 text-4xl font-bold tracking-tight">
+            <div className="border border-ink p-5 text-center">
+              <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">SCORE</p>
+              <p className="text-ink text-4xl font-bold tracking-[-0.04em] tabular-nums">
                 {myPick.score}
-                <span className="text-lg ml-1 text-white/40">점</span>
+                <span className="text-lg ml-1 text-ink-400 font-medium">점</span>
               </p>
             </div>
           )}
 
-          <p className="text-center text-white/20 text-xs">확정된 픽은 수정할 수 없습니다</p>
+          <p className="text-center text-ink-400 text-xs">확정된 픽은 수정할 수 없습니다</p>
 
           {deadlinePassed && (
             <Link
               to={`/predictions/${tournamentId}/picks/${division.id}`}
-              className="block w-full bg-black-900 border border-black-700 text-white/50
-                         font-semibold py-3.5 rounded-xl text-center text-sm pressable"
+              className="block w-full border border-ink-200 text-ink-600
+                         font-medium py-3 rounded-full text-center text-sm pressable"
             >
               전체 픽 통계 보기
             </Link>
@@ -435,35 +410,33 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
   );
 }
 
-/* ── 픽 카드 컨테이너 ──────────────────────────────────────── */
-function PickCard({ title, badge, borderCls = 'border-black-700', children }) {
+/* ── 픽 테이블 컨테이너 ────────────────────────────────────── */
+function PickTable({ title, badge, children }) {
   return (
-    <div className={`bg-black-900 border rounded-3xl p-5 ${borderCls}`}>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-white/35 text-[10px] font-semibold tracking-[0.18em] uppercase">
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase">
           {title}
         </p>
         {badge}
       </div>
-      <div className="flex flex-col">{children}</div>
+      <div style={{ borderTop: '1.5px solid #111111' }}>{children}</div>
     </div>
   );
 }
 
 /* ── 픽 행 ─────────────────────────────────────────────────── */
-function PickRow({ emoji, label, score, name, correct = null }) {
+function PickRow({ no, label, score, name, correct = null }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-black-700 last:border-0">
-      <span className="text-xl w-7 flex-none">{emoji}</span>
+    <div className="flex items-center gap-3 py-3 border-b border-ink-200 last:border-b-0">
+      <span className="text-[11px] text-ink-400 tabular-nums font-medium w-6 flex-none">{no}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-white/30 text-[10px]">{label} · {score}점</p>
-        <p className={`text-sm font-semibold truncate ${
-          correct === true  ? 'text-green-400' :
-          correct === false ? 'text-white/40' :
-          'text-white'
+        <p className="text-ink-400 text-[10px]">{label} · {score}점</p>
+        <p className={`text-sm font-semibold truncate mt-0.5 ${
+          correct === false ? 'text-ink-400 line-through' : 'text-ink'
         }`}>
-          {name}
-          {correct === true && <span className="ml-1 text-green-400">✓</span>}
+          {correct === true ? <span className="bg-lime px-1">{name}</span> : name}
+          {correct === true && <span className="ml-1.5 text-ink text-xs">✓</span>}
         </p>
       </div>
     </div>

@@ -11,9 +11,8 @@ const tabs = [
 export default function BottomTabBar() {
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile flex z-50
-                 bg-black-800 border-t border-orange-500/15"
-      style={{ height: 60 }}
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile flex z-50 bg-paper"
+      style={{ height: 60, borderTop: '1.5px solid #111111' }}
     >
       {tabs.map(({ to, label, icon: Icon, end }) => (
         <NavLink
@@ -21,8 +20,8 @@ export default function BottomTabBar() {
           to={to}
           end={end}
           className={({ isActive }) =>
-            `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold tracking-wider transition-colors
-             ${isActive ? 'text-orange-500' : 'text-ink-400'}`
+            `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold tracking-[0.2em] transition-colors
+             ${isActive ? 'text-ink' : 'text-ink-400'}`
           }
         >
           {({ isActive }) => (
@@ -38,14 +37,13 @@ export default function BottomTabBar() {
 }
 
 function ic(active) {
-  return active ? '#FF8800' : '#666666';
+  return active ? '#111111' : '#999999';
 }
 
 function HomeIcon({ active }) {
   const c = ic(active);
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-         style={active ? { filter: 'drop-shadow(0 0 4px #FF880088)' } : undefined}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"
         stroke={c} strokeWidth="1.8" fill="none" strokeLinejoin="round" />
       <path d="M9 21V12h6v9" stroke={c} strokeWidth="1.8" />
@@ -55,8 +53,7 @@ function HomeIcon({ active }) {
 function TargetIcon({ active }) {
   const c = ic(active);
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-         style={active ? { filter: 'drop-shadow(0 0 4px #FF880088)' } : undefined}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9"   stroke={c} strokeWidth="1.8" />
       <circle cx="12" cy="12" r="5"   stroke={c} strokeWidth="1.8" />
       <circle cx="12" cy="12" r="1.8" fill={c} />
@@ -66,8 +63,7 @@ function TargetIcon({ active }) {
 function TrophyIcon({ active }) {
   const c = ic(active);
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-         style={active ? { filter: 'drop-shadow(0 0 4px #FF880088)' } : undefined}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M6 2h12v7a6 6 0 01-12 0V2z"
         stroke={c} strokeWidth="1.8" strokeLinejoin="round" fill="none" />
       <path d="M6 5H3.5A1.5 1.5 0 002 6.5C2 8.43 3.57 10 5.5 10H6"
@@ -83,8 +79,7 @@ function TrophyIcon({ active }) {
 function ShieldIcon({ active }) {
   const c = ic(active);
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-         style={active ? { filter: 'drop-shadow(0 0 4px #FF880088)' } : undefined}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M12 2L4 5v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V5L12 2z"
         stroke={c} strokeWidth="1.8" fill="none" strokeLinejoin="round" />
     </svg>
@@ -93,8 +88,7 @@ function ShieldIcon({ active }) {
 function BagIcon({ active }) {
   const c = ic(active);
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-         style={active ? { filter: 'drop-shadow(0 0 4px #FF880088)' } : undefined}>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <rect x="3" y="8" width="18" height="13" rx="2"
         stroke={c} strokeWidth="1.8" fill="none" />
       <path d="M9 8V6a3 3 0 016 0v2"

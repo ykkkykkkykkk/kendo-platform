@@ -16,22 +16,13 @@ import PlayerAvatar         from '../components/PlayerAvatar.jsx';
 import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
 import InquiryModal        from '../components/InquiryModal.jsx';
 
-const GEAR_ICON = { 죽도: '🎋', 호구: '🛡️', 도복: '👘', 하카마: '🥋', 기타: '📦' };
-
-function useDarkBody() {
-  useEffect(() => {
-    document.body.classList.add('predict-dark');
-    return () => document.body.classList.remove('predict-dark');
-  }, []);
-}
-
 function BioText({ text }) {
   const parts = text.split(/([""][^""]*[""])/);
   return (
-    <p className="text-white/70 text-sm leading-relaxed">
+    <p className="text-ink-600 text-sm leading-relaxed">
       {parts.map((part, i) =>
         /^[""]/.test(part)
-          ? <strong key={i} className="text-orange-500 font-bold">{part}</strong>
+          ? <strong key={i} className="text-ink font-bold bg-lime px-0.5">{part}</strong>
           : <span key={i}>{part}</span>
       )}
     </p>
@@ -39,10 +30,10 @@ function BioText({ text }) {
 }
 
 function SnsBtn({ href, icon: Icon, disabled }) {
-  const cls = `w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+  const cls = `w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
     disabled
-      ? 'bg-black-700/40 text-white/20 cursor-not-allowed'
-      : 'bg-black-700 text-white/60 active:bg-black-800'
+      ? 'border-ink-200/60 text-ink-200 cursor-not-allowed'
+      : 'border-ink-200 text-ink pressable'
   }`;
   if (disabled) return <div className={cls}><Icon size={16} /></div>;
   return (
@@ -52,7 +43,7 @@ function SnsBtn({ href, icon: Icon, disabled }) {
   );
 }
 
-function ClinicCard({ clinic, booked, onBook, onCancel }) {
+function ClinicRow({ clinic, booked, onBook, onCancel, first }) {
   const full = clinic.status === '마감' ||
                (clinic.remaining_slots !== null && clinic.remaining_slots <= 0);
   const dateStr = clinic.scheduled_at
@@ -62,23 +53,23 @@ function ClinicCard({ clinic, booked, onBook, onCancel }) {
     : null;
 
   return (
-    <div className="bg-black-900 border border-black-700 rounded-xl p-4">
+    <div className={`py-4 ${first ? '' : 'border-t border-ink-200'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm leading-tight">{clinic.title}</p>
+          <p className="text-ink font-bold text-sm leading-tight tracking-tight">{clinic.title}</p>
           {dateStr && (
-            <p className="text-white/40 text-xs mt-1">
+            <p className="text-ink-400 text-xs mt-1">
               {dateStr}{clinic.venue ? ` · ${clinic.venue}` : ''}
             </p>
           )}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {clinic.price_krw > 0 && (
-              <span className="text-xs font-semibold text-white">
+              <span className="text-xs font-semibold text-ink tabular-nums">
                 {clinic.price_krw.toLocaleString()}원
               </span>
             )}
             {clinic.remaining_slots !== null && (
-              <span className={`text-xs ${clinic.remaining_slots <= 3 ? 'text-red-400 font-semibold' : 'text-white/40'}`}>
+              <span className={`text-xs ${clinic.remaining_slots <= 3 ? 'text-ink font-semibold' : 'text-ink-400'}`}>
                 {clinic.remaining_slots}자리 남음
               </span>
             )}
@@ -88,7 +79,7 @@ function ClinicCard({ clinic, booked, onBook, onCancel }) {
         {booked ? (
           <button
             onClick={() => onCancel(clinic.id)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-black-700 text-white/50 active:opacity-70"
+            className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium border border-ink-200 text-ink-600 pressable"
           >
             예약취소
           </button>
@@ -96,10 +87,10 @@ function ClinicCard({ clinic, booked, onBook, onCancel }) {
           <button
             onClick={() => onBook(clinic.id)}
             disabled={full}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium ${
               full
-                ? 'bg-black-700 text-white/30 cursor-not-allowed'
-                : 'bg-orange-500 text-black active:opacity-80'
+                ? 'border border-ink-200 text-ink-400 cursor-not-allowed'
+                : 'bg-lime hover:bg-lime-dark text-ink pressable'
             }`}
           >
             {full ? '마감' : '신청'}
@@ -111,7 +102,6 @@ function ClinicCard({ clinic, booked, onBook, onCancel }) {
 }
 
 export default function PlayerProfile({ onLoginRequest }) {
-  useDarkBody();
   const { slug }   = useParams();
   const navigate   = useNavigate();
   const { user }     = useAuth();
@@ -162,7 +152,7 @@ export default function PlayerProfile({ onLoginRequest }) {
       } else {
         await authPost('/follows', { playerId: player.id });
         setFollowed(true);
-        showToast(`${player.name} 선수의 팬이 되었습니다! 🎋`, 'success');
+        showToast(`${player.name} 선수의 팬이 되었습니다!`, 'success');
       }
     } catch { /* 실패 시 상태 유지 */ } finally {
       setFollowLoading(false);
@@ -176,7 +166,7 @@ export default function PlayerProfile({ onLoginRequest }) {
     const data = await res.json();
     if (res.ok) {
       setMyBookings((prev) => new Set([...prev, clinicId]));
-      showToast('클리닉 예약이 완료되었습니다! 🥋', 'success');
+      showToast('클리닉 예약이 완료되었습니다!', 'success');
     } else {
       showToast(data.error ?? '예약에 실패했습니다.', 'error');
     }
@@ -196,16 +186,16 @@ export default function PlayerProfile({ onLoginRequest }) {
 
   /* ── 로딩 ── */
   if (loading) return (
-    <main className="page-body bg-black px-4 pt-14">
+    <main className="page-body bg-paper px-5 pt-14">
       <SkeletonList count={5} />
     </main>
   );
 
   /* ── 404 ── */
   if (!player) return (
-    <main className="page-body bg-black px-4 flex flex-col items-center justify-center gap-3 min-h-[60vh]">
-      <p className="text-white/40 text-sm">선수를 찾을 수 없습니다.</p>
-      <button onClick={() => navigate(-1)} className="text-orange-500 text-sm font-semibold">← 뒤로</button>
+    <main className="page-body bg-paper px-5 flex flex-col items-center justify-center gap-3 min-h-[60vh]">
+      <p className="text-ink-400 text-sm">선수를 찾을 수 없습니다.</p>
+      <button onClick={() => navigate(-1)} className="text-ink text-sm font-semibold pressable">← 뒤로</button>
     </main>
   );
 
@@ -215,111 +205,97 @@ export default function PlayerProfile({ onLoginRequest }) {
   const clinicCount = player.clinic_count ?? 0;
 
   return (
-    <>
+    <main className="page-body bg-paper min-h-screen">
       {/* ════════════════════════════════════════
-          1. 히어로 (배경 다크)
+          1. 헤더 내비
       ════════════════════════════════════════ */}
-      <div className="relative w-full overflow-hidden" style={{ height: 320 }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-[#0F0F0F] to-[#1A1A1A]" />
-
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <PlayerAvatar
-            slug={player.slug}
-            name={player.name}
-            color="transparent"
-            size={200}
-            className="opacity-15"
-            profileImageUrl={currentPhoto}
-          />
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
-
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 z-10">
+      <div className="px-5 pt-12 flex items-center justify-between">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 pressable"
+          aria-label="뒤로"
+        >
+          <ChevronLeft size={18} className="text-ink" />
+        </button>
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-0.5 text-white active:opacity-60"
+            onClick={() => navigate('/search')}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable"
+            aria-label="선수 검색"
           >
-            <ChevronLeft size={20} />
-            <span className="text-sm">뒤로</span>
+            <Search size={16} strokeWidth={1.8} />
           </button>
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/search')} className="text-white/70 active:text-white" aria-label="선수 검색">
-              <Search size={18} />
-            </button>
-            <button className="text-white/70 active:text-white"><Share2 size={18} /></button>
-            <button
-              onClick={toggleFollow}
-              disabled={followLoading}
-              className={followed ? 'text-orange-500' : 'text-white/70 active:text-white'}
-            >
-              <Heart size={18} fill={followed ? '#FF8800' : 'none'} />
-            </button>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 z-10">
-          <div className="flex items-end gap-3 mb-2">
-            <div className="relative flex-shrink-0">
-              <PlayerAvatar
-                slug={player.slug}
-                name={player.name}
-                color={player.color_primary}
-                size={56}
-                className="border-2 border-white/20 shadow-lg"
-                profileImageUrl={currentPhoto}
-              />
-            </div>
-            <div>
-              {player.position && (
-                <span className="inline-flex items-center gap-1 bg-orange-500 text-black font-bold text-[11px] px-2.5 py-0.5 rounded-full mb-1">
-                  ● {player.position}
-                </span>
-              )}
-              <h1 className="text-3xl font-black text-white tracking-tight leading-tight">
-                {player.name}
-              </h1>
-            </div>
-          </div>
-          {player.name_en && (
-            <p className="text-[11px] text-white/40 uppercase tracking-widest mt-0.5">
-              {player.name_en}
-            </p>
-          )}
-          <p className="text-sm text-orange-500 mt-1.5">
-            {player.team_name} · {player.dan_grade}단
-          </p>
-          {(player.birth_year || player.height_cm) && (
-            <p className="text-xs text-white/50 mt-0.5">
-              {[
-                player.birth_year && `${player.birth_year}년생`,
-                player.height_cm  && `${player.height_cm}cm`,
-              ].filter(Boolean).join(' · ')}
-            </p>
-          )}
+          <button className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable">
+            <Share2 size={16} strokeWidth={1.8} />
+          </button>
+          <button
+            onClick={toggleFollow}
+            disabled={followLoading}
+            className={`w-9 h-9 flex items-center justify-center rounded-full border pressable ${
+              followed ? 'bg-ink border-ink text-white' : 'border-ink-200 text-ink'
+            }`}
+          >
+            <Heart size={16} fill={followed ? '#FFFFFF' : 'none'} strokeWidth={1.8} />
+          </button>
         </div>
       </div>
 
       {/* ════════════════════════════════════════
-          2. 팔로우 + SNS 액션 바
+          2. 선수 헤드라인 (초대형 타이포)
       ════════════════════════════════════════ */}
-      <div className="bg-black px-4 py-4 border-b border-black-700">
+      <header className="px-5 pt-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase">
+              PLAYER{player.position ? ` — ${player.position}` : ''}
+            </p>
+            <h1 className="text-5xl font-bold text-ink tracking-[-0.04em] leading-[0.95] mt-2">
+              {player.name}
+            </h1>
+            {player.name_en && (
+              <p className="text-[10px] text-ink-400 uppercase tracking-[0.2em] mt-2">
+                {player.name_en}
+              </p>
+            )}
+            <p className="text-sm text-ink font-semibold mt-3">
+              {player.team_name} · {player.dan_grade}단
+            </p>
+            {(player.birth_year || player.height_cm) && (
+              <p className="text-xs text-ink-400 mt-0.5">
+                {[
+                  player.birth_year && `${player.birth_year}년생`,
+                  player.height_cm  && `${player.height_cm}cm`,
+                ].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
+          <PlayerAvatar
+            slug={player.slug}
+            name={player.name}
+            color={player.color_primary}
+            size={72}
+            className="flex-none mt-1 border border-ink-200"
+            profileImageUrl={currentPhoto}
+          />
+        </div>
+
+        {/* 팬 등록 + SNS */}
         {isMyProfile && (
-          <div className="mb-3">
+          <div className="mt-4">
             <ProfilePhotoUpload
               currentUrl={currentPhoto}
               onSuccess={(url) => setProfilePhoto(url)}
             />
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-5">
           <button
             onClick={toggleFollow}
             disabled={followLoading}
-            className={`pressable flex-1 py-2.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-60 ${
+            className={`pressable flex-1 py-2.5 rounded-full text-sm font-medium transition-colors disabled:opacity-60 ${
               followed
-                ? 'bg-black-700 text-white/60'
-                : 'bg-orange-500 text-black'
+                ? 'border border-ink text-ink'
+                : 'bg-lime hover:bg-lime-dark text-ink'
             }`}
           >
             {followed ? '✓ 팬 등록됨' : '+ 팬 등록'}
@@ -328,65 +304,60 @@ export default function PlayerProfile({ onLoginRequest }) {
           <div className="flex gap-2">
             <SnsBtn href={player.instagram_url} icon={AtSign}     disabled={!player.instagram_url} />
             <SnsBtn href={player.youtube_url}   icon={PlayCircle} disabled={!player.youtube_url} />
-            <button className="w-10 h-10 rounded-full bg-black-700 flex items-center justify-center text-white/60 active:bg-black-800">
-              <Calendar size={16} />
-            </button>
           </div>
         </div>
 
-        <p className="text-xs text-white/40 mt-2.5 text-center">
-          팬 {(fanCount + (followed ? 1 : 0)).toLocaleString()}명
-          {clinicCount > 0 && ` · 클리닉 ${clinicCount}회 진행`}
-        </p>
-      </div>
+        <div className="flex items-center gap-3 mt-4 text-xs">
+          <span className="text-ink font-semibold">
+            팬 {(fanCount + (followed ? 1 : 0)).toLocaleString()}명
+          </span>
+          {clinicCount > 0 && <span className="text-ink-400">클리닉 {clinicCount}회 진행</span>}
+          <span className="flex-1 border-t border-ink" />
+        </div>
+      </header>
 
       {/* ════════════════════════════════════════
           이하 본문
       ════════════════════════════════════════ */}
-      <div className="bg-black px-4 pb-24">
+      <div className="px-5 pb-6">
 
-
-        {/* ── 4. 소개 ── */}
+        {/* ── 소개 ── */}
         {player.bio && (
-          <div className="bg-black-900 border border-black-700 rounded-2xl p-5 mt-3">
-            <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide mb-3">
-              <span className="text-orange-500 mr-1">•</span>소개
-            </h2>
-            <BioText text={player.bio} />
-          </div>
+          <section className="mt-8">
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">ABOUT</p>
+            <div className="pt-3" style={{ borderTop: '1.5px solid #111111' }}>
+              <BioText text={player.bio} />
+            </div>
+          </section>
         )}
 
-        {/* ── 5. My Gear ── */}
-        <div className="mt-3">
+        {/* ── My Gear ── */}
+        <section className="mt-8">
           <div className="flex items-baseline gap-2 mb-3">
-            <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide">My Gear</h2>
-            <span className="text-[11px] text-white/30">선수가 직접 사용하는 장비</span>
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">MY GEAR</p>
+            <span className="text-[11px] text-ink-400">선수가 직접 사용하는 장비</span>
           </div>
 
           {gear.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {gear.map((g) => (
+            <div style={{ borderTop: '1.5px solid #111111' }}>
+              {gear.map((g, i) => (
                 <div
                   key={g.id}
-                  className="bg-black-900 border border-black-700 rounded-xl p-3 flex items-center gap-3 hover:-translate-y-0.5 transition-transform"
+                  className={`flex items-center gap-3 py-4 ${i > 0 ? 'border-t border-ink-200' : ''}`}
                 >
-                  <div className="w-14 h-14 rounded-xl bg-black-700 flex items-center justify-center text-2xl flex-shrink-0">
-                    {GEAR_ICON[g.category] ?? '📦'}
-                  </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-orange-500 font-semibold uppercase tracking-wider">
+                    <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase">
                       {g.category}
                     </p>
-                    <p className="text-sm font-semibold text-white truncate mt-0.5">
+                    <p className="text-sm font-bold text-ink truncate mt-1 tracking-tight">
                       {g.model_name}
                     </p>
-                    <p className="text-xs text-white/40 mt-0.5">{g.brand}</p>
+                    <p className="text-xs text-ink-400 mt-0.5">{g.brand}</p>
                   </div>
 
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                     {g.price_krw && (
-                      <p className="text-sm font-bold text-white">
+                      <p className="text-sm font-bold text-ink tabular-nums">
                         {g.price_krw.toLocaleString()}원
                       </p>
                     )}
@@ -395,8 +366,10 @@ export default function PlayerProfile({ onLoginRequest }) {
                       target={g.product_url ? '_blank' : undefined}
                       rel="noreferrer"
                       onClick={!g.product_url ? (e) => e.preventDefault() : undefined}
-                      className={`bg-orange-500 text-black rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap ${
-                        !g.product_url ? 'opacity-40 cursor-not-allowed' : ''
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap ${
+                        g.product_url
+                          ? 'bg-lime hover:bg-lime-dark text-ink pressable'
+                          : 'border border-ink-200 text-ink-400 cursor-not-allowed'
                       }`}
                     >
                       동일구매
@@ -406,56 +379,52 @@ export default function PlayerProfile({ onLoginRequest }) {
               ))}
             </div>
           ) : (
-            <div className="bg-black-900 border border-black-700 rounded-2xl p-5 text-center">
-              <p className="text-white/40 text-sm">아직 등록된 장비 정보 없음</p>
+            <div className="border border-ink-200 p-5 text-center">
+              <p className="text-ink-400 text-sm">아직 등록된 장비 정보 없음</p>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* ── 6. 1:1 클리닉 ── */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold text-white/35 uppercase tracking-wide">1:1 클리닉</h2>
-          </div>
+        {/* ── 1:1 클리닉 ── */}
+        <section className="mt-8">
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">1:1 CLINIC</p>
 
           {clinics.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {clinics.map((clinic) => (
-                <ClinicCard
+            <div style={{ borderTop: '1.5px solid #111111' }}>
+              {clinics.map((clinic, i) => (
+                <ClinicRow
                   key={clinic.id}
                   clinic={clinic}
                   booked={myBookings.has(clinic.id)}
                   onBook={handleBook}
                   onCancel={handleCancel}
+                  first={i === 0}
                 />
               ))}
             </div>
           ) : (
-            <div className="bg-black-900 border border-black-700 rounded-xl p-4 flex items-center justify-between">
+            <div className="pt-3 flex items-center justify-between" style={{ borderTop: '1.5px solid #111111' }}>
               <div>
-                <p className="text-white font-semibold text-sm">예정된 클리닉 없음</p>
-                <button className="text-orange-500 text-xs font-semibold mt-1">알림 받기 →</button>
+                <p className="text-ink font-bold text-sm">예정된 클리닉 없음</p>
+                <button className="text-ink text-xs font-semibold mt-1 pressable">알림 받기 →</button>
               </div>
-              <Calendar size={32} className="text-black-700" />
+              <Calendar size={28} className="text-ink-200" />
             </div>
           )}
-        </div>
+        </section>
 
-        {/* ── 장비 입점 문의 배너 ── */}
-        <div className="mt-4 rounded-2xl overflow-hidden border border-orange-500/20"
-             style={{ background: 'linear-gradient(135deg, #150F00 0%, #1C1400 100%)' }}>
-          <div className="p-5 flex items-center gap-4">
-            <div className="flex-1">
-              <p className="text-white font-bold text-sm">장비 입점 문의</p>
-              <p className="text-white/50 text-xs mt-0.5">검도 브랜드라면 누구든 환영합니다</p>
-              <button
-                onClick={() => setShowInquiry(true)}
-                className="mt-3 bg-orange-500 text-black text-xs font-bold px-4 py-1.5 rounded-full active:opacity-80"
-              >
-                문의하기 →
-              </button>
-            </div>
-            <div className="text-5xl select-none opacity-30">🥋</div>
+        {/* ── 장비 입점 문의 — 반전 블록 ── */}
+        <div className="mt-8 bg-block rounded-2xl">
+          <div className="p-5">
+            <p className="text-[10px] tracking-[0.2em] font-medium" style={{ color: '#D8FF3E' }}>PARTNERSHIP</p>
+            <p className="text-white font-bold text-sm mt-2">장비 입점 문의</p>
+            <p className="text-white/50 text-xs mt-0.5">검도 브랜드라면 누구든 환영합니다</p>
+            <button
+              onClick={() => setShowInquiry(true)}
+              className="mt-4 bg-lime hover:bg-lime-dark text-ink text-xs font-medium px-4 py-2 rounded-full pressable"
+            >
+              문의하기 →
+            </button>
           </div>
         </div>
 
@@ -464,6 +433,6 @@ export default function PlayerProfile({ onLoginRequest }) {
         </AnimatePresence>
 
       </div>
-    </>
+    </main>
   );
 }

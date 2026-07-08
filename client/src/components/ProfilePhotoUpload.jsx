@@ -68,8 +68,8 @@ export default function ProfilePhotoUpload({ onSuccess }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 border border-orange-500/30
-                   rounded-full text-orange-400 text-xs font-semibold"
+        className="inline-flex items-center gap-1.5 px-3 py-2 border border-ink
+                   rounded-full text-ink text-xs font-medium pressable"
       >
         <Camera size={12} /> 사진 변경
       </button>
@@ -97,13 +97,13 @@ export default function ProfilePhotoUpload({ onSuccess }) {
 
               {loading ? (
                 <div className="flex flex-col items-center py-8 gap-3">
-                  <Loader size={32} className="text-orange-500 animate-spin" />
+                  <Loader size={32} className="animate-spin" style={{ color: '#D8FF3E' }} />
                   <p className="text-white/50 text-sm">업로드 중...</p>
                 </div>
               ) : (
                 <>
                   <label className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer active:bg-white/5 transition-colors mb-4">
-                    <ImagePlus size={40} className="text-orange-500 mb-3" />
+                    <ImagePlus size={40} className="mb-3" style={{ color: '#D8FF3E' }} />
                     <p className="text-white font-semibold text-sm">사진을 선택하세요</p>
                     <p className="text-white/40 text-xs mt-1">탭하여 갤러리에서 선택</p>
                     <input

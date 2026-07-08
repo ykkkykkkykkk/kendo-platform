@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
@@ -7,15 +7,7 @@ import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { SkeletonCard } from '../components/Skeleton.jsx';
 
-function useDarkBody() {
-  useEffect(() => {
-    document.body.classList.add('predict-dark');
-    return () => document.body.classList.remove('predict-dark');
-  }, []);
-}
-
 export default function SearchPage() {
-  useDarkBody();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const { data: players, loading } = useFetch(api.players);
@@ -32,29 +24,29 @@ export default function SearchPage() {
   );
 
   return (
-    <main className="page-body bg-black">
+    <main className="page-body bg-paper min-h-screen">
       {/* 검색바 헤더 */}
-      <div className="sticky top-0 z-40 bg-black px-4 pt-12 pb-3 border-b border-black-700">
+      <div className="sticky top-0 z-40 bg-paper px-5 pt-12 pb-3" style={{ borderBottom: '1.5px solid #111111' }}>
         <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-black-900 rounded-full px-3 py-2.5">
-            <Search size={15} className="text-white/40 flex-shrink-0" />
+          <div className="flex-1 flex items-center gap-2 border border-ink-200 rounded-full px-3.5 py-2.5">
+            <Search size={15} className="text-ink-400 flex-shrink-0" />
             <input
               autoFocus
               type="text"
               placeholder="선수 이름 검색"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
+              className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-400 outline-none"
             />
             {query && (
-              <button onClick={() => setQuery('')} className="text-white/40 active:opacity-60">
+              <button onClick={() => setQuery('')} className="text-ink-400 pressable">
                 <X size={14} />
               </button>
             )}
           </div>
           <button
             onClick={() => navigate(-1)}
-            className="text-sm text-white/50 font-medium px-1 flex-shrink-0"
+            className="text-sm text-ink-600 font-medium px-1 flex-shrink-0 pressable"
           >
             취소
           </button>
@@ -62,7 +54,7 @@ export default function SearchPage() {
       </div>
 
       {/* 본문 */}
-      <div className="px-4 pt-4 pb-24">
+      <div className="px-5 pt-5 pb-24">
         {loading ? (
           <div className="flex flex-col gap-2">
             <SkeletonCard className="h-16" />
@@ -71,15 +63,15 @@ export default function SearchPage() {
           </div>
         ) : query.trim() === '' ? (
           <>
-            <p className="text-[11px] text-white/35 font-semibold uppercase tracking-wide mb-3">
-              추천 선수
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-2">
+              RECOMMENDED
             </p>
             {recommended.length === 0 ? (
-              <p className="text-xs text-white/30 text-center py-8">선수 이름을 입력하세요</p>
+              <p className="text-xs text-ink-400 text-center py-8">선수 이름을 입력하세요</p>
             ) : (
-              <div className="flex flex-col gap-2">
-                {recommended.map((p) => (
-                  <PlayerRow key={p.id} player={p} />
+              <div style={{ borderTop: '1.5px solid #111111' }}>
+                {recommended.map((p, i) => (
+                  <PlayerRow key={p.id} player={p} first={i === 0} />
                 ))}
               </div>
             )}
@@ -92,12 +84,12 @@ export default function SearchPage() {
           />
         ) : (
           <>
-            <p className="text-[11px] text-white/35 font-semibold uppercase tracking-wide mb-3">
-              검색 결과 {results.length}명
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-2">
+              RESULTS — {results.length}
             </p>
-            <div className="flex flex-col gap-2">
-              {results.map((p) => (
-                <PlayerRow key={p.id} player={p} />
+            <div style={{ borderTop: '1.5px solid #111111' }}>
+              {results.map((p, i) => (
+                <PlayerRow key={p.id} player={p} first={i === 0} />
               ))}
             </div>
           </>
@@ -107,19 +99,19 @@ export default function SearchPage() {
   );
 }
 
-function PlayerRow({ player: p }) {
+function PlayerRow({ player: p, first }) {
   return (
     <Link
       to={`/players/${p.slug}`}
-      className="flex items-center gap-3 bg-black-900 border border-black-700 rounded-xl p-3 active:opacity-70"
+      className={`flex items-center gap-3 py-3.5 pressable ${first ? '' : 'border-t border-ink-200'}`}
     >
-      <PlayerAvatar slug={p.slug} name={p.name} color={p.color_primary} size={44} />
+      <PlayerAvatar slug={p.slug} name={p.name} color={p.color_primary} size={40} />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-white text-sm">{p.name}</p>
-        <p className="text-xs text-white/40 truncate">{p.team_name ?? '소속팀 없음'}</p>
+        <p className="font-bold text-ink text-sm">{p.name}</p>
+        <p className="text-xs text-ink-400 truncate mt-0.5">{p.team_name ?? '소속팀 없음'}</p>
       </div>
       {p.dan_grade && (
-        <span className="text-[11px] text-orange-500 font-semibold flex-shrink-0">{p.dan_grade}단</span>
+        <span className="text-[11px] text-ink-600 font-semibold flex-shrink-0">{p.dan_grade}단</span>
       )}
     </Link>
   );

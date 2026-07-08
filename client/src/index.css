@@ -3,11 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --color-navy:  #0A1F44;
-  --color-gold:  #C9A961;
-  --color-card:  #F7F8FA;
-  --color-sub:   #5A6478;
-  --color-text:  #1A1A1A;
+  --color-paper: #FFFFFF;
+  --color-ink:   #111111;
+  --color-lime:  #D8FF3E;
 }
 
 * {
@@ -15,8 +13,8 @@
 }
 
 body {
-  background: #050505;
-  color: #ffffff;
+  background: #FFFFFF;
+  color: #111111;
   font-family: 'Pretendard', system-ui, sans-serif;
 }
 
@@ -49,9 +47,9 @@ body {
   min-height: 100dvh;
 }
 
-/* 예측 페이지 다크 배경 */
+/* DEPRECATED: 예측 페이지 다크 배경 — 매거진 전환으로 흰 배경 통일 */
 body.predict-dark {
-  background: #050505;
+  background: #FFFFFF;
 }
 
 /* 버튼 누를 때 물리적 피드백 느낌 */

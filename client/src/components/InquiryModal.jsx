@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, ChevronDown, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -8,7 +8,6 @@ import { haptic } from '../utils/haptic.js';
 const CATEGORIES = ['버그신고', '기능제안', '계정문의', '도장문의', '기타'];
 
 const STATUS_LABEL = { pending: '검토중', in_progress: '처리중', resolved: '처리완료' };
-const STATUS_COLOR = { pending: 'text-yellow-400', in_progress: 'text-blue-400', resolved: 'text-green-400' };
 
 function timeAgo(d) {
   const diff = Math.floor((Date.now() - new Date(d + 'Z')) / 1000);
@@ -76,9 +75,10 @@ export default function InquiryModal({ onClose }) {
       transition={{ duration: 0.2 }}
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0 bg-black/40" />
       <motion.div
-        className="relative w-full max-w-mobile bg-black-800 rounded-t-2xl border-t border-black-700 flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-mobile bg-paper rounded-t-2xl flex flex-col max-h-[85vh]"
+        style={{ borderTop: '1.5px solid #111111' }}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
@@ -86,19 +86,20 @@ export default function InquiryModal({ onClose }) {
         {/* 헤더 */}
         <div className="px-6 pt-5 pb-4 flex-none">
           <div className="relative flex items-center justify-center mb-5">
-            <div className="w-10 h-1 bg-black-700 rounded-full" />
-            <button onClick={onClose} className="absolute right-0 w-8 h-8 rounded-full bg-black-700 flex items-center justify-center text-white/50">
+            <div className="w-10 h-1 bg-ink-200 rounded-full" />
+            <button onClick={onClose} className="absolute right-0 w-8 h-8 rounded-full border border-ink-200 flex items-center justify-center text-ink-400 pressable">
               <X size={15} />
             </button>
           </div>
-          <h2 className="text-white font-black text-lg mb-1">고객센터</h2>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">SUPPORT</p>
+          <h2 className="text-ink font-bold text-lg tracking-tight">고객센터</h2>
 
           {/* 탭 */}
-          <div className="flex gap-1 bg-black-900 p-1 rounded-xl mt-3">
+          <div className="flex gap-2 mt-3">
             {[['form', '문의하기'], ['history', '내 문의']].map(([v, label]) => (
               <button key={v} onClick={() => handleViewChange(v)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  view === v ? 'bg-black-700 text-white' : 'text-white/35'
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                  view === v ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-600 border-ink-200'
                 }`}>{label}</button>
             ))}
           </div>
@@ -109,10 +110,10 @@ export default function InquiryModal({ onClose }) {
           {view === 'form' ? (
             done ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <CheckCircle size={48} className="text-green-400 mb-4" />
-                <p className="text-white font-bold text-lg">문의 접수 완료!</p>
-                <p className="text-white/40 text-sm mt-2">운영팀이 검토 후 답변드립니다.</p>
-                <button onClick={onClose} className="mt-6 px-6 py-2.5 bg-orange-500 text-black font-bold rounded-xl text-sm">
+                <CheckCircle size={48} className="text-ink mb-4" />
+                <p className="text-ink font-bold text-lg tracking-tight">문의 접수 완료!</p>
+                <p className="text-ink-400 text-sm mt-2">운영팀이 검토 후 답변드립니다.</p>
+                <button onClick={onClose} className="mt-6 px-6 py-2.5 bg-lime hover:bg-lime-dark text-ink font-medium rounded-full text-sm pressable">
                   확인
                 </button>
               </div>
@@ -120,48 +121,48 @@ export default function InquiryModal({ onClose }) {
               <div className="space-y-4 pt-2">
                 {/* 닉네임 */}
                 <div>
-                  <label className="text-xs font-medium text-white/40 mb-1 block">닉네임</label>
+                  <label className="text-xs font-medium text-ink-400 mb-1 block">닉네임</label>
                   <input
                     type="text" maxLength={10} placeholder="닉네임"
                     value={nickname} onChange={(e) => setNickname(e.target.value)}
-                    className="w-full bg-black-900 border border-black-700 rounded-xl px-4 py-3 text-sm text-white
-                               placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
+                    className="w-full bg-paper border border-ink-200 px-4 py-3 text-sm text-ink
+                               placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
                   />
                 </div>
 
                 {/* 카테고리 */}
                 <div>
-                  <label className="text-xs font-medium text-white/40 mb-1 block">문의 유형</label>
+                  <label className="text-xs font-medium text-ink-400 mb-1 block">문의 유형</label>
                   <div className="relative">
                     <select
                       value={category} onChange={(e) => setCategory(e.target.value)}
-                      className="w-full appearance-none bg-black-900 border border-black-700 rounded-xl px-4 py-3 text-sm text-white
-                                 focus:outline-none focus:border-orange-500 transition-colors"
+                      className="w-full appearance-none bg-paper border border-ink-200 px-4 py-3 text-sm text-ink
+                                 focus:outline-none focus:border-ink transition-colors"
                     >
                       {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* 내용 */}
                 <div>
-                  <label className="text-xs font-medium text-white/40 mb-1 flex items-center justify-between">
+                  <label className="text-xs font-medium text-ink-400 mb-1 flex items-center justify-between">
                     <span>문의 내용</span>
-                    <span className={content.length > 450 ? 'text-red-400' : 'text-white/25'}>{content.length}/500</span>
+                    <span className={content.length > 450 ? 'text-ink font-semibold' : 'text-ink-400/60'}>{content.length}/500</span>
                   </label>
                   <textarea
                     rows={5} maxLength={500}
                     placeholder="문의 내용을 입력해주세요 (최소 5자)"
                     value={content} onChange={(e) => setContent(e.target.value)}
-                    className="w-full bg-black-900 border border-black-700 rounded-xl px-4 py-3 text-sm text-white
-                               placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors resize-none"
+                    className="w-full bg-paper border border-ink-200 px-4 py-3 text-sm text-ink
+                               placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors resize-none"
                   />
                 </div>
 
                 <button
                   onClick={handleSubmit} disabled={loading || !nickname.trim() || content.trim().length < 5}
-                  className="w-full bg-orange-500 text-black font-bold py-3.5 rounded-xl text-sm disabled:opacity-50 pressable"
+                  className="w-full bg-lime hover:bg-lime-dark text-ink font-medium py-3.5 rounded-full text-sm disabled:opacity-50 pressable"
                 >
                   {loading ? '제출 중...' : '문의 접수하기'}
                 </button>
@@ -172,34 +173,36 @@ export default function InquiryModal({ onClose }) {
             <div className="pt-2">
               {hLoading ? (
                 <div className="flex flex-col gap-2 animate-pulse">
-                  {[1,2].map((i) => <div key={i} className="h-20 bg-black-900 rounded-xl" />)}
+                  {[1,2].map((i) => <div key={i} className="h-20 bg-ink-200/40" />)}
                 </div>
               ) : !user ? (
                 <div className="py-10 text-center">
-                  <p className="text-white/30 text-sm">로그인 후 확인할 수 있습니다.</p>
+                  <p className="text-ink-400 text-sm">로그인 후 확인할 수 있습니다.</p>
                 </div>
               ) : !history?.length ? (
                 <div className="py-10 text-center">
-                  <p className="text-white/30 text-sm">접수된 문의가 없습니다.</p>
+                  <p className="text-ink-400 text-sm">접수된 문의가 없습니다.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                  {history.map((q) => (
-                    <div key={q.id} className="bg-black-900 border border-black-700 rounded-xl p-4">
+                <div style={{ borderTop: '1.5px solid #111111' }}>
+                  {history.map((q, i) => (
+                    <div key={q.id} className={`py-4 ${i > 0 ? 'border-t border-ink-200' : ''}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-orange-500 text-[10px] font-semibold bg-orange-500/10 px-2 py-0.5 rounded-full">
+                        <span className="text-ink-600 text-[10px] font-medium border border-ink-200 px-2 py-0.5">
                           {q.category}
                         </span>
-                        <span className={`text-[10px] font-semibold ${STATUS_COLOR[q.status]}`}>
+                        <span className={`text-[10px] font-semibold ${
+                          q.status === 'resolved' ? 'bg-lime text-ink px-1.5 py-0.5' : 'text-ink-400'
+                        }`}>
                           {STATUS_LABEL[q.status]}
                         </span>
                       </div>
-                      <p className="text-white/70 text-sm leading-relaxed">{q.content}</p>
-                      <p className="text-white/25 text-[10px] mt-2">{timeAgo(q.created_at)}</p>
+                      <p className="text-ink text-sm leading-relaxed">{q.content}</p>
+                      <p className="text-ink-400 text-[10px] mt-2">{timeAgo(q.created_at)}</p>
                       {q.admin_reply && (
-                        <div className="mt-3 pt-3 border-t border-black-700">
-                          <p className="text-white/30 text-[10px] mb-1">운영팀 답변</p>
-                          <p className="text-white/60 text-sm leading-relaxed">{q.admin_reply}</p>
+                        <div className="mt-3 pt-3 border-t border-ink-200">
+                          <p className="text-ink-400 text-[10px] mb-1">운영팀 답변</p>
+                          <p className="text-ink-600 text-sm leading-relaxed">{q.admin_reply}</p>
                         </div>
                       )}
                     </div>

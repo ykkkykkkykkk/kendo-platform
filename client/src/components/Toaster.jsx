@@ -3,9 +3,9 @@ import { useToast } from '../context/ToastContext.jsx';
 
 const ICONS = { success: '✓', error: '✕', info: 'ℹ' };
 const COLORS = {
-  success: 'bg-emerald-500',
-  error:   'bg-red-500',
-  info:    'bg-navy',
+  success: 'bg-lime text-ink',
+  error:   'bg-white text-ink',
+  info:    'bg-white/20 text-white',
 };
 
 export default function Toaster() {
@@ -21,7 +21,7 @@ export default function Toaster() {
             initial={{ opacity: 0, y: 20, scale: 0.92 }}
             animate={{ opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] } }}
             exit={{    opacity: 0, y: 10, scale: 0.95,  transition: { duration: 0.15 } }}
-            className="flex items-center gap-3 bg-navy-900/95 backdrop-blur-sm text-white
+            className="flex items-center gap-3 bg-block text-white
                        rounded-2xl px-4 py-3 shadow-xl"
           >
             <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${COLORS[t.type] ?? COLORS.success}`}>

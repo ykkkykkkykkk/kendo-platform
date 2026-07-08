@@ -58,7 +58,7 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
         } catch {}
       }
 
-      showToast(`환영합니다, ${nickname.trim()}님! 🎋`, 'success');
+      showToast(`환영합니다, ${nickname.trim()}님!`, 'success');
       onClose();
     } catch (e) {
       setError(e.message);
@@ -82,21 +82,22 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
       transition={{ duration: 0.2 }}
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-black/40" />
 
       <motion.div
-        className="relative w-full max-w-mobile bg-black-800 rounded-t-2xl px-6 pt-5 pb-10 border-t border-black-700"
+        className="relative w-full max-w-mobile bg-paper rounded-t-2xl px-6 pt-5 pb-10"
+        style={{ borderTop: '1.5px solid #111111' }}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 핸들 + X */}
         <div className="relative flex items-center justify-center mb-6">
-          <div className="w-10 h-1 bg-black-700 rounded-full" />
+          <div className="w-10 h-1 bg-ink-200 rounded-full" />
           <button
             onClick={onClose}
-            className="absolute right-0 w-8 h-8 rounded-full bg-black-700 flex items-center
-                       justify-center text-white/50 active:bg-black-900"
+            className="absolute right-0 w-8 h-8 rounded-full border border-ink-200 flex items-center
+                       justify-center text-ink-400 pressable"
           >
             <X size={15} />
           </button>
@@ -107,64 +108,65 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden">
             <img src="/logo.svg" alt="마이너스타" className="w-full h-full" />
           </div>
-          <h2 className="text-white font-black text-lg">마이너스타 시작하기</h2>
-          <p className="text-white/40 text-sm mt-1">닉네임과 휴대폰 끝 4자리로 시작하세요</p>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">MINOR—STAR®</p>
+          <h2 className="text-ink font-bold text-lg tracking-tight">마이너스타 시작하기</h2>
+          <p className="text-ink-400 text-sm mt-1">닉네임과 휴대폰 끝 4자리로 시작하세요</p>
         </div>
 
         {/* 입력 필드 */}
         <div className="space-y-3 mb-5">
           <div className="group">
-            <label className="text-xs font-medium mb-1 block text-white/40 group-focus-within:text-orange-500 transition-colors">
+            <label className="text-xs font-medium mb-1 block text-ink-400 group-focus-within:text-ink transition-colors">
               닉네임
             </label>
             <input
               type="text" maxLength={10} placeholder="최대 10자"
               value={nickname} onChange={(e) => setNickname(e.target.value)}
-              className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
-                         placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
+              className="w-full border border-ink-200 bg-paper px-4 py-3 text-sm text-ink
+                         placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
             />
           </div>
           <div className="group">
-            <label className="text-xs font-medium mb-1 block text-white/40 group-focus-within:text-orange-500 transition-colors">
+            <label className="text-xs font-medium mb-1 block text-ink-400 group-focus-within:text-ink transition-colors">
               휴대폰 끝 4자리
             </label>
             <input
               type="tel" inputMode="numeric" maxLength={4} placeholder="0000"
               value={phone} onChange={handlePhoneChange}
-              className="w-full border border-black-700 bg-black-900 rounded-xl px-4 py-3 text-sm text-white
-                         placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors tracking-widest"
+              className="w-full border border-ink-200 bg-paper px-4 py-3 text-sm text-ink
+                         placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors tracking-widest"
             />
           </div>
 
           {/* 도장 자동완성 */}
           <div className="group relative">
-            <label className="text-xs font-medium mb-1 block text-white/40 group-focus-within:text-orange-500 transition-colors">
-              소속 도장 <span className="text-white/25">(선택)</span>
+            <label className="text-xs font-medium mb-1 block text-ink-400 group-focus-within:text-ink transition-colors">
+              소속 도장 <span className="text-ink-400/60">(선택)</span>
             </label>
             <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
               <input
                 type="text" maxLength={30} placeholder="도장 검색 또는 직접 입력"
                 value={dojo}
                 onChange={(e) => { setDojo(e.target.value); setDojoId(null); }}
-                className="w-full border border-black-700 bg-black-900 rounded-xl pl-9 pr-4 py-3 text-sm text-white
-                           placeholder:text-white/20 focus:outline-none focus:border-orange-500 transition-colors"
+                className="w-full border border-ink-200 bg-paper pl-9 pr-4 py-3 text-sm text-ink
+                           placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
               />
             </div>
             <AnimatePresence>
               {suggestions.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="absolute z-10 top-full left-0 right-0 mt-1 bg-black-700 border border-black-600 rounded-xl overflow-hidden shadow-xl"
+                  className="absolute z-10 top-full left-0 right-0 mt-1 bg-paper border border-ink overflow-hidden shadow-lg"
                 >
                   {suggestions.map((d) => (
                     <button
                       key={d.id}
                       onMouseDown={() => selectDojo(d.name)}
-                      className="w-full px-4 py-2.5 text-left text-sm text-white/80 hover:bg-black-600 flex items-center justify-between"
+                      className="w-full px-4 py-2.5 text-left text-sm text-ink hover:bg-ink-200/30 flex items-center justify-between"
                     >
                       <span>{d.name}</span>
-                      <span className="text-white/30 text-xs">{d.member_count}명</span>
+                      <span className="text-ink-400 text-xs">{d.member_count}명</span>
                     </button>
                   ))}
                 </motion.div>
@@ -173,18 +175,18 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
           </div>
         </div>
 
-        {error && <p className="text-red-400 text-xs text-center mb-3">{error}</p>}
+        {error && <p className="text-ink text-xs text-center mb-3 font-semibold">{error}</p>}
 
         <button
           onClick={handleSubmit} disabled={loading}
-          className="pressable w-full bg-orange-500 text-black font-bold py-3.5 rounded-xl text-sm disabled:opacity-60 mb-4"
+          className="pressable w-full bg-lime hover:bg-lime-dark text-ink font-medium py-3.5 rounded-full text-sm disabled:opacity-60 mb-4"
         >
           {loading ? '처리 중...' : '시작하기'}
         </button>
 
-        <p className="text-center text-white/30 text-xs">
+        <p className="text-center text-ink-400 text-xs">
           선수이신가요?{' '}
-          <button onClick={onSwitchToPlayer} className="text-orange-500 font-semibold">
+          <button onClick={onSwitchToPlayer} className="text-ink font-semibold underline underline-offset-2">
             선수 로그인
           </button>
         </p>

@@ -36,11 +36,11 @@ export default function IOSInstallBanner() {
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-20 left-4 right-4 z-50"
         >
-          <div className="bg-black-800 border border-black-700 rounded-2xl px-4 py-4 shadow-2xl">
+          <div className="bg-block rounded-2xl px-4 py-4 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-black-700 border border-orange-500/30 rounded-xl flex items-center justify-center flex-none">
-                  <span className="text-orange-500 font-black text-lg">검</span>
+                <div className="w-10 h-10 border border-white/20 rounded-xl flex items-center justify-center flex-none">
+                  <span className="font-black text-lg" style={{ color: '#D8FF3E' }}>M</span>
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">앱으로 설치하기</p>
@@ -49,20 +49,16 @@ export default function IOSInstallBanner() {
                     <span className="mx-1 text-white/70">
                       <ShareIcon />
                     </span>
-                    버튼 → <span className="text-orange-400">"홈 화면에 추가"</span>
+                    버튼 → <span style={{ color: '#D8FF3E' }}>"홈 화면에 추가"</span>
                   </p>
                 </div>
               </div>
               <button
                 onClick={dismiss}
-                className="w-7 h-7 rounded-full bg-black-700 flex items-center justify-center flex-none mt-0.5"
+                className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center flex-none mt-0.5"
               >
                 <X size={13} className="text-white/50" />
               </button>
-            </div>
-            {/* 말풍선 꼬리 */}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-2 overflow-hidden">
-              <div className="w-3 h-3 bg-black-800 border-r border-b border-black-700 rotate-45 translate-y-[-6px] mx-auto" />
             </div>
           </div>
         </motion.div>

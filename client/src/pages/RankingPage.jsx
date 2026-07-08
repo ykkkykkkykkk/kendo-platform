@@ -6,25 +6,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import DojoRankingTab from '../components/DojoRankingTab.jsx';
 
-function useDarkBody() {
-  useEffect(() => {
-    document.body.classList.add('predict-dark');
-    return () => document.body.classList.remove('predict-dark');
-  }, []);
-}
-
 function totalMyScore(t) {
   return t.divisions.reduce((s, d) => s + (d.my_score ?? 0), 0);
 }
 
-const MEDAL = {
-  1: { emoji: '🥇', grad: 'from-[#231700] to-[#181000]', border: 'border-amber-400/25',  scoreColor: 'text-amber-300', nameColor: 'text-amber-100' },
-  2: { emoji: '🥈', grad: 'from-[#1C1C1C] to-[#131313]', border: 'border-gray-400/25',   scoreColor: 'text-gray-200',  nameColor: 'text-gray-100'  },
-  3: { emoji: '🥉', grad: 'from-[#1E1109] to-[#150C05]', border: 'border-amber-700/25',  scoreColor: 'text-amber-500', nameColor: 'text-amber-200' },
-};
+const rankNo = (n) => String(n).padStart(2, '0');
 
 export default function RankingPage() {
-  useDarkBody();
   const { user } = useAuth();
   const myUserId = user?.id ?? null;
 
@@ -54,28 +42,26 @@ export default function RankingPage() {
   const total   = rankingData?.total    ?? 0;
 
   return (
-    <main className="page-body bg-black min-h-screen">
+    <main className="page-body bg-paper min-h-screen">
       {/* 헤더 */}
-      <header className="px-5 pt-12 pb-4">
-        <p className="text-[10px] text-orange-500 font-semibold tracking-[0.25em] uppercase">RANKING</p>
-        <h1 className="text-[32px] font-bold text-white leading-tight tracking-tight mt-0.5">랭킹</h1>
-        <p className="text-sm text-white/40 mt-1">
+      <header className="px-5 pt-12 pb-5">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">RANKING</p>
+        <h1 className="text-4xl font-bold text-ink tracking-[-0.04em] leading-[0.95] mt-1">랭킹</h1>
+        <p className="text-sm text-ink-400 mt-2">
           {mainTab === 'individual' ? '픽 예측 순위' : '도장 시즌 순위'}
         </p>
       </header>
 
       {/* 상단 메인 토글: INDIVIDUAL / DOJO */}
-      <div className="flex gap-1 mx-5 mb-4 bg-black-900 p-1 rounded-2xl">
+      <div className="flex gap-2 mx-5 mb-4">
         {[['individual', '개인 랭킹'], ['dojo', '도장 랭킹']].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setMainTab(key)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-medium transition-all pressable border ${
               mainTab === key
-                ? key === 'dojo'
-                  ? 'bg-orange-500 text-black'
-                  : 'bg-black-700 text-white'
-                : 'text-white/35'
+                ? 'bg-ink text-white border-ink'
+                : 'bg-paper text-ink-600 border-ink-200'
             }`}
           >
             {label}
@@ -88,13 +74,13 @@ export default function RankingPage() {
       ) : (
         <>
           {/* 개인 랭킹 서브탭 */}
-          <div className="flex gap-1 mx-5 mb-5 bg-black-900 p-1 rounded-2xl">
+          <div className="flex gap-2 mx-5 mb-5">
             {[['ongoing', '진행 대회'], ['past', '종료 대회']].map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
-                  tab === key ? 'bg-black-700 text-white' : 'text-white/35'
+                className={`text-xs font-medium transition-all pressable pb-1 border-b-2 ${
+                  tab === key ? 'text-ink border-ink' : 'text-ink-400 border-transparent'
                 }`}
               >
                 {label}
@@ -127,6 +113,27 @@ export default function RankingPage() {
   );
 }
 
+/* ── 랭킹 행 (테이블 문법) ──────────────────────────────────── */
+function RankRow({ rank, name, sub, score, isMe, first, big }) {
+  return (
+    <div className={`flex items-center gap-3 ${big ? 'py-3.5' : 'py-3'} ${first ? '' : 'border-t border-ink-200'}`}>
+      <span className={`tabular-nums font-bold flex-none w-8 ${big ? 'text-base text-ink' : 'text-sm text-ink-400'}`}>
+        {rankNo(rank)}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className={`font-bold truncate ${big ? 'text-base' : 'text-sm'} text-ink`}>
+          {isMe ? <span className="bg-lime px-1">{name}</span> : name}
+        </p>
+        {sub && <p className="text-ink-400 text-[11px] mt-0.5 truncate">{sub}</p>}
+      </div>
+      <p className={`font-bold flex-none tabular-nums ${big ? 'text-lg' : 'text-sm'} text-ink`}>
+        {score}
+        <span className="text-[10px] text-ink-400 font-medium ml-0.5">점</span>
+      </p>
+    </div>
+  );
+}
+
 /* ── 진행 대회 탭 ───────────────────────────────────────────── */
 function OngoingTab({
   ongoing, selectedId, onSelect, selectedTournament,
@@ -135,17 +142,16 @@ function OngoingTab({
   if (ongoing.length === 0) {
     return (
       <div className="px-5 py-16 text-center">
-        <p className="text-white/25 text-sm">현재 진행 중인 대회가 없어요</p>
+        <p className="text-ink-400 text-sm">현재 진행 중인 대회가 없어요</p>
       </div>
     );
   }
 
-  const top3        = ranking.slice(0, 3);
-  const rest        = ranking.slice(3, 10);
-  const myInTop10   = myRank != null && myRank <= 10;
+  const top10 = ranking.slice(0, 10);
+  const myInTop10 = myRank != null && myRank <= 10;
 
   return (
-    <div className="px-5 flex flex-col gap-4 pb-4">
+    <div className="px-5 flex flex-col gap-5 pb-4">
       {/* 대회 선택 (복수일 때만) */}
       {ongoing.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -153,8 +159,8 @@ function OngoingTab({
             <button
               key={t.id}
               onClick={() => onSelect(t.id)}
-              className={`flex-none px-3.5 py-2 rounded-full text-xs font-semibold transition-all pressable ${
-                selectedId === t.id ? 'bg-orange-500 text-black' : 'bg-black-700 text-white/55'
+              className={`flex-none px-3.5 py-2 rounded-full text-xs font-medium transition-all pressable border ${
+                selectedId === t.id ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-600 border-ink-200'
               }`}
             >
               {t.name}
@@ -163,147 +169,71 @@ function OngoingTab({
         </div>
       )}
 
-      {/* 현재 대회 카드 */}
+      {/* 현재 대회 */}
       {selectedTournament && (
         <Link to={`/predictions/${selectedTournament.id}`} className="pressable block">
-          <div className="bg-black-900 border border-black-700 rounded-2xl px-4 py-3
-                          flex items-center justify-between">
+          <div className="flex items-center justify-between py-3" style={{ borderTop: '1.5px solid #111111', borderBottom: '1px solid #E5E5E5' }}>
             <div>
-              <p className="text-white/35 text-[10px] font-semibold tracking-[0.15em] uppercase">
-                현재 대회
-              </p>
-              <p className="text-white font-semibold text-sm mt-0.5 tracking-tight">
+              <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">NOW</p>
+              <p className="text-ink font-bold text-sm mt-0.5 tracking-tight">
                 {selectedTournament.name}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-white/40 text-xs">참여자 {total > 0 ? `${total}명` : '-'}</p>
-              <p className="text-white/25 text-[10px] mt-0.5">픽 보러가기 →</p>
+              <p className="text-ink-400 text-xs">참여 {total > 0 ? `${total}명` : '—'}</p>
+              <p className="text-ink text-[10px] font-semibold mt-0.5">픽 보러가기 →</p>
             </div>
           </div>
         </Link>
       )}
 
-      {/* 랭킹 콘텐츠 */}
+      {/* 랭킹 테이블 */}
       {rankingLoading ? (
         <div className="flex flex-col gap-2 animate-pulse">
-          {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-black-900 rounded-2xl" />)}
-          {[4, 5].map((i) => <div key={i} className="h-12 bg-black-900 rounded-xl" />)}
+          {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 bg-ink-200/40" />)}
         </div>
       ) : ranking.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-white/25 text-sm">아직 픽한 사람이 없어요</p>
+          <p className="text-ink-400 text-sm">아직 픽한 사람이 없어요</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {/* ─ TOP 3 메달 카드 ─ */}
-          {top3.map((item, i) => {
-            const isMe = item.user_id === myUserId;
-            const m    = MEDAL[item.rank] ?? MEDAL[3];
-            return (
-              <ScrollReveal key={item.user_id} delay={i * 0.08}>
-              <div
-                className={`bg-gradient-to-br ${m.grad} border ${m.border} rounded-2xl p-4
-                            ${isMe ? 'ring-1 ring-orange-500/50' : ''}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{m.emoji}</span>
-                    <div>
-                      <p className={`font-bold text-[15px] ${m.nameColor}`}>
-                        {item.nickname}
-                        {isMe && (
-                          <span className="ml-1.5 text-orange-500 text-[10px] font-semibold bg-orange-500/12 px-1.5 py-0.5 rounded-full">
-                            나
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-white/30 text-[11px] mt-0.5">
-                        {item.dojo ?? '소속 없음'} · {item.divisions_picked}부문 픽
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-2xl font-bold leading-none ${m.scoreColor}`}>
-                      {item.total_score}
-                    </p>
-                    <p className="text-white/25 text-[10px] mt-0.5">점</p>
-                  </div>
-                </div>
-              </div>
+        <div>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-2">TOP 10</p>
+          <div style={{ borderTop: '1.5px solid #111111' }}>
+            {top10.map((item, i) => (
+              <ScrollReveal key={item.user_id} delay={Math.min(i * 0.04, 0.3)}>
+                <RankRow
+                  rank={item.rank}
+                  name={item.nickname}
+                  sub={`${item.dojo ?? '소속 없음'} · ${item.divisions_picked}부문 픽`}
+                  score={item.total_score}
+                  isMe={item.user_id === myUserId}
+                  first={i === 0}
+                  big={item.rank <= 3}
+                />
               </ScrollReveal>
-            );
-          })}
+            ))}
+          </div>
 
-          {/* ─ 4~10위 ─ */}
-          {rest.map((item, i) => {
-            const isMe = item.user_id === myUserId;
-            return (
-              <ScrollReveal key={item.user_id} delay={0.24 + i * 0.05}>
-              <div
-                className={`border rounded-xl px-4 py-3 flex items-center gap-3 ${
-                  isMe
-                    ? 'bg-[#1A1400] border-orange-500/30 ring-1 ring-orange-500/20'
-                    : 'bg-black-900 border-black-700'
-                }`}
-              >
-                <span className="text-white/35 text-sm font-bold w-6 text-center flex-none">
-                  {item.rank}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm truncate ${isMe ? 'text-orange-500' : 'text-white/80'}`}>
-                    {item.nickname}
-                    {isMe && (
-                      <span className="ml-1.5 text-orange-500 text-[10px] font-semibold bg-orange-500/12 px-1.5 py-0.5 rounded-full">
-                        나
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-white/25 text-[11px]">{item.dojo ?? '소속 없음'}</p>
-                </div>
-                <p className={`font-bold text-sm flex-none ${isMe ? 'text-orange-500' : 'text-white/60'}`}>
-                  {item.total_score}점
-                </p>
-              </div>
-              </ScrollReveal>
-            );
-          })}
-
-          {/* ─ 내 위치 (TOP 10 밖) ─ */}
+          {/* 내 위치 (TOP 10 밖) */}
           {myRank != null && !myInTop10 && (
-            <div className="mt-1 flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-black-700" />
-                <p className="text-white/20 text-[10px] font-semibold tracking-wider">내 위치</p>
-                <div className="flex-1 h-px bg-black-700" />
-              </div>
-              <div className="bg-gradient-to-br from-[#1A1200] to-[#120E00]
-                              border border-orange-500/25 ring-1 ring-orange-500/15 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-orange-500 font-bold text-lg w-7 text-center flex-none">
-                      {myRank}
-                    </span>
-                    <div>
-                      <p className="text-orange-500 font-bold text-[15px]">
-                        {myNickname ?? '나'}
-                        <span className="ml-1.5 text-orange-500 text-[10px] font-semibold bg-orange-500/12 px-1.5 py-0.5 rounded-full">
-                          나
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-orange-500 text-2xl font-bold leading-none">{myScore}</p>
-                    <p className="text-white/25 text-[10px] mt-0.5">점</p>
-                  </div>
-                </div>
+            <div className="mt-6">
+              <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-2">MY POSITION</p>
+              <div style={{ borderTop: '1.5px solid #111111' }}>
+                <RankRow
+                  rank={myRank}
+                  name={myNickname ?? '나'}
+                  score={myScore}
+                  isMe
+                  first
+                  big
+                />
               </div>
             </div>
           )}
 
           {ranking.length >= 10 && (
-            <p className="text-center text-white/20 text-xs pt-1">상위 10명까지 표시</p>
+            <p className="text-center text-ink-400 text-xs pt-4">상위 10명까지 표시</p>
           )}
         </div>
       )}
@@ -316,35 +246,34 @@ function PastTab({ past }) {
   if (past.length === 0) {
     return (
       <div className="px-5 py-16 text-center">
-        <p className="text-white/25 text-sm">종료된 대회가 없어요</p>
+        <p className="text-ink-400 text-sm">종료된 대회가 없어요</p>
       </div>
     );
   }
 
   return (
-    <div className="px-5 flex flex-col gap-2 pb-4">
-      {past.map((t) => {
-        const myScore = totalMyScore(t);
-        return (
-          <Link key={t.id} to={`/predictions/${t.id}`} className="pressable block">
-            <div className="bg-black-900 border border-black-700 rounded-2xl px-4 py-4
-                            flex items-center justify-between">
+    <div className="px-5 pb-4">
+      <div style={{ borderTop: '1.5px solid #111111' }}>
+        {past.map((t, i) => {
+          const myScore = totalMyScore(t);
+          return (
+            <Link key={t.id} to={`/predictions/${t.id}`} className={`pressable flex items-center justify-between py-4 ${i > 0 ? 'border-t border-ink-200' : ''}`}>
               <div className="flex-1 min-w-0 mr-3">
-                <p className="text-white/60 font-semibold text-sm tracking-tight truncate">
+                <p className="text-ink font-semibold text-sm tracking-tight truncate">
                   {t.name}
                 </p>
                 {t.start_date && (
-                  <p className="text-white/25 text-[11px] mt-0.5">{t.start_date}</p>
+                  <p className="text-ink-400 text-[11px] mt-0.5">{t.start_date}</p>
                 )}
               </div>
               <div className="text-right flex-none">
-                <p className="text-white/70 font-bold text-sm">{myScore}점</p>
-                <p className="text-white/25 text-[10px] mt-0.5">결산 보기 →</p>
+                <p className="text-ink font-bold text-sm tabular-nums">{myScore}점</p>
+                <p className="text-ink-400 text-[10px] mt-0.5">결산 보기 →</p>
               </div>
-            </div>
-          </Link>
-        );
-      })}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -353,12 +282,11 @@ function PastTab({ past }) {
 function LoadingSkeleton() {
   return (
     <div className="px-5 flex flex-col gap-2 animate-pulse">
-      <div className="h-14 bg-black-900 rounded-2xl mb-2" />
-      <div className="h-20 bg-black-900 rounded-2xl" />
-      <div className="h-20 bg-black-900 rounded-2xl" />
-      <div className="h-20 bg-black-900 rounded-2xl" />
-      <div className="h-12 bg-black-900 rounded-xl" />
-      <div className="h-12 bg-black-900 rounded-xl" />
+      <div className="h-14 bg-ink-200/40 mb-2" />
+      <div className="h-12 bg-ink-200/40" />
+      <div className="h-12 bg-ink-200/40" />
+      <div className="h-12 bg-ink-200/40" />
+      <div className="h-12 bg-ink-200/40" />
     </div>
   );
 }
