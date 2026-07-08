@@ -17,6 +17,22 @@ const EMPTY_GEAR = {
   product_url: '', image_url: '', display_order: 0,
 };
 
+function Field({ label, value, onChange, type = 'text', ...props }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink
+                   placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
+        {...props}
+      />
+    </div>
+  );
+}
+
 export default function PlayerForm() {
   const { id }    = useParams();
   const navigate  = useNavigate();
@@ -124,20 +140,6 @@ export default function PlayerForm() {
     if (res.ok) setGear((g) => g.filter((x) => x.id !== gearId));
   };
 
-  const Field = ({ label, name, type = 'text', ...props }) => (
-    <div>
-      <label className="text-xs font-medium text-ink-600 mb-1 block">{label}</label>
-      <input
-        type={type}
-        value={form[name]}
-        onChange={set(name)}
-        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink
-                   placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
-        {...props}
-      />
-    </div>
-  );
-
   return (
     <div className="p-8 max-w-4xl">
       {/* 헤더 */}
@@ -162,8 +164,8 @@ export default function PlayerForm() {
         <div className="border border-ink-200 p-6 mb-6">
           <h2 className="font-semibold text-ink-600 mb-5 pb-2 border-b border-ink-200">기본 정보</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="이름 *"      name="name"    placeholder="김정환" required />
-            <Field label="영문명"       name="name_en" placeholder="Kim Jeong-hwan" />
+            <Field label="이름 *"      value={form.name}    onChange={set('name')}    placeholder="김정환" required />
+            <Field label="영문명"       value={form.name_en} onChange={set('name_en')} placeholder="Kim Jeong-hwan" />
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">슬러그 *</label>
               <div className="flex gap-2">
@@ -219,8 +221,8 @@ export default function PlayerForm() {
                 {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-            <Field label="출생연도"   name="birth_year" type="number" placeholder="1990" />
-            <Field label="신장 (cm)"  name="height_cm"  type="number" placeholder="178" />
+            <Field label="출생연도"   value={form.birth_year} onChange={set('birth_year')} type="number" placeholder="1990" />
+            <Field label="신장 (cm)"  value={form.height_cm}  onChange={set('height_cm')}  type="number" placeholder="178" />
           </div>
         </div>
 
@@ -228,10 +230,10 @@ export default function PlayerForm() {
         <div className="border border-ink-200 p-6 mb-6">
           <h2 className="font-semibold text-ink-600 mb-5 pb-2 border-b border-ink-200">SNS / 미디어</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="인스타그램 URL"    name="instagram_url"     placeholder="https://instagram.com/..." />
-            <Field label="유튜브 URL"        name="youtube_url"       placeholder="https://youtube.com/..." />
+            <Field label="인스타그램 URL"    value={form.instagram_url}     onChange={set('instagram_url')}     placeholder="https://instagram.com/..." />
+            <Field label="유튜브 URL"        value={form.youtube_url}       onChange={set('youtube_url')}       placeholder="https://youtube.com/..." />
             <div className="col-span-2">
-              <Field label="프로필 이미지 URL" name="profile_image_url" placeholder="https://..." />
+              <Field label="프로필 이미지 URL" value={form.profile_image_url} onChange={set('profile_image_url')} placeholder="https://..." />
             </div>
           </div>
         </div>

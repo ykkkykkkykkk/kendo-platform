@@ -11,6 +11,19 @@ const EMPTY = {
   reward_quantity: '', claim_condition: '우승자맞추기',
 };
 
+function Field({ label, value, onChange, type = 'text', required, ...props }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input type={type} value={value} onChange={onChange} required={required}
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
+        {...props} />
+    </div>
+  );
+}
+
 export default function SponsorshipForm() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -59,17 +72,6 @@ export default function SponsorshipForm() {
     finally { setSaving(false); }
   };
 
-  const Field = ({ label, name, type = 'text', required, ...props }) => (
-    <div>
-      <label className="text-xs font-medium text-ink-600 mb-1 block">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      <input type={type} value={form[name]} onChange={set(name)} required={required}
-        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
-        {...props} />
-    </div>
-  );
-
   return (
     <div className="p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-8">
@@ -94,8 +96,8 @@ export default function SponsorshipForm() {
                 {tournaments.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
-            <Field label="스폰서명" name="sponsor_name" placeholder="동심죽도" required />
-            <Field label="스폰서 로고 URL" name="sponsor_logo" placeholder="https://..." />
+            <Field label="스폰서명" value={form.sponsor_name} onChange={set('sponsor_name')} placeholder="동심죽도" required />
+            <Field label="스폰서 로고 URL" value={form.sponsor_logo} onChange={set('sponsor_logo')} placeholder="https://..." />
           </div>
         </div>
 
@@ -103,11 +105,11 @@ export default function SponsorshipForm() {
           <h2 className="font-semibold text-ink mb-5 pb-2 border-b border-ink-200">상품 정보</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Field label="상품명" name="reward_name" placeholder="동심 38 진검형 죽도" required />
+              <Field label="상품명" value={form.reward_name} onChange={set('reward_name')} placeholder="동심 38 진검형 죽도" required />
             </div>
-            <Field label="상품 이미지 URL" name="reward_image" placeholder="https://..." />
-            <Field label="상품 가치 (원)" name="reward_value_krw" type="number" placeholder="147000" />
-            <Field label="수량"            name="reward_quantity"  type="number" placeholder="3" />
+            <Field label="상품 이미지 URL" value={form.reward_image} onChange={set('reward_image')} placeholder="https://..." />
+            <Field label="상품 가치 (원)" value={form.reward_value_krw} onChange={set('reward_value_krw')} type="number" placeholder="147000" />
+            <Field label="수량"            value={form.reward_quantity}  onChange={set('reward_quantity')}  type="number" placeholder="3" />
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">당첨 조건</label>
               <select value={form.claim_condition} onChange={set('claim_condition')}

@@ -8,6 +8,19 @@ const EMPTY = {
   logo_url: '', color_primary: '#111111', championships: '0',
 };
 
+function Field({ label, value, onChange, type = 'text', required, ...props }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input type={type} value={value} onChange={onChange} required={required}
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
+        {...props} />
+    </div>
+  );
+}
+
 export default function TeamForm() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -54,17 +67,6 @@ export default function TeamForm() {
     finally { setSaving(false); }
   };
 
-  const Field = ({ label, name, type = 'text', required, ...props }) => (
-    <div>
-      <label className="text-xs font-medium text-ink-600 mb-1 block">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      <input type={type} value={form[name]} onChange={set(name)} required={required}
-        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
-        {...props} />
-    </div>
-  );
-
   return (
     <div className="p-8 max-w-xl">
       <div className="flex items-center gap-3 mb-8">
@@ -80,7 +82,7 @@ export default function TeamForm() {
           <h2 className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-5 pb-2 border-b border-ink-200">팀 정보</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Field label="팀명" name="name" placeholder="경찰청" required />
+              <Field label="팀명" value={form.name} onChange={set('name')} placeholder="경찰청" required />
             </div>
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">
@@ -95,10 +97,10 @@ export default function TeamForm() {
                 </button>
               </div>
             </div>
-            <Field label="지역"     name="region"       placeholder="서울" />
-            <Field label="창단년도" name="founded_year" type="number" placeholder="1946" />
-            <Field label="우승 횟수" name="championships" type="number" placeholder="0" />
-            <Field label="로고 URL" name="logo_url" placeholder="https://..." />
+            <Field label="지역"     value={form.region}       onChange={set('region')}       placeholder="서울" />
+            <Field label="창단년도" value={form.founded_year} onChange={set('founded_year')} type="number" placeholder="1946" />
+            <Field label="우승 횟수" value={form.championships} onChange={set('championships')} type="number" placeholder="0" />
+            <Field label="로고 URL" value={form.logo_url}     onChange={set('logo_url')}     placeholder="https://..." />
             <div className="col-span-2">
               <label className="text-xs font-medium text-ink-600 mb-2 block">메인 컬러</label>
               <div className="flex items-center gap-3">

@@ -9,6 +9,25 @@ const EMPTY = {
   poster_image_url: '', status: '예정',
 };
 
+function Field({ label, value, onChange, type = 'text', required, ...props }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">
+        {label}{required && <span className="text-red-600 ml-0.5">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink
+                   placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
+        {...props}
+      />
+    </div>
+  );
+}
+
 export default function TournamentForm() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -73,23 +92,6 @@ export default function TournamentForm() {
     }
   };
 
-  const Field = ({ label, name, type = 'text', required, ...props }) => (
-    <div>
-      <label className="text-xs font-medium text-ink-600 mb-1 block">
-        {label}{required && <span className="text-red-600 ml-0.5">*</span>}
-      </label>
-      <input
-        type={type}
-        value={form[name]}
-        onChange={set(name)}
-        required={required}
-        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink
-                   placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
-        {...props}
-      />
-    </div>
-  );
-
   return (
     <div className="p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-8">
@@ -109,7 +111,7 @@ export default function TournamentForm() {
           <h2 className="font-semibold text-ink mb-5 pb-2 border-b border-ink-200">기본 정보</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Field label="대회명" name="name" placeholder="2026 전국검도선수권대회" required />
+              <Field label="대회명" value={form.name} onChange={set('name')} placeholder="2026 전국검도선수권대회" required />
             </div>
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">
@@ -137,10 +139,10 @@ export default function TournamentForm() {
                 {['개인전','단체전','혼합'].map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
-            <Field label="시작일" name="start_date" type="date" />
-            <Field label="종료일" name="end_date"   type="date" />
-            <Field label="장소"   name="venue"       placeholder="충무체육관 (창원)" />
-            <Field label="주최"   name="host_organization" placeholder="대한검도회" />
+            <Field label="시작일" value={form.start_date} onChange={set('start_date')} type="date" />
+            <Field label="종료일" value={form.end_date}   onChange={set('end_date')}   type="date" />
+            <Field label="장소"   value={form.venue}      onChange={set('venue')}      placeholder="충무체육관 (창원)" />
+            <Field label="주최"   value={form.host_organization} onChange={set('host_organization')} placeholder="대한검도회" />
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">상태</label>
               <select value={form.status} onChange={set('status')}
@@ -149,7 +151,7 @@ export default function TournamentForm() {
               </select>
             </div>
             <div className="col-span-2">
-              <Field label="포스터 이미지 URL" name="poster_image_url" placeholder="https://..." />
+              <Field label="포스터 이미지 URL" value={form.poster_image_url} onChange={set('poster_image_url')} placeholder="https://..." />
             </div>
           </div>
         </div>

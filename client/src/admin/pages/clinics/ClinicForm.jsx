@@ -8,6 +8,17 @@ const EMPTY = {
   venue: '', capacity: '', remaining_slots: '', price_krw: '', status: '모집중',
 };
 
+function Field({ label, value, onChange, type = 'text', ...props }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-600 mb-1 block">{label}</label>
+      <input type={type} value={value} onChange={onChange}
+        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
+        {...props} />
+    </div>
+  );
+}
+
 export default function ClinicForm() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -66,15 +77,6 @@ export default function ClinicForm() {
     finally { setSaving(false); }
   };
 
-  const Field = ({ label, name, type = 'text', ...props }) => (
-    <div>
-      <label className="text-xs font-medium text-ink-600 mb-1 block">{label}</label>
-      <input type={type} value={form[name]} onChange={set(name)}
-        className="w-full border border-ink-200 px-4 py-3 text-sm text-ink placeholder:text-ink-400/60 focus:outline-none focus:border-ink transition-colors"
-        {...props} />
-    </div>
-  );
-
   return (
     <div className="p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-8">
@@ -102,13 +104,13 @@ export default function ClinicForm() {
               </select>
             </div>
             <div className="col-span-2">
-              <Field label="제목 *" name="title" placeholder="머리치기 완성 클래스" required />
+              <Field label="제목 *" value={form.title} onChange={set('title')} placeholder="머리치기 완성 클래스" required />
             </div>
-            <Field label="일시" name="scheduled_at" type="datetime-local" />
-            <Field label="장소" name="venue" placeholder="강남검우관" />
-            <Field label="정원" name="capacity" type="number" placeholder="8" />
-            <Field label="잔여 자리" name="remaining_slots" type="number" placeholder="정원과 동일하게 자동" />
-            <Field label="가격 (원)" name="price_krw" type="number" placeholder="70000" />
+            <Field label="일시" value={form.scheduled_at} onChange={set('scheduled_at')} type="datetime-local" />
+            <Field label="장소" value={form.venue} onChange={set('venue')} placeholder="강남검우관" />
+            <Field label="정원" value={form.capacity} onChange={set('capacity')} type="number" placeholder="8" />
+            <Field label="잔여 자리" value={form.remaining_slots} onChange={set('remaining_slots')} type="number" placeholder="정원과 동일하게 자동" />
+            <Field label="가격 (원)" value={form.price_krw} onChange={set('price_krw')} type="number" placeholder="70000" />
             <div>
               <label className="text-xs font-medium text-ink-600 mb-1 block">상태</label>
               <select value={form.status} onChange={set('status')}
