@@ -5,7 +5,7 @@ const DICEBEAR = 'https://api.dicebear.com/9.x/micah/svg';
 export default function PlayerAvatar({ slug, name, color, size = 44, className = '', profileImageUrl }) {
   const [failed, setFailed] = useState(false);
 
-  const style = { width: size, height: size, background: color ?? '#0A1F44', flexShrink: 0 };
+  const style = { width: size, height: size, background: color ?? '#111111', flexShrink: 0 };
 
   // 실제 프로필 이미지가 있으면 우선 사용
   if (profileImageUrl && !failed) {

@@ -44,26 +44,28 @@ export default function KakaoLoginModal({ onClose }) {
   return (
     /* 딤 배경 */
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+      className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center"
       onClick={onClose}
     >
       {/* 바텀 시트 */}
       <div
-        className="w-full max-w-mobile bg-white rounded-t-2xl px-6 pt-6 pb-10"
+        className="w-full max-w-mobile bg-paper rounded-t-2xl px-6 pt-6 pb-10"
+        style={{ borderTop: '1.5px solid #111111' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+        <div className="w-10 h-1 bg-ink-200 rounded-full mx-auto mb-6" />
 
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-gold font-black text-2xl">검</span>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden">
+            <img src="/logo.svg" alt="마이너스타" className="w-full h-full" />
           </div>
-          <h2 className="text-navy font-black text-lg">마이너스타 시작하기</h2>
-          <p className="text-sub text-sm mt-1">로그인하고 경기 예측에 참여하세요</p>
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">MINOR—STAR®</p>
+          <h2 className="text-ink font-bold text-lg tracking-tight">마이너스타 시작하기</h2>
+          <p className="text-ink-400 text-sm mt-1">로그인하고 경기 예측에 참여하세요</p>
         </div>
 
         {error && (
-          <p className="text-red-500 text-xs text-center mb-3 whitespace-pre-line">{error}</p>
+          <p className="text-red-600 text-xs text-center mb-3 whitespace-pre-line">{error}</p>
         )}
 
         <button
@@ -84,7 +86,7 @@ export default function KakaoLoginModal({ onClose }) {
 
         <button
           onClick={onClose}
-          className="w-full mt-3 text-sub text-sm py-2"
+          className="w-full mt-3 text-ink-400 text-sm py-2"
         >
           닫기
         </button>

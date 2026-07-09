@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon-180x180.png'],
+      includeAssets: ['logo.svg', 'apple-touch-icon-180x180.png', 'favicon-32.png', 'favicon-16.png'],
       manifest: {
         name: '마이너스타',
         short_name: '마이너스타',
         description: '비인기종목 선수와 팬을 잇는 플랫폼',
-        theme_color: '#FF8800',
-        background_color: '#050505',
+        theme_color: '#FFFFFF',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',

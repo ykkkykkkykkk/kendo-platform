@@ -1,6 +1,6 @@
 export function SkeletonCard({ className = '' }) {
   return (
-    <div className={`bg-card rounded-xl animate-pulse ${className}`} />
+    <div className={`bg-ink-200/40 animate-pulse ${className}`} />
   );
 }
 

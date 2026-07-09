@@ -7,25 +7,25 @@ function DataTable({ title, rows, columns, emptyMsg = '데이터 없음' }) {
   return (
     <section className="mb-8">
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-sm font-bold text-navy">{title}</h2>
-        <span className="text-xs bg-gold/20 text-gold font-semibold px-2 py-0.5 rounded-full">
+        <h2 className="text-sm font-bold text-ink">{title}</h2>
+        <span className="text-xs border border-ink-200 text-ink-600 font-semibold px-2 py-0.5 rounded-full">
           {rows.length}건
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="border border-ink-100 rounded-xl py-6 text-center text-ink-400 text-xs">
+        <div className="border border-ink-200 rounded-xl py-6 text-center text-ink-400 text-xs">
           {emptyMsg}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-ink-100 shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-ink-200 shadow-sm">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-ink-50 border-b border-ink-100">
+              <tr className="bg-ink-200/40 border-b border-ink-200">
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className="px-3 py-2.5 text-left text-ink-500 font-semibold whitespace-nowrap"
+                    className="px-3 py-2.5 text-left text-ink-600 font-semibold whitespace-nowrap"
                   >
                     {col.label}
                   </th>
@@ -34,9 +34,9 @@ function DataTable({ title, rows, columns, emptyMsg = '데이터 없음' }) {
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={i} className={`border-t border-ink-100 ${i % 2 === 1 ? 'bg-ink-50/40' : ''}`}>
+                <tr key={i} className={`border-t border-ink-200 ${i % 2 === 1 ? 'bg-ink-200/40/40' : ''}`}>
                   {columns.map((col) => (
-                    <td key={col.key} className="px-3 py-2 text-ink-700 whitespace-nowrap">
+                    <td key={col.key} className="px-3 py-2 text-ink whitespace-nowrap">
                       {col.render
                         ? col.render(row[col.key], row)
                         : (row[col.key] ?? '—')}
@@ -53,9 +53,9 @@ function DataTable({ title, rows, columns, emptyMsg = '데이터 없음' }) {
 }
 
 /* ── 요약 카드 ─────────────────────────────────────────── */
-function StatCard({ label, value, color = 'text-navy' }) {
+function StatCard({ label, value, color = 'text-ink' }) {
   return (
-    <div className="bg-white border border-ink-100 rounded-xl p-4 text-center">
+    <div className="bg-white border border-ink-200 rounded-xl p-4 text-center">
       <p className={`text-3xl font-black ${color}`}>{value}</p>
       <p className="text-ink-400 text-xs mt-1">{label}</p>
     </div>
@@ -83,7 +83,7 @@ export default function Debug() {
     return (
       <main className="page-body px-4 pt-12">
         <div className="flex items-center gap-2 text-ink-400 text-sm">
-          <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
+          <div className="w-2 h-2 bg-lime rounded-full animate-pulse" />
           DB 조회 중...
         </div>
       </main>
@@ -106,7 +106,7 @@ export default function Debug() {
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-6">
         <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
-        <h1 className="text-xl font-black text-navy">Debug Panel</h1>
+        <h1 className="text-xl font-black text-ink">Debug Panel</h1>
         <span className="text-[11px] bg-red-100 text-red-500 px-2 py-0.5 rounded-full font-bold">
           DEV ONLY
         </span>
@@ -114,8 +114,8 @@ export default function Debug() {
 
       {/* 요약 */}
       <div className="grid grid-cols-3 gap-3 mb-8">
-        <StatCard label="가입 유저"  value={users.length}       color="text-navy" />
-        <StatCard label="팔로우"     value={follows.length}     color="text-gold" />
+        <StatCard label="가입 유저"  value={users.length}       color="text-ink" />
+        <StatCard label="팔로우"     value={follows.length}     color="text-ink" />
         <StatCard label="예측"       value={predictions.length} color="text-emerald-600" />
       </div>
 
@@ -168,7 +168,7 @@ export default function Debug() {
             key: 'predicted_player',
             label: '예측',
             render: (v) => (
-              <span className="font-semibold text-gold">{v ?? '—'}</span>
+              <span className="font-semibold text-ink">{v ?? '—'}</span>
             ),
           },
           {
