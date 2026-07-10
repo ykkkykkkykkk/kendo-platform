@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Shield, Trophy, Dumbbell, Star, LogOut,
+  LayoutDashboard, Users, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut,
 } from 'lucide-react';
 
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/admin/tournaments',  label: '대회 관리',  icon: Trophy },
   { to: '/admin/clinics',      label: '클리닉',     icon: Dumbbell },
   { to: '/admin/sponsorships', label: '스폰서',     icon: Star },
+  { to: '/admin/questions',    label: 'Q&A',        icon: MessageCircle },
 ];
 
 export default function AdminLayout({ children, onLogout }) {

@@ -820,4 +820,33 @@ router.patch('/player-accounts/:id/password', async (req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+/* ════════════════════════════════════════
+   선수 Q&A 관리 (부적절 질문 삭제)
+════════════════════════════════════════ */
+
+// GET /api/admin/questions — 전체 Q&A 목록 (최신순)
+router.get('/questions', async (_req, res) => {
+  try {
+    const { rows } = await db.execute(`
+      SELECT q.id, q.question, q.answer, q.created_at, q.answered_at,
+             p.name AS player_name, p.slug AS player_slug,
+             u.nickname AS asker
+      FROM player_questions q
+      JOIN players p ON p.id = q.player_id
+      JOIN users   u ON u.id = q.user_id
+      ORDER BY q.created_at DESC
+      LIMIT 300
+    `);
+    res.json(rows);
+  } catch (e) { serverError(res, e); }
+});
+
+// DELETE /api/admin/questions/:id — 질문 삭제 (관리자 권한)
+router.delete('/questions/:id', async (req, res) => {
+  try {
+    await db.execute({ sql: 'DELETE FROM player_questions WHERE id = ?', args: [req.params.id] });
+    res.json({ deleted: true });
+  } catch (e) { serverError(res, e); }
+});
+
 export default router;
