@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import CountdownTimer from '../components/CountdownTimer.jsx';
 import DivisionTypeBadge from '../components/DivisionTypeBadge.jsx';
+import LoginPrompt from '../components/LoginPrompt.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 
 /* ── 대회 분류 ─────────────────────────────────────────────── */
@@ -26,8 +28,12 @@ function pickedCount(t) {
 }
 
 /* ── 메인 페이지 ───────────────────────────────────────────── */
-export default function PredictionsPage() {
-  const { data, loading } = useFetch(api.tournamentsWithDivisions);
+export default function PredictionsPage({ onLoginRequest }) {
+  const { user } = useAuth();
+  const { data, loading } = useFetch(
+    () => (user ? api.tournamentsWithDivisions() : Promise.resolve([])),
+    [user?.userId],
+  );
   const { pickable, live, past } = Array.isArray(data) ? classify(data) : { pickable: [], live: [], past: [] };
 
   return (
@@ -39,7 +45,14 @@ export default function PredictionsPage() {
         <p className="text-sm text-ink-400 mt-2">우승자를 맞춰보세요</p>
       </header>
 
-      {loading ? (
+      {!user ? (
+        <LoginPrompt
+          eyebrow="PICK"
+          title="예측에 참여해보세요"
+          desc="로그인하고 대회 우승을 맞혀보세요. 적중하면 진짜 검도용품을 드려요."
+          onLoginRequest={onLoginRequest}
+        />
+      ) : loading ? (
         <LoadingSkeleton />
       ) : (
         <div className="px-5 flex flex-col gap-10 pb-4">

@@ -27,7 +27,8 @@ import MyFollows           from './pages/MyFollows.jsx';
 export default function App() {
   const { user }   = useAuth();
   const location   = useLocation();
-  const [showLogin,       setShowLogin]       = useState(!user);
+  // 둘러보기 먼저: 랜딩 시 로그인 강제하지 않음 (참여 액션에서만 로그인 유도)
+  const [showLogin,       setShowLogin]       = useState(false);
   const [showPlayerLogin, setShowPlayerLogin] = useState(false);
 
   // /admin/* 경로는 완전히 분리된 AdminApp으로 렌더링
@@ -63,7 +64,7 @@ export default function App() {
           <Route path="/tournaments" element={<Navigate to="/predictions" replace />} />
           <Route path="/tournaments/:slug" element={<Navigate to="/predictions" replace />} />
           <Route path="/predictions" element={
-            <PageTransition><PredictionsPage /></PageTransition>
+            <PageTransition><PredictionsPage onLoginRequest={openLogin} /></PageTransition>
           } />
           <Route path="/predictions/:tournament_id" element={
             <PageTransition><PredictionTournamentPage /></PageTransition>
@@ -72,7 +73,7 @@ export default function App() {
             <PageTransition><PickInputPage /></PageTransition>
           } />
           <Route path="/ranking" element={
-            <PageTransition><RankingPage /></PageTransition>
+            <PageTransition><RankingPage onLoginRequest={openLogin} /></PageTransition>
           } />
           <Route path="/search" element={
             <PageTransition><SearchPage /></PageTransition>

@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import DojoRankingTab from '../components/DojoRankingTab.jsx';
+import LoginPrompt from '../components/LoginPrompt.jsx';
 
 function totalMyScore(t) {
   return t.divisions.reduce((s, d) => s + (d.my_score ?? 0), 0);
@@ -12,7 +13,7 @@ function totalMyScore(t) {
 
 const rankNo = (n) => String(n).padStart(2, '0');
 
-export default function RankingPage() {
+export default function RankingPage({ onLoginRequest }) {
   const { user } = useAuth();
   const myUserId = user?.id ?? null;
 
@@ -51,6 +52,16 @@ export default function RankingPage() {
           {mainTab === 'individual' ? '픽 예측 순위' : '도장 시즌 순위'}
         </p>
       </header>
+
+      {!user ? (
+        <LoginPrompt
+          eyebrow="RANK"
+          title="랭킹에 참여해보세요"
+          desc="로그인하고 예측 점수를 쌓아 랭킹에 이름을 올려보세요."
+          onLoginRequest={onLoginRequest}
+        />
+      ) : (
+      <>
 
       {/* 상단 메인 토글: INDIVIDUAL / DOJO */}
       <div className="flex gap-2 mx-5 mb-4">
@@ -108,6 +119,8 @@ export default function RankingPage() {
             <PastTab past={past} />
           )}
         </>
+      )}
+      </>
       )}
     </main>
   );
