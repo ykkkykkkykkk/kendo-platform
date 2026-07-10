@@ -35,6 +35,13 @@ export const api = {
   team:        (slug) => get(`/teams/${slug}`),
   players:     (team) => get(team ? `/players?team=${team}` : '/players'),
   player:      (slug) => get(`/players/${slug}`),
+
+  // 선수 Q&A
+  playerQuestions: (slug)          => get(`/players/${slug}/questions`),
+  questionQuota:   (slug)          => authGet(`/players/${slug}/questions/quota`),
+  askQuestion:     (slug, question)=> authPost(`/players/${slug}/questions`, { question }),
+  answerQuestion:  (id, answer)    => authPost(`/questions/${id}/answer`, { answer }),
+  deleteQuestion:  (id)            => authDelete(`/questions/${id}`),
   tournaments: ()     => get('/tournaments'),
   tournament:  (slug) => get(`/tournaments/${slug}`),
 

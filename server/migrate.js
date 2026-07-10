@@ -25,6 +25,7 @@ const DROP_ORDER = [
   'clinic_bookings','clinics','sponsorships','predictions',
   'follows',
   'division_results','tournament_picks','division_participants','tournament_divisions',
+  'player_questions',
   'player_comments',
   'dojo_invitations',
   'inquiries',
@@ -66,5 +67,6 @@ await run('007_player_accounts.sql');
 await run('008_comments.sql');
 await run('009_dojo_invitations.sql');
 await run('010_inquiries.sql');
+await run('011_player_questions.sql');
 console.log('마이그레이션 완료!');
 process.exit(0);

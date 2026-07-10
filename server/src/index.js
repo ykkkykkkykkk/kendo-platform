@@ -18,6 +18,7 @@ import dojosRouter       from './routes/dojos.js';
 import meRouter          from './routes/me.js';
 import adminDojosRouter  from './routes/adminDojos.js';
 import inquiriesRouter   from './routes/inquiries.js';
+import questionsRouter    from './routes/questions.js';
 
 import { authLimiter, predictionLimiter, adminLimiter } from './middleware/rateLimits.js';
 
@@ -56,6 +57,7 @@ app.use('/api/admin',       adminLimiter,      adminDojosRouter);
 app.use('/api',             dojosRouter);
 app.use('/api/me',          meRouter);
 app.use('/api',             inquiriesRouter);
+app.use('/api',             questionsRouter);
 app.use('/api',             picksRouter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));

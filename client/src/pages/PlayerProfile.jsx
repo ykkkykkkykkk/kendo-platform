@@ -15,6 +15,7 @@ import { SkeletonList } from '../components/Skeleton.jsx';
 import PlayerAvatar         from '../components/PlayerAvatar.jsx';
 import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
 import InquiryModal        from '../components/InquiryModal.jsx';
+import PlayerQnA           from '../components/PlayerQnA.jsx';
 
 function BioText({ text }) {
   const parts = text.split(/([""][^""]*[""])/);
@@ -412,6 +413,14 @@ export default function PlayerProfile({ onLoginRequest }) {
             </div>
           )}
         </section>
+
+        {/* ── 선수 Q&A ── */}
+        <PlayerQnA
+          slug={player.slug}
+          playerId={player.id}
+          playerName={player.name}
+          onLoginRequest={onLoginRequest}
+        />
 
         {/* ── 장비 입점 문의 — 반전 블록 ── */}
         <div className="mt-8 bg-block rounded-2xl">
