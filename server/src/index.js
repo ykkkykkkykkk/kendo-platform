@@ -33,12 +33,28 @@ for (const key of ['JWT_SECRET', 'ADMIN_TOKEN']) {
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
-/* ── CORS ── */
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean)
-  : true;
+/* ── CORS ──
+   허용 출처: ALLOWED_ORIGINS(env) + 마이너스타 도메인 + 모든 *.vercel.app(프로덕션/프리뷰).
+   커스텀 도메인(minorstar.kr)을 코드에 넣어, Render env 수정 없이도 항상 허용된다. */
+const staticAllowed = (process.env.ALLOWED_ORIGINS ?? '')
+  .split(',').map((o) => o.trim()).filter(Boolean);
 
-app.use(cors({ origin: allowedOrigins }));
+function isAllowedOrigin(origin) {
+  if (!origin) return true;                        // 서버-투-서버 / curl (Origin 없음)
+  if (staticAllowed.includes(origin)) return true;
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname === 'minorstar.kr' || hostname === 'www.minorstar.kr') return true;
+    if (hostname.endsWith('.vercel.app')) return true;
+  } catch { /* invalid origin */ }
+  return false;
+}
+
+const corsOptions = process.env.NODE_ENV === 'production'
+  ? { origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) }
+  : { origin: true };
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 /* ── 라우트 (rate limit은 보호 필요한 라우트에만) ── */
