@@ -89,3 +89,20 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => console.log(`server running on http://localhost:${PORT}`));
+
+/* ── 콜드스타트 방지 self-ping ──
+   Render 무료 플랜은 15분 유휴 시 슬립한다. GitHub Actions 스케줄은 지연이 심해
+   (실측 ~2시간 간격) 신뢰할 수 없으므로, 서버가 13분마다 자기 자신을 호출해 깨어 있게 한다.
+   RENDER_EXTERNAL_URL 은 Render가 자동 주입하는 서비스 공개 URL. */
+const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+if (process.env.NODE_ENV === 'production' && SELF_URL) {
+  const PING_MS = 13 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      const r = await fetch(`${SELF_URL}/health`);
+      console.log(`[keep-alive] self-ping ${r.status}`);
+    } catch (e) {
+      console.warn('[keep-alive] self-ping 실패:', e.message);
+    }
+  }, PING_MS).unref();
+}
