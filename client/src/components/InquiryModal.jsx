@@ -77,7 +77,7 @@ export default function InquiryModal({ onClose }) {
     >
       <div className="absolute inset-0 bg-black/40" />
       <motion.div
-        className="relative w-full max-w-mobile bg-paper rounded-t-2xl flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-mobile bg-paper rounded-t-2xl flex flex-col max-h-[85dvh]"
         style={{ borderTop: '1.5px solid #111111' }}
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
@@ -105,8 +105,11 @@ export default function InquiryModal({ onClose }) {
           </div>
         </div>
 
-        {/* 본문 */}
-        <div className="flex-1 overflow-y-auto px-6 pb-8">
+        {/* 본문 — 하단 탭바(60px)+safe-area 만큼 여백을 둬 제출 버튼이 가려지지 않게 */}
+        <div
+          className="flex-1 overflow-y-auto px-6"
+          style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom) + 16px)' }}
+        >
           {view === 'form' ? (
             done ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
