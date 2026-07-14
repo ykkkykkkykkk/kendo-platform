@@ -30,14 +30,16 @@ router.get('/players/:slug/questions', async (req, res) => {
 });
 
 // GET /api/players/:slug/questions/quota — 로그인 유저의 오늘 질문 가능 여부 (계정당 하루 1회)
+// users.last_question_at(KST 날짜) 기준. 질문을 삭제해도 이 값은 남으므로 삭제→재질문 우회 불가.
 router.get('/players/:slug/questions/quota', requireAuth, async (req, res) => {
   try {
-    const { rows: [c] } = await db.execute({
-      sql: `SELECT COUNT(*) AS cnt FROM player_questions
-            WHERE user_id = ? AND date(created_at, '+9 hours') = date('now', '+9 hours')`,
+    const { rows: [u] } = await db.execute({
+      sql: `SELECT (last_question_at IS NULL
+                    OR date(last_question_at, '+9 hours') <> date('now', '+9 hours')) AS can_ask
+            FROM users WHERE id = ?`,
       args: [req.user.userId],
     });
-    res.json({ canAsk: c.cnt === 0, usedToday: c.cnt });
+    res.json({ canAsk: !!u?.can_ask });
   } catch (e) { serverError(res, e); }
 });
 
@@ -57,18 +59,25 @@ router.post('/players/:slug/questions', requireAuth, async (req, res) => {
     if (req.user.role === 'player' && req.user.playerId === player.id)
       return res.status(400).json({ error: '본인에게는 질문할 수 없습니다.' });
 
-    // 계정당 하루 1회 제한 (KST 기준)
-    const { rows: [c] } = await db.execute({
-      sql: `SELECT COUNT(*) AS cnt FROM player_questions
-            WHERE user_id = ? AND date(created_at, '+9 hours') = date('now', '+9 hours')`,
+    // 계정당 하루 1회 제한 (KST 기준) — users.last_question_at 로 판정하여 삭제 우회 방지
+    const { rows: [u] } = await db.execute({
+      sql: `SELECT (last_question_at IS NOT NULL
+                    AND date(last_question_at, '+9 hours') = date('now', '+9 hours')) AS asked_today
+            FROM users WHERE id = ?`,
       args: [req.user.userId],
     });
-    if (c.cnt > 0)
+    if (u?.asked_today)
       return res.status(429).json({ error: '질문은 하루에 한 번만 가능해요. 내일 다시 물어봐 주세요!' });
 
     const { lastInsertRowid } = await db.execute({
       sql: 'INSERT INTO player_questions (player_id, user_id, question) VALUES (?, ?, ?)',
       args: [player.id, req.user.userId, question.trim()],
+    });
+
+    // 마지막 질문 시각 기록 (제한 판정 기준)
+    await db.execute({
+      sql: `UPDATE users SET last_question_at = datetime('now') WHERE id = ?`,
+      args: [req.user.userId],
     });
 
     const { rows: [q] } = await db.execute({
