@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { trackVisit } from './api.js';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
@@ -30,6 +31,11 @@ export default function App() {
   // 둘러보기 먼저: 랜딩 시 로그인 강제하지 않음 (참여 액션에서만 로그인 유도)
   const [showLogin,       setShowLogin]       = useState(false);
   const [showPlayerLogin, setShowPlayerLogin] = useState(false);
+
+  // 방문 기록: 경로 바뀔 때마다 1건 핑 (어드민 경로는 제외 — 운영자 접속은 통계에서 뺌)
+  useEffect(() => {
+    if (!location.pathname.startsWith('/admin')) trackVisit(location.pathname);
+  }, [location.pathname]);
 
   // /admin/* 경로는 완전히 분리된 AdminApp으로 렌더링
   if (location.pathname.startsWith('/admin')) {

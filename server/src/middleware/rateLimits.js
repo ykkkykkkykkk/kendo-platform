@@ -26,3 +26,12 @@ export const adminLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// 방문 기록: 1분에 60회 (한 클라가 페이지 이동마다 핑 — 넉넉하게)
+export const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { ok: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

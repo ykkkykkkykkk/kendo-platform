@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -90,7 +91,15 @@ export default function Home({ onLoginRequest }) {
     [firstSlug],
   );
 
-  const featured    = players?.filter((p) => p.bio) ?? [];
+  // 접속(데이터 로드)할 때마다 전체 선수에서 랜덤으로 섞어 6명 노출 (Fisher–Yates)
+  const featured = useMemo(() => {
+    const list = [...(players ?? [])];
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }, [players]);
   const upcoming    = tournaments?.filter((t) => t.status !== '종료') ?? [];
   const hero        = upcoming[0];
   const weekMatches = detail?.bracket?.['16강']?.slice(0, 3) ?? [];
@@ -233,7 +242,7 @@ export default function Home({ onLoginRequest }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-ink font-bold text-[15px] leading-tight truncate">{p.name}</p>
                   <p className="text-ink-400 text-[11px] mt-0.5 truncate">
-                    {p.team_name} · {p.dan_grade}단
+                    {p.team_name}{p.dan_grade ? ` · ${p.dan_grade}단` : ''}
                   </p>
                 </div>
                 <span className="text-ink-400 text-[11px] flex-shrink-0">

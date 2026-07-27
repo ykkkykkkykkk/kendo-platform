@@ -19,8 +19,9 @@ import meRouter          from './routes/me.js';
 import adminDojosRouter  from './routes/adminDojos.js';
 import inquiriesRouter   from './routes/inquiries.js';
 import questionsRouter    from './routes/questions.js';
+import trackRouter        from './routes/track.js';
 
-import { authLimiter, predictionLimiter, adminLimiter } from './middleware/rateLimits.js';
+import { authLimiter, predictionLimiter, adminLimiter, trackLimiter } from './middleware/rateLimits.js';
 
 /* ── 필수 환경변수 검증 (없으면 서버 시작 거부) ── */
 for (const key of ['JWT_SECRET', 'ADMIN_TOKEN']) {
@@ -75,6 +76,7 @@ app.use('/api/me',          meRouter);
 app.use('/api',             inquiriesRouter);
 app.use('/api',             questionsRouter);
 app.use('/api',             picksRouter);
+app.use('/api',             trackLimiter,      trackRouter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 

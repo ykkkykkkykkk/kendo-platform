@@ -7,6 +7,25 @@ function authHeaders() {
 
 const get = (path) => fetch(BASE + path).then((r) => r.json());
 
+// 익명 방문 기록 (통계용). visitor_id는 localStorage의 랜덤 UUID(PII 아님).
+// 실패해도 조용히 무시 — 사용자 경험에 영향 없음.
+export function trackVisit(path) {
+  try {
+    let vid = localStorage.getItem('visitor_id');
+    if (!vid) {
+      vid = (crypto.randomUUID && crypto.randomUUID()) ||
+            (Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+      localStorage.setItem('visitor_id', vid);
+    }
+    fetch(BASE + '/track', {
+      method:    'POST',
+      headers:   { 'Content-Type': 'application/json' },
+      body:      JSON.stringify({ visitor_id: vid, path }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* localStorage 차단 등 — 무시 */ }
+}
+
 export const authPost = (path, body) =>
   fetch(BASE + path, {
     method:  'POST',

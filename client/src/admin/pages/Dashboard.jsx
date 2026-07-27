@@ -47,15 +47,111 @@ function RecentTable({ title, rows, columns }) {
   );
 }
 
+/* ── 방문자 막대차트 ──────────────────────────────
+   흑백 모노톤: 조회수=연회색 전체 막대, 순방문자=잉크(하단), 사이 2px 갭.
+   순방문자 ≤ 조회수 가 항상 성립하므로 겹쳐 그려도 의미가 맞음.
+   명도 차이로 구분 → 색맹 안전. */
+const INK = '#111111';
+const GRAY = '#d4d4d4';
+
+function fmtBucket(b, kind) {
+  if (!b) return '';
+  return kind === 'daily' ? b.slice(5).replace('-', '/') : b.slice(2).replace('-', '.'); // MM/DD | YY.MM
+}
+
+function VisitBarChart({ data = [], kind }) {
+  const [hover, setHover] = useState(null);
+  if (!data.length) return <div className="border border-ink-200 py-10 text-center text-ink-400 text-sm">데이터 없음</div>;
+
+  const H = 210, padT = 14, padB = 30, padL = 38, padR = 8;
+  const slotW = kind === 'daily' ? 26 : 54;
+  const W = padL + padR + data.length * slotW;
+  const plotH = H - padT - padB;
+  const maxV = Math.max(1, ...data.map((d) => d.views));
+  const yOf = (v) => padT + plotH * (1 - v / maxV);
+  const barW = Math.min(slotW * 0.62, 24);
+  const hasData = data.some((d) => d.views > 0);
+
+  // 그리드 3단계 (0, 중간, 최대)
+  const ticks = [0, Math.round(maxV / 2), maxV];
+  const labelEvery = kind === 'daily' ? Math.ceil(data.length / 8) : 1;
+
+  return (
+    <div className="relative">
+      {/* 범례 */}
+      <div className="flex items-center gap-4 mb-2 text-[11px] text-ink-600">
+        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3" style={{ background: INK }} />순방문자</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3" style={{ background: GRAY }} />조회수</span>
+      </div>
+
+      {!hasData && (
+        <div className="absolute inset-0 top-8 flex items-center justify-center text-ink-400 text-sm z-10 pointer-events-none">
+          아직 방문 데이터가 없습니다
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <svg width={W} height={H} role="img" aria-label={`${kind === 'daily' ? '일별' : '월별'} 방문자`}>
+          {/* 그리드 + y라벨 */}
+          {ticks.map((t, i) => (
+            <g key={i}>
+              <line x1={padL} y1={yOf(t)} x2={W - padR} y2={yOf(t)} stroke="#ececec" strokeWidth="1" />
+              <text x={padL - 6} y={yOf(t) + 3} textAnchor="end" fontSize="9" fill="#9a9a9a" className="tabular-nums">{t}</text>
+            </g>
+          ))}
+          {data.map((d, i) => {
+            const cx = padL + i * slotW + slotW / 2;
+            const x = cx - barW / 2;
+            const yViews = yOf(d.views);
+            const yUniq = yOf(d.uniques);
+            const gap = d.uniques > 0 && d.views > d.uniques ? 2 : 0; // 두 채움 사이 2px 서피스 갭
+            return (
+              <g key={i}
+                 onMouseEnter={() => setHover(i)}
+                 onMouseLeave={() => setHover((h) => (h === i ? null : h))}>
+                {/* 조회수(연회색) 전체 */}
+                {d.views > 0 && (
+                  <rect x={x} y={yViews} width={barW} height={Math.max(0, (yUniq - gap) - yViews)} fill={GRAY} rx="1" />
+                )}
+                {/* 순방문자(잉크) 하단 */}
+                {d.uniques > 0 && (
+                  <rect x={x} y={yUniq} width={barW} height={padT + plotH - yUniq} fill={INK} rx="1" />
+                )}
+                {/* 호버 히트영역 */}
+                <rect x={padL + i * slotW} y={padT} width={slotW} height={plotH} fill="transparent" />
+                {hover === i && <rect x={padL + i * slotW} y={padT} width={slotW} height={plotH} fill="#11111108" />}
+                {/* x라벨 */}
+                {i % labelEvery === 0 && (
+                  <text x={cx} y={H - 12} textAnchor="middle" fontSize="9" fill="#9a9a9a">{fmtBucket(d.bucket, kind)}</text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* 툴팁 */}
+      {hover != null && data[hover] && (
+        <div className="absolute top-0 right-0 bg-ink text-white text-[11px] px-3 py-2 pointer-events-none shadow-lg">
+          <div className="font-semibold mb-0.5">{data[hover].bucket}</div>
+          <div>순방문자 <span className="tabular-nums font-bold">{data[hover].uniques}</span></div>
+          <div>조회수 <span className="tabular-nums font-bold">{data[hover].views}</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [data,    setData]    = useState(null);
+  const [visits,  setVisits]  = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminGet('/stats')
-      .then(setData)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    Promise.all([
+      adminGet('/stats').then(setData).catch(console.error),
+      adminGet('/stats/visits').then(setVisits).catch(console.error),
+    ]).finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
@@ -78,6 +174,29 @@ export default function Dashboard() {
         <StatTile label="등록 선수"     value={stats.players} />
         <StatTile label="진행중 대회"   value={stats.activeTournaments} />
         <StatTile label="총 예측 수"    value={stats.predictions} />
+      </div>
+
+      {/* 방문자 통계 */}
+      <div className="mb-10">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">VISITORS — 방문자 통계</p>
+
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <StatTile label="오늘 순방문자"   value={visits?.today?.uniques} />
+          <StatTile label="오늘 조회수"     value={visits?.today?.views} />
+          <StatTile label="이번달 순방문자" value={visits?.month?.uniques} />
+          <StatTile label="이번달 조회수"   value={visits?.month?.views} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="border border-ink-200 p-5">
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">DAILY — 최근 30일 (일별)</p>
+            <VisitBarChart data={visits?.daily ?? []} kind="daily" />
+          </div>
+          <div className="border border-ink-200 p-5">
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">MONTHLY — 최근 12개월 (월별)</p>
+            <VisitBarChart data={visits?.monthly ?? []} kind="monthly" />
+          </div>
+        </div>
       </div>
 
       {/* 최근 데이터 테이블 */}

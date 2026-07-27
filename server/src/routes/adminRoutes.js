@@ -90,6 +90,59 @@ router.get('/stats', async (_req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+// GET /api/admin/stats/visits — 방문자 통계 (일별 30일 + 월별 12개월). 시각은 KST(+9h) 기준으로 그룹.
+router.get('/stats/visits', async (_req, res) => {
+  try {
+    const [dailyR, monthlyR, todayR, monthR] = await Promise.all([
+      // 최근 30일 — 방문 없는 날도 0으로 채워 연속 축 유지 (KST 기준)
+      db.execute(`
+        WITH RECURSIVE days(d) AS (
+          SELECT date('now', '+9 hours', '-29 days')
+          UNION ALL
+          SELECT date(d, '+1 day') FROM days WHERE d < date('now', '+9 hours')
+        )
+        SELECT days.d                              AS bucket,
+               COUNT(DISTINCT v.visitor_id)        AS uniques,
+               COUNT(v.id)                         AS views
+        FROM days
+        LEFT JOIN page_visits v ON date(v.created_at, '+9 hours') = days.d
+        GROUP BY days.d ORDER BY days.d
+      `),
+      // 최근 12개월 — 방문 없는 달도 0으로 채움 (KST 기준)
+      db.execute(`
+        WITH RECURSIVE months(m) AS (
+          SELECT strftime('%Y-%m', 'now', '+9 hours', '-11 months')
+          UNION ALL
+          SELECT strftime('%Y-%m', date(m || '-01', '+1 month'))
+          FROM months WHERE m < strftime('%Y-%m', 'now', '+9 hours')
+        )
+        SELECT months.m                            AS bucket,
+               COUNT(DISTINCT v.visitor_id)        AS uniques,
+               COUNT(v.id)                         AS views
+        FROM months
+        LEFT JOIN page_visits v ON strftime('%Y-%m', v.created_at, '+9 hours') = months.m
+        GROUP BY months.m ORDER BY months.m
+      `),
+      db.execute(`
+        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views
+        FROM page_visits
+        WHERE date(created_at, '+9 hours') = date('now', '+9 hours')
+      `),
+      db.execute(`
+        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views
+        FROM page_visits
+        WHERE strftime('%Y-%m', created_at, '+9 hours') = strftime('%Y-%m', 'now', '+9 hours')
+      `),
+    ]);
+    res.json({
+      daily:   dailyR.rows,
+      monthly: monthlyR.rows,
+      today:   todayR.rows[0],
+      month:   monthR.rows[0],
+    });
+  } catch (e) { serverError(res, e); }
+});
+
 /* ════════════════════════════════════════
    팀 CRUD (목록은 드롭다운 + 관리 겸용)
 ════════════════════════════════════════ */
