@@ -91,9 +91,9 @@ export default function Home({ onLoginRequest }) {
     [firstSlug],
   );
 
-  // 접속(데이터 로드)할 때마다 전체 선수에서 랜덤으로 섞어 6명 노출 (Fisher–Yates)
+  // 접속(데이터 로드)할 때마다 장비 등록된 선수 중 랜덤 6명 노출 (Fisher–Yates)
   const featured = useMemo(() => {
-    const list = [...(players ?? [])];
+    const list = (players ?? []).filter((p) => (p.gear_count ?? 0) > 0);
     for (let i = list.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [list[i], list[j]] = [list[j], list[i]];

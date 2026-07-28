@@ -12,7 +12,8 @@ router.get('/', async (req, res) => {
     const sql = team
       ? `SELECT p.*, t.name AS team_name, t.slug AS team_slug, t.color_primary,
                 ps.wins, ps.losses, ps.total_matches,
-                (SELECT COUNT(*) FROM follows f WHERE f.player_id = p.id) AS fan_count
+                (SELECT COUNT(*) FROM follows f WHERE f.player_id = p.id) AS fan_count,
+                (SELECT COUNT(*) FROM player_gear g WHERE g.player_id = p.id) AS gear_count
          FROM players p
          JOIN teams t ON t.id = p.team_id
          LEFT JOIN player_stats ps ON ps.player_id = p.id
@@ -20,7 +21,8 @@ router.get('/', async (req, res) => {
          ORDER BY p.name`
       : `SELECT p.*, t.name AS team_name, t.slug AS team_slug, t.color_primary,
                 ps.wins, ps.losses, ps.total_matches,
-                (SELECT COUNT(*) FROM follows f WHERE f.player_id = p.id) AS fan_count
+                (SELECT COUNT(*) FROM follows f WHERE f.player_id = p.id) AS fan_count,
+                (SELECT COUNT(*) FROM player_gear g WHERE g.player_id = p.id) AS gear_count
          FROM players p
          JOIN teams t ON t.id = p.team_id
          LEFT JOIN player_stats ps ON ps.player_id = p.id
