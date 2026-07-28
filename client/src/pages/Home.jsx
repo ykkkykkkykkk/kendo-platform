@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -7,6 +7,7 @@ import { api } from '../api.js';
 import { SkeletonCard } from '../components/Skeleton.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
+import WelcomeModal from '../components/WelcomeModal.jsx';
 
 /* ── D-day: "D—9" (em dash) ────────────────────────────── */
 function dday(dateStr) {
@@ -78,6 +79,20 @@ function MatchCard({ match }) {
 export default function Home({ onLoginRequest }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // 첫 방문 환영 팝업: 로그인 안 했고 welcome_seen 없을 때 1회
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    if (!user && localStorage.getItem('welcome_seen') !== 'true') setShowWelcome(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const closeWelcome = () => {
+    localStorage.setItem('welcome_seen', 'true');
+    setShowWelcome(false);
+  };
+  const startWelcome = () => {
+    closeWelcome();
+    onLoginRequest?.();
+  };
   const { data: tournaments, loading: tLoad } = useFetch(api.tournaments);
   const { data: players,     loading: pLoad } = useFetch(api.players);
   const { data: myPicks } = useFetch(
@@ -113,6 +128,8 @@ export default function Home({ onLoginRequest }) {
 
   return (
     <main className="page-body bg-paper min-h-screen">
+
+      <WelcomeModal open={showWelcome} onClose={closeWelcome} onStart={startWelcome} />
 
       {/* ── 헤더 ────────────────────────────────────── */}
       <header className="px-5 pt-12">
