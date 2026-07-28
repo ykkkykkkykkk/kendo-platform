@@ -374,7 +374,7 @@ router.post('/players', async (req, res) => {
     if (!name?.trim() || !slug?.trim() || !team_id)
       return res.status(400).json({ error: '이름, 슬러그, 소속팀은 필수입니다.' });
 
-    const urlErr = checkUrls(req.body, ['instagram_url', 'youtube_url', 'profile_image_url']);
+    const urlErr = checkUrls(req.body, ['youtube_url', 'profile_image_url']);
     if (urlErr) return res.status(400).json({ error: urlErr });
 
     await db.execute({
@@ -410,7 +410,7 @@ router.put('/players/:id', async (req, res) => {
       position, bio, instagram_url, youtube_url, profile_image_url,
     } = req.body;
 
-    const urlErrP = checkUrls(req.body, ['instagram_url', 'youtube_url', 'profile_image_url']);
+    const urlErrP = checkUrls(req.body, ['youtube_url', 'profile_image_url']);
     if (urlErrP) return res.status(400).json({ error: urlErrP });
 
     await db.execute({

@@ -30,6 +30,14 @@ function BioText({ text }) {
   );
 }
 
+// 저장된 인스타 값(아이디)을 링크로. 과거 URL 저장분도 그대로 지원.
+function instaUrl(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://instagram.com/${s.replace(/^@/, '')}`;
+}
+
 function SnsBtn({ href, icon: Icon, disabled }) {
   const cls = `w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
     disabled
@@ -303,7 +311,7 @@ export default function PlayerProfile({ onLoginRequest }) {
           </button>
 
           <div className="flex gap-2">
-            <SnsBtn href={player.instagram_url} icon={AtSign}     disabled={!player.instagram_url} />
+            <SnsBtn href={instaUrl(player.instagram_url)} icon={AtSign}     disabled={!player.instagram_url} />
             <SnsBtn href={player.youtube_url}   icon={PlayCircle} disabled={!player.youtube_url} />
           </div>
         </div>

@@ -6,6 +6,15 @@ import { adminGet, adminPost, adminPut, adminDelete } from '../../adminApi.js';
 const POSITIONS  = ['선봉', '이봉', '중견', '부장', '대장'];
 const CATEGORIES = ['죽도', '호구', '도복', '하카마', '기타'];
 
+// 인스타 입력값을 아이디(핸들)로 정규화: URL/@/공백 제거. 빈 값이면 '' 반환.
+function normInstaHandle(v) {
+  let s = String(v ?? '').trim();
+  if (!s) return '';
+  const m = s.match(/instagram\.com\/([^/?\s]+)/i);
+  if (m) s = m[1];
+  return s.replace(/^@/, '').replace(/\s+/g, '').replace(/^[.,!\-]+|[.,!\-]+$/g, '');
+}
+
 const EMPTY_FORM = {
   name: '', name_en: '', slug: '', team_id: '',
   dan_grade: '', birth_year: '', height_cm: '', position: '',
@@ -95,10 +104,11 @@ export default function PlayerForm() {
     try {
       const body = {
         ...form,
-        team_id:    Number(form.team_id)    || null,
-        dan_grade:  Number(form.dan_grade)  || null,
-        birth_year: Number(form.birth_year) || null,
-        height_cm:  Number(form.height_cm)  || null,
+        team_id:       Number(form.team_id)    || null,
+        dan_grade:     Number(form.dan_grade)  || null,
+        birth_year:    Number(form.birth_year) || null,
+        height_cm:     Number(form.height_cm)  || null,
+        instagram_url: normInstaHandle(form.instagram_url),  // @·URL 붙여넣어도 아이디만 저장
       };
       const res = isEdit
         ? await adminPut(`/players/${id}`, body)
@@ -230,7 +240,7 @@ export default function PlayerForm() {
         <div className="border border-ink-200 p-6 mb-6">
           <h2 className="font-semibold text-ink-600 mb-5 pb-2 border-b border-ink-200">SNS / 미디어</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="인스타그램 URL"    value={form.instagram_url}     onChange={set('instagram_url')}     placeholder="https://instagram.com/..." />
+            <Field label="인스타그램 아이디"  value={form.instagram_url}     onChange={set('instagram_url')}     placeholder="아이디만 (예: bj_kwon_)" />
             <Field label="유튜브 URL"        value={form.youtube_url}       onChange={set('youtube_url')}       placeholder="https://youtube.com/..." />
             <div className="col-span-2">
               <Field label="프로필 이미지 URL" value={form.profile_image_url} onChange={set('profile_image_url')} placeholder="https://..." />
