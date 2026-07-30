@@ -108,7 +108,9 @@ export default function PredictionTournamentPage() {
       </div>
 
       {/* ── 탭바 ───────────────────────────────────────── */}
-      <div className="scroll-x flex gap-2 px-5 pb-5">
+      {/* 부문 표시명이 길어질 수 있으므로 가로 스크롤 대신 줄바꿈 —
+          스크롤바를 숨겨둔 상태라 잘린 탭이 있다는 걸 알아챌 수 없었다. */}
+      <div className="flex flex-wrap gap-2 px-5 pb-5">
         {tabs.map((tab) => (
           <button
             key={tab.id}

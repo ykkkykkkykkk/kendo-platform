@@ -18,10 +18,10 @@ const TOURNAMENT_SLUG = '2026';   // 2026년 하계 전국실업검도대회
 
 /* ── 부문 정의 (파일 → 부문) ─────────────────────────────── */
 const SOURCES = [
-  { file: '개인전 남자 3단부 (2).xls', type: 'male_individual',   label: '남자 3단부',  dan: 3,    order: 1, expect: 42 },
-  { file: '개인전 남자 4단부.xls',     type: 'male_individual',   label: '남자 4단부',  dan: 4,    order: 2, expect: 37 },
-  { file: '개인전 남자 5단부.xls',     type: 'male_individual',   label: '남자 5단부',  dan: 5,    order: 3, expect: 58 },
-  { file: '여자 개인전.xls',           type: 'female_individual', label: '여자 개인전', dan: null, order: 4, expect: 42 },
+  { file: '개인전 남자 3단부 (2).xls', type: 'male_individual',   label: '남자개인3단부', dan: 3,    order: 1, expect: 42 },
+  { file: '개인전 남자 4단부.xls',     type: 'male_individual',   label: '남자개인4단부', dan: 4,    order: 2, expect: 37 },
+  { file: '개인전 남자 5단부.xls',     type: 'male_individual',   label: '남자개인5단부', dan: 5,    order: 3, expect: 58 },
+  { file: '여자 개인전.xls',           type: 'female_individual', label: '여자개인',      dan: null, order: 4, expect: 42 },
 ];
 
 /* ── 한글 로마자 슬러그 (add-missing-players.js와 동일) ──── */
@@ -245,20 +245,37 @@ for (const p of playersToCreate) {
 
 // 6-3. 부문 + 참가자
 for (const d of divisions) {
+  // 부문 식별은 (대회, 타입, sort_order)로 한다 — label로 찾으면 표시명을 바꿨을 때
+  // 기존 부문을 못 찾고 중복 부문을 새로 만들어 버린다.
   const { rows: existing } = await db.execute({
-    sql:  'SELECT id FROM tournament_divisions WHERE tournament_id = ? AND division_type = ? AND label = ?',
-    args: [tournament.id, d.type, d.label],
+    sql:  'SELECT id, label FROM tournament_divisions WHERE tournament_id = ? AND division_type = ? AND sort_order = ?',
+    args: [tournament.id, d.type, d.order],
   });
 
   let divisionId;
   if (existing.length) {
     divisionId = existing[0].id;
+    const renamed = existing[0].label !== d.label ? ` ('${existing[0].label}' → '${d.label}')` : '';
     await db.execute({
-      sql:  'UPDATE tournament_divisions SET sort_order = ?, participant_count = ? WHERE id = ?',
-      args: [d.order, d.entries.length, divisionId],
+      sql:  'UPDATE tournament_divisions SET label = ?, participant_count = ? WHERE id = ?',
+      args: [d.label, d.entries.length, divisionId],
     });
+
+    // 참가자 id는 픽·결과가 참조한다. 이미 픽이 들어왔으면 갈아끼우면 안 된다.
+    const [{ n: pickN }] = (await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM tournament_picks WHERE division_id = ?', args: [divisionId],
+    })).rows;
+    const [{ n: resN }] = (await db.execute({
+      sql: 'SELECT COUNT(*) AS n FROM division_results WHERE division_id = ?', args: [divisionId],
+    })).rows;
+
+    if (pickN > 0 || resN > 0) {
+      console.log(`↻ 부문 갱신 ${d.label}${renamed} (id=${divisionId})`);
+      console.log(`   ⚠ 픽 ${pickN}건 · 결과 ${resN}건이 참조 중 → 참가자는 그대로 둡니다 (표시명만 변경)`);
+      continue;
+    }
     await db.execute({ sql: 'DELETE FROM division_participants WHERE division_id = ?', args: [divisionId] });
-    console.log(`↻ 부문 갱신 ${d.label} (id=${divisionId}, 기존 참가자 삭제)`);
+    console.log(`↻ 부문 갱신 ${d.label}${renamed} (id=${divisionId}, 기존 참가자 삭제)`);
   } else {
     const { lastInsertRowid } = await db.execute({
       sql: `INSERT INTO tournament_divisions (tournament_id, division_type, label, sort_order, participant_count)
