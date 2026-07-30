@@ -32,12 +32,13 @@ router.get('/tournaments-with-divisions', requireAuth, async (req, res) => {
     const result = [];
     for (const t of tournaments) {
       const { rows: divisions } = await db.execute({
-        sql: `SELECT td.id, td.division_type, td.participant_count,
+        sql: `SELECT td.id, td.division_type, td.label, td.sort_order, td.participant_count,
                      tp.id AS pick_id, tp.is_locked, tp.score
               FROM tournament_divisions td
               LEFT JOIN tournament_picks tp
                 ON tp.division_id = td.id AND tp.user_id = ?
-              WHERE td.tournament_id = ?`,
+              WHERE td.tournament_id = ?
+              ORDER BY td.sort_order, td.id`,
         args: [userId, t.id],
       });
 
@@ -46,6 +47,7 @@ router.get('/tournaments-with-divisions', requireAuth, async (req, res) => {
         divisions: divisions.map((d) => ({
           division_id:     d.id,
           division_type:   d.division_type,
+          label:           d.label,
           participant_count: d.participant_count,
           my_pick_status:  d.pick_id == null ? 'not_picked'
                            : d.is_locked     ? 'locked'
@@ -80,7 +82,7 @@ router.get('/tournaments/:id/full', requireAuth, async (req, res) => {
       : null;
 
     const { rows: divisions } = await db.execute({
-      sql:  'SELECT * FROM tournament_divisions WHERE tournament_id = ?',
+      sql:  'SELECT * FROM tournament_divisions WHERE tournament_id = ? ORDER BY sort_order, id',
       args: [id],
     });
 
@@ -114,6 +116,7 @@ router.get('/tournaments/:id/full', requireAuth, async (req, res) => {
       divisionDetails.push({
         id:                d.id,
         division_type:     d.division_type,
+        label:             d.label,
         participant_count: d.participant_count,
         participants:      participants.map((p) => ({
           id:          p.id,
@@ -157,12 +160,12 @@ router.get('/divisions/:id/participants', requireAuth, async (req, res) => {
     const { id } = req.params;
 
     const { rows: divRows } = await db.execute({
-      sql:  'SELECT division_type FROM tournament_divisions WHERE id = ?',
+      sql:  'SELECT division_type, label FROM tournament_divisions WHERE id = ?',
       args: [id],
     });
     if (!divRows.length) return res.status(404).json({ error: '부문을 찾을 수 없습니다.' });
 
-    const { division_type } = divRows[0];
+    const { division_type, label } = divRows[0];
     const isTeam = division_type.includes('team');
 
     const { rows } = await db.execute({
@@ -184,7 +187,7 @@ router.get('/divisions/:id/participants', requireAuth, async (req, res) => {
       ? rows.map((r) => ({ id: r.id, seed_number: r.seed_number, team_name: r.direct_team_name, region: r.region }))
       : rows.map((r) => ({ id: r.id, seed_number: r.seed_number, name: r.player_name, team_name: r.team_name }));
 
-    res.json({ division_type, participants });
+    res.json({ division_type, label, participants });
   } catch (e) {
     serverError(res, e, 'A-3');
   }

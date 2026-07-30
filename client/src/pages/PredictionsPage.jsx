@@ -149,7 +149,7 @@ function PickableRow({ t, first }) {
         )}
         <span className="flex-1" />
         {t.divisions.map((d) => (
-          <DivisionTypeBadge key={d.division_id} type={d.division_type} />
+          <DivisionTypeBadge key={d.division_id} type={d.division_type} label={d.label} />
         ))}
       </div>
 

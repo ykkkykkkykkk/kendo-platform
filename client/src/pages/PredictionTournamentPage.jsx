@@ -71,7 +71,7 @@ export default function PredictionTournamentPage() {
     { id: 'summary', label: '합산' },
     ...tournament.divisions.map((d) => ({
       id:       String(d.id),
-      label:    DIV_LABELS[d.division_type] ?? d.division_type,
+      label:    d.label ?? DIV_LABELS[d.division_type] ?? d.division_type,
       division: d,
     })),
   ];
@@ -195,7 +195,7 @@ function SummaryTab({ tournament, onDivClick }) {
                 </span>
 
                 <div className="flex-1 min-w-0">
-                  <DivisionTypeBadge type={d.division_type} />
+                  <DivisionTypeBadge type={d.division_type} label={d.label} />
                   <p className="text-[11px] mt-1 text-ink-400">
                     {isLocked ? (
                       <>확정 · <span className="bg-lime text-ink px-1 font-semibold">{myPick.score}점 획득 예정</span></>
@@ -272,7 +272,7 @@ function DivisionTab({ tournamentId, division, pickDeadline, onRefresh }) {
     <div className="flex flex-col gap-4">
       {/* 부문 헤더 정보 */}
       <div className="flex items-center gap-2">
-        <DivisionTypeBadge type={division.division_type} />
+        <DivisionTypeBadge type={division.division_type} label={division.label} />
         {division.participant_count != null && (
           <span className="text-ink-400 text-xs">{division.participant_count}명 참가</span>
         )}

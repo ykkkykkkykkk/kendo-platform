@@ -81,7 +81,7 @@ function DivisionCard({ div, onResultSaved, onFinalized }) {
       {/* 헤더 */}
       <div className="px-5 py-3.5 flex items-center justify-between border-b border-ink-200">
         <h3 className="font-bold text-ink">
-          {DIVISION_LABELS[div.division_type] ?? div.division_type}
+          {div.label ?? DIVISION_LABELS[div.division_type] ?? div.division_type}
         </h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-ink-400">참가 {participants.length}명</span>

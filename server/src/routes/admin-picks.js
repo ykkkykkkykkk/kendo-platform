@@ -16,24 +16,26 @@ router.get('/tournaments/:id/divisions', async (req, res) => {
     const { id } = req.params;
 
     const { rows: divisions } = await db.execute({
-      sql: `SELECT td.id, td.division_type, td.participant_count,
+      sql: `SELECT td.id, td.division_type, td.label, td.sort_order, td.participant_count,
                    dr.rank_1st, dr.rank_2nd, dr.rank_3rd_a, dr.rank_3rd_b,
                    dr.is_finalized, dr.finalized_at
             FROM tournament_divisions td
             LEFT JOIN division_results dr ON dr.division_id = td.id
             WHERE td.tournament_id = ?
-            ORDER BY td.id`,
+            ORDER BY td.sort_order, td.id`,
       args: [id],
     });
 
     for (const div of divisions) {
+      // 개인전은 선수의 소속 팀(p.team_id), 단체전은 참가 팀(dp.team_id)에서 팀명을 얻는다.
       const { rows: participants } = await db.execute({
         sql: `SELECT dp.id, dp.seed_number,
                      p.name  AS player_name,
-                     t.name  AS team_name
+                     COALESCE(pt.name, dt.name) AS team_name
               FROM division_participants dp
-              LEFT JOIN players p ON p.id = dp.player_id
-              LEFT JOIN teams   t ON t.id = dp.team_id
+              LEFT JOIN players p  ON p.id  = dp.player_id
+              LEFT JOIN teams   pt ON pt.id = p.team_id
+              LEFT JOIN teams   dt ON dt.id = dp.team_id
               WHERE dp.division_id = ?
               ORDER BY dp.seed_number`,
         args: [div.id],
@@ -50,7 +52,7 @@ router.get('/tournaments/:id/divisions', async (req, res) => {
 router.post('/tournaments/:id/divisions', async (req, res) => {
   try {
     const { id } = req.params;
-    const { division_type, participant_count } = req.body;
+    const { division_type, label, sort_order, participant_count } = req.body;
 
     if (!VALID_DIVISION_TYPES.includes(division_type))
       return res.status(400).json({ error: '유효하지 않은 부문 타입입니다.', valid: VALID_DIVISION_TYPES });
@@ -62,8 +64,9 @@ router.post('/tournaments/:id/divisions', async (req, res) => {
     if (!ts.length) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
 
     const { lastInsertRowid } = await db.execute({
-      sql:  'INSERT INTO tournament_divisions (tournament_id, division_type, participant_count) VALUES (?, ?, ?)',
-      args: [id, division_type, participant_count ?? null],
+      sql: `INSERT INTO tournament_divisions (tournament_id, division_type, label, sort_order, participant_count)
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [id, division_type, label ?? null, sort_order ?? 0, participant_count ?? null],
     });
 
     const { rows: [division] } = await db.execute({

@@ -53,7 +53,7 @@ export default function PickInputPage() {
   const participants  = divData?.participants ?? [];
   const divisionType  = divData?.division_type ?? '';
   const isTeam        = divisionType.includes('team');
-  const divLabel      = DIV_FULL[divisionType] ?? divisionType;
+  const divLabel      = divData?.label ?? DIV_FULL[divisionType] ?? divisionType;
   const filledCount   = Object.values(picks).filter(Boolean).length;
   const allFilled     = filledCount === 4;
 
