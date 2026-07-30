@@ -6,71 +6,133 @@ import { api } from '../api.js';
 /* 대회 슬러그 — 지금은 대회가 하나뿐이라 고정. 여러 개가 되면 목록에서 고르게 바꾼다. */
 const SLUG = '2026';
 
-/* ── 한쪽 대진 (선수 / N경기 승자 / 조 우승) ───────────────── */
+const labelOf = (s) => s.kind === 'group_winner' ? `${s.group}조 우승`
+                     : s.kind === 'from'         ? `${s.number}경기 승자`
+                     :                             '미정';
+
+/* ── 한쪽 대진: 이름은 왼쪽, 팀은 오른쪽 정렬 (전광판처럼 읽히게) ── */
 function Side({ s, dark = false }) {
   const navigate = useNavigate();
 
-  if (s.kind === 'player') {
+  if (s.kind !== 'player') {
     return (
-      <button
-        onClick={() => s.slug && navigate(`/players/${s.slug}`)}
-        disabled={!s.slug}
-        className="flex items-baseline gap-2 min-w-0 text-left pressable disabled:pointer-events-none"
-      >
-        <span className={`text-[10px] font-medium tabular-nums shrink-0 ${dark ? 'text-white/35' : 'text-ink-400'}`}>
-          {String(s.seed).padStart(2, '0')}
-        </span>
-        <span className={`text-[15px] font-semibold truncate ${dark ? 'text-white' : 'text-ink'}`}>
-          {s.name}
-        </span>
-        <span className={`text-[11px] truncate ${dark ? 'text-white/45' : 'text-ink-400'}`}>
-          {s.team}
-        </span>
-      </button>
+      <div className="py-1">
+        <span className={`text-[13px] ${dark ? 'text-lime' : 'text-ink-400'}`}>{labelOf(s)}</span>
+      </div>
     );
   }
 
-  const text = s.kind === 'group_winner' ? `${s.group}조 우승`
-             : s.kind === 'from'         ? `${s.number}경기 승자`
-             :                             '미정';
   return (
-    <span className={`text-[13px] ${dark ? 'text-lime' : 'text-ink-400'}`}>{text}</span>
+    <button
+      onClick={() => s.slug && navigate(`/players/${s.slug}`)}
+      disabled={!s.slug}
+      className="w-full flex items-baseline gap-3 py-1 text-left pressable disabled:pointer-events-none"
+    >
+      <span className={`text-[16px] font-bold tracking-[-0.02em] truncate ${dark ? 'text-white' : 'text-ink'}`}>
+        {s.name}
+      </span>
+      <span className="flex-1" />
+      <span className={`text-[11px] shrink-0 ${dark ? 'text-white/45' : 'text-ink-400'}`}>
+        {s.team}
+      </span>
+    </button>
   );
 }
 
-/* ── 경기 한 건 ────────────────────────────────────────────── */
+/* ── 경기 한 건 (양쪽 중 실제 선수가 하나라도 있을 때) ───────── */
 function MatchRow({ m, dark = false }) {
-  const line = dark ? 'bg-white/25' : 'bg-ink-200';
+  const bye = (m.a.kind === 'player') !== (m.b.kind === 'player');
   return (
-    <div className="flex items-stretch gap-2.5 py-3">
-      <span className={`w-7 shrink-0 pt-0.5 text-right text-[11px] font-bold tabular-nums
-                        ${dark ? 'text-lime' : 'text-ink-600'}`}>
-        {m.number}
-      </span>
-
-      {/* 대진 괄호 모양 ┤ */}
-      <div className="relative w-2.5 shrink-0" aria-hidden="true">
-        <span className={`absolute left-0 top-[26%] bottom-[26%] w-px ${line}`} />
-        <span className={`absolute left-0 top-[26%] w-2.5 h-px ${line}`} />
-        <span className={`absolute left-0 bottom-[26%] w-2.5 h-px ${line}`} />
-      </div>
-
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        <Side s={m.a} dark={dark} />
-        <Side s={m.b} dark={dark} />
-      </div>
-
-      {m.winner && (
-        <span className={`shrink-0 self-center text-[10px] font-bold px-1.5 py-0.5
-                          ${dark ? 'bg-lime text-ink' : 'bg-ink text-white'}`}>
-          {m.winner.name}
+    <div className="py-2.5">
+      <div className="flex items-center gap-2 mb-0.5">
+        <span className={`text-[11px] font-bold tabular-nums ${dark ? 'text-lime' : 'text-ink'}`}>
+          {m.number}경기
         </span>
-      )}
+        {bye && (
+          <span className={`text-[10px] px-1.5 py-px rounded-full border
+                            ${dark ? 'border-white/25 text-white/55' : 'border-ink-200 text-ink-400'}`}>
+            부전승
+          </span>
+        )}
+        <span className="flex-1" />
+        {m.winner && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 ${dark ? 'bg-lime text-ink' : 'bg-ink text-white'}`}>
+            {m.winner.name} 승
+          </span>
+        )}
+      </div>
+
+      <Side s={m.a} dark={dark} />
+      <div className={`h-px ${dark ? 'bg-white/15' : 'bg-ink-200'}`} />
+      <Side s={m.b} dark={dark} />
+    </div>
+  );
+}
+
+/* ── 양쪽 다 '승자 대기'인 경기 — 한 줄로 압축 ───────────────── */
+function PendingRow({ m }) {
+  return (
+    <div className="flex items-baseline gap-2 py-1.5">
+      <span className="w-12 shrink-0 text-[11px] font-bold tabular-nums text-ink-600">{m.number}경기</span>
+      <span className="text-[12px] text-ink-400 truncate">
+        {labelOf(m.a)} <span className="text-ink-200">·</span> {labelOf(m.b)}
+      </span>
     </div>
   );
 }
 
 /* ── 조 하나 (라운드별 구간) ────────────────────────────────── */
+const hasPlayer = (m) => m.a.kind === 'player' || m.b.kind === 'player';
+
+function RoundSection({ round }) {
+  // 실제 이름이 있는 경기만 펼쳐 보여주고, '승자 대기'만 있는 경기는 접어둔다.
+  const live    = round.matches.filter(hasPlayer);
+  const pending = round.matches.filter((m) => !hasPlayer(m));
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section className="mb-1">
+      <div className="flex items-center gap-2.5 pt-6 pb-1.5">
+        <span className="text-[12px] font-bold tracking-[0.1em] text-ink">{round.label}</span>
+        <span className="flex-1 h-px bg-ink-200" />
+        <span className="text-[10px] text-ink-400 tabular-nums">{round.matches.length}경기</span>
+      </div>
+
+      {round.isFinal ? (
+        <div className="bg-block rounded-2xl px-4 mt-2">
+          {round.matches.map((m) => <MatchRow key={m.id} m={m} dark />)}
+        </div>
+      ) : (
+        <>
+          {live.length > 0 && (
+            <div className="divide-y divide-ink-200" style={{ borderTop: '1.5px solid #111111' }}>
+              {live.map((m) => <MatchRow key={m.id} m={m} />)}
+            </div>
+          )}
+
+          {pending.length > 0 && (
+            <div className={live.length ? 'mt-2' : ''}>
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="w-full flex items-center gap-1.5 py-2 text-[11px] text-ink-400 pressable"
+              >
+                <span>{open ? '접기' : `승자 대기 ${pending.length}경기 보기`}</span>
+                <span className="text-[9px]">{open ? '▲' : '▼'}</span>
+                <span className="flex-1 h-px bg-ink-200" />
+              </button>
+              {open && (
+                <div className="pb-1">
+                  {pending.map((m) => <PendingRow key={m.id} m={m} />)}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 function GroupView({ group }) {
   const rounds = useMemo(() => {
     const byDepth = new Map();
@@ -90,34 +152,14 @@ function GroupView({ group }) {
 
   return (
     <div>
-      <div className="flex items-baseline gap-2 pb-3">
+      <div className="flex items-baseline gap-2 pb-1">
         <h2 className="text-2xl font-bold text-ink tracking-[-0.03em]">{group.group}조</h2>
         <span className="text-[11px] text-ink-400">{group.court}</span>
         <span className="flex-1" />
         <span className="text-[11px] text-ink-400">{group.matches.length}경기</span>
       </div>
 
-      {rounds.map((r) => (
-        <section key={r.depth} className="mb-1">
-          <div className="flex items-center gap-2 pt-4 pb-1">
-            <span className={`text-[10px] font-bold tracking-[0.18em] ${r.isFinal ? 'text-ink' : 'text-ink-400'}`}>
-              {r.label}
-            </span>
-            <span className="flex-1 h-px bg-ink-200" />
-            <span className="text-[10px] text-ink-400 tabular-nums">{r.matches.length}</span>
-          </div>
-
-          {r.isFinal ? (
-            <div className="bg-block rounded-2xl px-4 mt-2">
-              {r.matches.map((m) => <MatchRow key={m.id} m={m} dark />)}
-            </div>
-          ) : (
-            <div className="divide-y divide-ink-200" style={{ borderTop: '1.5px solid #111111' }}>
-              {r.matches.map((m) => <MatchRow key={m.id} m={m} />)}
-            </div>
-          )}
-        </section>
-      ))}
+      {rounds.map((r) => <RoundSection key={r.depth} round={r} />)}
     </div>
   );
 }
