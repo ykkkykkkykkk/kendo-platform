@@ -16,6 +16,105 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// GET /api/tournaments/:slug/draw — 공개 대진표 (로그인 불필요)
+// 부문 → 조(경기장) → 경기번호 순으로 실제 대진을 돌려준다.
+// 각 경기의 양쪽은 선수(kind:'player')이거나 앞선 경기의 승자(kind:'from')다.
+router.get('/:slug/draw', async (req, res) => {
+  try {
+    const { rows: [tournament] } = await db.execute({
+      sql:  'SELECT id, name, slug, venue, status, start_date, end_date FROM tournaments WHERE slug = ?',
+      args: [req.params.slug],
+    });
+    if (!tournament) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
+
+    const { rows: divisions } = await db.execute({
+      sql: `SELECT id, division_type, label, participant_count
+            FROM tournament_divisions
+            WHERE tournament_id = ? ORDER BY sort_order, id`,
+      args: [tournament.id],
+    });
+
+    const { rows: matches } = await db.execute({
+      sql: `SELECT bm.id, bm.division_id, bm.group_label, bm.court_label,
+                   bm.match_number, bm.round_depth, bm.is_group_final, bm.is_final,
+                   bm.status, bm.score_a, bm.score_b,
+                   pa.name AS a_name, pa.slug AS a_slug, dpa.seed_number AS a_seed, ta.name AS a_team,
+                   pb.name AS b_name, pb.slug AS b_slug, dpb.seed_number AS b_seed, tb.name AS b_team,
+                   ma.match_number AS a_from_number, ma.group_label AS a_from_group,
+                   ma.is_group_final AS a_from_is_group_final,
+                   mb.match_number AS b_from_number, mb.group_label AS b_from_group,
+                   mb.is_group_final AS b_from_is_group_final,
+                   pw.name AS winner_name, pw.slug AS winner_slug
+            FROM bracket_matches bm
+            JOIN tournament_divisions td ON td.id = bm.division_id
+            LEFT JOIN division_participants dpa ON dpa.id = bm.a_participant_id
+            LEFT JOIN players pa ON pa.id = dpa.player_id
+            LEFT JOIN teams   ta ON ta.id = pa.team_id
+            LEFT JOIN division_participants dpb ON dpb.id = bm.b_participant_id
+            LEFT JOIN players pb ON pb.id = dpb.player_id
+            LEFT JOIN teams   tb ON tb.id = pb.team_id
+            LEFT JOIN bracket_matches ma ON ma.id = bm.a_from_match_id
+            LEFT JOIN bracket_matches mb ON mb.id = bm.b_from_match_id
+            LEFT JOIN division_participants dpw ON dpw.id = bm.winner_participant_id
+            LEFT JOIN players pw ON pw.id = dpw.player_id
+            WHERE td.tournament_id = ?
+            ORDER BY td.sort_order, bm.group_label, bm.match_number`,
+      args: [tournament.id],
+    });
+
+    // 조 결승 승자를 가리킬 때는 '{조}조 우승'으로 구분한다 —
+    // A조·B조의 조 결승은 경기번호가 같아서 '28경기 승자'만으로는 구분이 안 된다.
+    const sideOf = (name, slug, team, seed, from) => {
+      if (name) return { kind: 'player', name, slug, team, seed };
+      if (from.number == null) return { kind: 'tbd' };
+      return from.isGroupFinal && from.group
+        ? { kind: 'group_winner', group: from.group, number: from.number }
+        : { kind: 'from', number: from.number, group: from.group };
+    };
+
+    const shape = (m) => ({
+      id:             m.id,
+      number:         m.match_number,
+      round_depth:    m.round_depth,
+      is_group_final: !!m.is_group_final,
+      is_final:       !!m.is_final,
+      status:         m.status,
+      score_a:        m.score_a,
+      score_b:        m.score_b,
+      a:              sideOf(m.a_name, m.a_slug, m.a_team, m.a_seed,
+                             { number: m.a_from_number, group: m.a_from_group, isGroupFinal: !!m.a_from_is_group_final }),
+      b:              sideOf(m.b_name, m.b_slug, m.b_team, m.b_seed,
+                             { number: m.b_from_number, group: m.b_from_group, isGroupFinal: !!m.b_from_is_group_final }),
+      winner:         m.winner_name ? { name: m.winner_name, slug: m.winner_slug } : null,
+    });
+
+    const result = divisions.map((d) => {
+      const mine = matches.filter((m) => m.division_id === d.id);
+      const groupNames = [...new Set(mine.filter((m) => m.group_label).map((m) => m.group_label))].sort();
+      return {
+        id:                d.id,
+        division_type:     d.division_type,
+        label:             d.label,
+        participant_count: d.participant_count,
+        max_round:         mine.length ? Math.max(...mine.map((m) => m.round_depth)) : 0,
+        groups: groupNames.map((g) => {
+          const gm = mine.filter((m) => m.group_label === g);
+          return {
+            group:   g,
+            court:   gm[0]?.court_label ?? null,
+            matches: gm.map(shape),
+          };
+        }),
+        final: mine.filter((m) => m.is_final).map(shape)[0] ?? null,
+      };
+    });
+
+    res.json({ ...tournament, divisions: result });
+  } catch (e) {
+    serverError(res, e);
+  }
+});
+
 // GET /api/tournaments/:slug
 router.get('/:slug', async (req, res) => {
   try {

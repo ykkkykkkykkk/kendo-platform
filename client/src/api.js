@@ -63,6 +63,7 @@ export const api = {
   deleteQuestion:  (id)            => authDelete(`/questions/${id}`),
   tournaments: ()     => get('/tournaments'),
   tournament:  (slug) => get(`/tournaments/${slug}`),
+  draw:        (slug) => get(`/tournaments/${slug}/draw`),
 
   // 픽 시스템
   tournamentsWithDivisions: ()   => authGet('/tournaments-with-divisions'),

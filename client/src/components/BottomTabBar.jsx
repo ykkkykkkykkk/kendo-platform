@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const tabs = [
   { to: '/',            label: 'HOME', icon: HomeIcon,   end: true  },
+  { to: '/draw',        label: 'DRAW', icon: DrawIcon,   end: false },
   { to: '/predictions', label: 'PICK', icon: TargetIcon, end: false },
   { to: '/ranking',     label: 'RANK', icon: TrophyIcon, end: false },
   { to: '/teams',       label: 'TEAM', icon: ShieldIcon, end: false },
@@ -47,6 +48,20 @@ function HomeIcon({ active }) {
       <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"
         stroke={c} strokeWidth="1.8" fill="none" strokeLinejoin="round" />
       <path d="M9 21V12h6v9" stroke={c} strokeWidth="1.8" />
+    </svg>
+  );
+}
+/* 토너먼트 대진 괄호 모양 */
+function DrawIcon({ active }) {
+  const c = ic(active);
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M3 5h4a2 2 0 012 2v10a2 2 0 002 2h4"
+        stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 19h4a2 2 0 002-2"
+        stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 12h6" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="19" cy="19" r="1.6" fill={c} />
     </svg>
   );
 }
