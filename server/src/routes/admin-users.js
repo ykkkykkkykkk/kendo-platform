@@ -94,7 +94,9 @@ router.get('/users/:id', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { rows: [user] } = await db.execute({ sql: 'SELECT id, nickname FROM users WHERE id = ?', args: [id] });
+    const { rows: [user] } = await db.execute({
+      sql: 'SELECT id, nickname, dojo_id FROM users WHERE id = ?', args: [id],
+    });
     if (!user) return res.status(404).json({ error: '회원을 찾을 수 없습니다.' });
 
     // 이 회원에게 딸린 행들. 남겨두면 FK 때문에 삭제가 막힌다.
@@ -116,6 +118,18 @@ router.delete('/users/:id', async (req, res) => {
     }
 
     await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [id] });
+
+    // dojos.member_count는 비정규화 컬럼이라 회원이 빠져도 자동으로 줄지 않는다.
+    // 실제 소속 인원으로 다시 센다.
+    if (user.dojo_id) {
+      await db.execute({
+        sql: `UPDATE dojos SET member_count =
+                (SELECT COUNT(*) FROM users u WHERE u.dojo_id = dojos.id)
+              WHERE id = ?`,
+        args: [user.dojo_id],
+      });
+    }
+
     res.json({ deleted: user, removed });
   } catch (e) { serverError(res, e, 'admin-user-delete'); }
 });
