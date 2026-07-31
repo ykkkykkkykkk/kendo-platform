@@ -2,6 +2,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
+import { findSimilarAccounts } from '../utils/similarNickname.js';
 
 const router = Router();
 
@@ -24,6 +25,22 @@ router.post('/register', async (req, res) => {
 
   let user = existing;
   if (!user) {
+    // 새 계정이 생기는 순간이다. 예전에는 여기서 조용히 만들어버려서,
+    // 닉네임이나 번호를 한 글자만 잘못 입력해도 기존 계정에 못 들어가고
+    // 계정이 하나 더 생겼다(픽·팔로우가 그대로 남겨진 채로).
+    // 그래서 확인을 받고, 비슷한 기존 계정이 있으면 알려준다.
+    if (!req.body.confirm_new) {
+      const { rows: others } = await db.execute(
+        "SELECT nickname, phone FROM users WHERE phone NOT LIKE '검도팬_%'"
+      );
+      return res.status(409).json({
+        error: '처음 오신 것 같습니다. 새 계정을 만들까요?',
+        new_account: true,
+        nickname: trimmedNick,
+        suggestions: findSimilarAccounts(trimmedNick, phone, others),
+      });
+    }
+
     await db.execute({
       sql:  'INSERT INTO users (phone, nickname, home_dojo) VALUES (?, ?, ?)',
       args: [phoneKey, trimmedNick, home_dojo?.trim() || null],

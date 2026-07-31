@@ -16,6 +16,7 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(null);
+  const [confirmNew,  setConfirmNew]  = useState(null);   // 새 계정 생성 확인 단계
   const debounce = useRef(null);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
     return () => clearTimeout(debounce.current);
   }, [dojo]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirmNew = false) => {
     if (!nickname.trim()) { setError('닉네임을 입력해주세요.'); return; }
     if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
 
@@ -40,9 +41,20 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
       const res  = await fetch('/api/auth/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nickname: nickname.trim(), phone, home_dojo: dojo.trim() || null }),
+        body:    JSON.stringify({
+          nickname: nickname.trim(), phone, home_dojo: dojo.trim() || null,
+          confirm_new: confirmNew || undefined,
+        }),
       });
       const data = await res.json();
+
+      // 기존 계정이 없어 새로 만들어야 하는 경우 — 바로 만들지 않고 한 번 확인한다.
+      // (닉네임·번호를 한 글자만 잘못 넣어도 기존 계정 대신 새 계정이 생겨버렸다)
+      if (res.status === 409 && data.new_account) {
+        setConfirmNew({ nickname: data.nickname, suggestions: data.suggestions ?? [] });
+        setLoading(false);
+        return;
+      }
       if (!res.ok) throw new Error(data.error);
 
       login(data.token);
@@ -177,12 +189,58 @@ export default function NickLoginModal({ onClose, onSwitchToPlayer }) {
 
         {error && <p className="text-ink text-xs text-center mb-3 font-semibold">{error}</p>}
 
-        <button
-          onClick={handleSubmit} disabled={loading}
-          className="pressable w-full bg-lime hover:bg-lime-dark text-ink font-medium py-3.5 rounded-full text-sm disabled:opacity-60 mb-4"
-        >
-          {loading ? '처리 중...' : '시작하기'}
-        </button>
+        {/* 새 계정 확인 — 오타로 계정이 하나 더 생기는 걸 막는다 */}
+        {confirmNew ? (
+          <div className="mb-4 border border-ink p-4">
+            <p className="text-ink text-sm font-semibold">
+              ‘{confirmNew.nickname}’으로 <span className="bg-lime px-1">새 계정</span>을 만들까요?
+            </p>
+            <p className="text-ink-400 text-xs mt-1.5 leading-relaxed">
+              이미 쓰던 계정이 있다면 닉네임과 끝 4자리를 다시 확인해주세요.
+              한 글자만 달라도 다른 계정이 되어 픽·팔로우가 따라오지 않습니다.
+            </p>
+
+            {confirmNew.suggestions.length > 0 && (
+              <div className="mt-3">
+                <p className="text-[11px] text-ink-400 mb-1.5">혹시 이 계정인가요?</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {confirmNew.suggestions.map((s) => (
+                    <button
+                      key={s.nickname}
+                      onClick={() => { setNickname(s.nickname); setConfirmNew(null); setError(null); }}
+                      className="text-[12px] border border-ink-200 hover:border-ink px-2.5 py-1 transition-colors"
+                    >
+                      {s.nickname}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => { setConfirmNew(null); setError(null); }}
+                className="pressable flex-1 border border-ink-200 text-ink-600 py-2.5 rounded-full text-sm"
+              >
+                다시 입력
+              </button>
+              <button
+                onClick={() => { setConfirmNew(null); handleSubmit(true); }}
+                disabled={loading}
+                className="pressable flex-1 bg-lime hover:bg-lime-dark text-ink font-medium py-2.5 rounded-full text-sm disabled:opacity-60"
+              >
+                새로 시작
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => handleSubmit(false)} disabled={loading}
+            className="pressable w-full bg-lime hover:bg-lime-dark text-ink font-medium py-3.5 rounded-full text-sm disabled:opacity-60 mb-4"
+          >
+            {loading ? '처리 중...' : '시작하기'}
+          </button>
+        )}
 
         <p className="text-center text-ink-400 text-xs">
           선수이신가요?{' '}
