@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
 import { findSimilarAccounts } from '../utils/similarNickname.js';
+import { touchLastSeen } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -52,6 +53,8 @@ router.post('/register', async (req, res) => {
     user = newUser;
   }
 
+  touchLastSeen(user.id);
+
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: user.role ?? 'fan' },
     process.env.JWT_SECRET,
@@ -79,6 +82,8 @@ router.post('/player-login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid)
     return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+
+  touchLastSeen(user.id);
 
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: 'player', playerId: user.player_id },

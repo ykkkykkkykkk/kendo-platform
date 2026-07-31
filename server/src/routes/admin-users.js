@@ -29,7 +29,7 @@ router.get('/users', async (req, res) => {
 
     const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.role, u.dan_grade, u.home_dojo,
-                   u.created_at, u.player_id,
+                   u.created_at, u.last_seen_at, u.player_id,
                    ${IS_SEED} AS is_seed,
                    t.name  AS favorite_team,
                    d.name  AS dojo_name,

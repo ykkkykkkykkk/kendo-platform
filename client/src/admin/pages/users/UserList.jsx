@@ -2,6 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loader, Search, Trash2, X } from 'lucide-react';
 import { adminGet, adminDelete } from '../../adminApi.js';
 
+/**
+ * 'YYYY-MM-DD HH:MM:SS' → '3분 전' 같은 상대 시각.
+ * SQLite datetime('now')는 UTC라 Z를 붙여 해석해야 시차만큼 어긋나지 않는다.
+ */
+function sinceText(s) {
+  const t = new Date(String(s).replace(' ', 'T') + 'Z').getTime();
+  if (Number.isNaN(t)) return s;
+  const min = Math.floor((Date.now() - t) / 60000);
+  if (min < 1)      return '방금';
+  if (min < 60)     return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24)      return `${hr}시간 전`;
+  const day = Math.floor(hr / 24);
+  if (day < 7)      return `${day}일 전`;
+  return new Date(t).toISOString().slice(0, 10);
+}
+
 /** 가입 회원 관리. 선수 계정(role=player)은 '선수 계정' 메뉴에서 따로 다룬다. */
 export default function UserList() {
   const [users, setUsers]     = useState([]);
@@ -105,6 +122,7 @@ export default function UserList() {
                 <th className="px-4 py-3 font-medium">응원팀</th>
                 <th className="px-4 py-3 font-medium">팔로우</th>
                 <th className="px-4 py-3 font-medium">픽</th>
+                <th className="px-4 py-3 font-medium">최근 접속</th>
                 <th className="px-4 py-3 font-medium">가입일</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
@@ -132,6 +150,11 @@ export default function UserList() {
                   <td className="px-4 py-3 text-ink-600">{u.favorite_team ?? '—'}</td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{u.follow_count}</td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{u.pick_count}</td>
+                  <td className="px-4 py-3 text-xs tabular-nums">
+                    {u.last_seen_at
+                      ? <span className="text-ink" title={u.last_seen_at}>{sinceText(u.last_seen_at)}</span>
+                      : <span className="text-ink-400">기록 없음</span>}
+                  </td>
                   <td className="px-4 py-3 text-ink-400 text-xs tabular-nums">{(u.created_at ?? '').slice(0, 10)}</td>
                   <td className="px-4 py-3">
                     <button
@@ -145,7 +168,7 @@ export default function UserList() {
                 </tr>
               ))}
               {!users.length && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
               )}
             </tbody>
           </table>

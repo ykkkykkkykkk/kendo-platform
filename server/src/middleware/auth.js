@@ -1,4 +1,22 @@
 import jwt from 'jsonwebtoken';
+import { db } from '../db.js';
+
+/**
+ * 로그인한 회원의 최근 접속 시각을 남긴다.
+ *
+ * 요청마다 UPDATE를 날리면 부담되므로 마지막 기록이 10분보다 오래됐을 때만 쓴다.
+ * (WHERE로 걸러서 대부분의 요청은 아무 행도 건드리지 않는다)
+ * 응답을 늦추지 않도록 기다리지 않고, 실패해도 요청 처리에는 영향을 주지 않는다.
+ */
+export function touchLastSeen(userId) {
+  if (!userId) return;
+  db.execute({
+    sql: `UPDATE users SET last_seen_at = datetime('now')
+          WHERE id = ?
+            AND (last_seen_at IS NULL OR last_seen_at < datetime('now', '-10 minutes'))`,
+    args: [userId],
+  }).catch(() => { /* 접속 기록 실패가 요청을 막을 이유는 없다 */ });
+}
 
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization;
@@ -8,6 +26,7 @@ export function requireAuth(req, res, next) {
   const token = header.slice(7);
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
+    touchLastSeen(req.user.userId);
     next();
   } catch {
     res.status(401).json({ error: '유효하지 않은 토큰입니다.' });
