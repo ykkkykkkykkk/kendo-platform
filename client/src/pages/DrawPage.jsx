@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import BracketBoard from '../components/BracketBoard.jsx';
+import BracketModal from '../components/BracketModal.jsx';
 import { adminPost, adminDelete } from '../admin/adminApi.js';
 
 /* 대회 슬러그 — 지금은 대회가 하나뿐이라 고정. 여러 개가 되면 목록에서 고르게 바꾼다. */
@@ -175,6 +176,7 @@ export default function DrawPage() {
   const [divIdx, setDivIdx] = useState(0);
   const [segment, setSegment] = useState(0);   // 0,1 = 조 / 2 = 결승
   const [view, setView] = useState('bracket'); // 'bracket' | 'list'
+  const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const admin = isAdmin();
@@ -303,6 +305,14 @@ export default function DrawPage() {
                 </button>
               ))}
             </div>
+            {view === 'bracket' && (
+              <button
+                onClick={() => setExpanded(true)}
+                className="px-3 py-1.5 text-[11px] font-semibold border border-ink rounded-full text-ink pressable"
+              >
+                ⤢ 전체 보기
+              </button>
+            )}
             <span className="flex-1" />
             {admin && (
               <span className="text-[10px] font-bold tracking-[0.1em] bg-lime text-ink px-2 py-1">
@@ -347,6 +357,20 @@ export default function DrawPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {expanded && (
+            <BracketModal
+              title={`${division.label} · ${segment < division.groups.length ? `${division.groups[segment].group}조` : '결승'}`}
+              subtitle={segment < division.groups.length
+                ? `${division.groups[segment].court} · ${division.groups[segment].matches.length}경기`
+                : 'A조 우승 vs B조 우승'}
+              matches={segment < division.groups.length ? division.groups[segment].matches : [division.final]}
+              canEdit={admin && !busy}
+              onPick={handlePick}
+              championId={segment < division.groups.length ? null : division.final.winner_participant_id}
+              onClose={() => setExpanded(false)}
+            />
           )}
         </>
       )}

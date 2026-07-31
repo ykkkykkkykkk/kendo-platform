@@ -169,8 +169,29 @@ function Connectors({ layout }) {
   );
 }
 
+/* ── 라운드 헤더 ────────────────────────────────────────────── */
+function RoundHeaders({ headers, width }) {
+  return (
+    <div className="relative" style={{ width, height: 34 }}>
+      {headers.map((h) => {
+        const active = h.done > 0 && h.done < h.count;   // 진행 중인 라운드
+        return (
+          <div key={h.d} className="absolute top-0" style={{ left: h.x, width: BOX_W }}>
+            <div className={`flex items-baseline gap-1.5 pb-1 ${active ? 'border-b-2 border-ink' : 'border-b border-ink-200'}`}>
+              <span className="text-[11px] font-bold text-ink">{h.ko}</span>
+              <span className="text-[8px] tracking-[0.14em] text-ink-400">{h.en}</span>
+              <span className="flex-1" />
+              <span className="text-[9px] tabular-nums text-ink-400">{h.done}/{h.count}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── 보드 ───────────────────────────────────────────────────── */
-export default function BracketBoard({ matches, canEdit, onPick, championId = null }) {
+export default function BracketBoard({ matches, canEdit, onPick, championId = null, bare = false }) {
   const layout = useLayout(matches);
   const { boxes, depths, height, width } = layout;
 
@@ -185,6 +206,24 @@ export default function BracketBoard({ matches, canEdit, onPick, championId = nu
     };
   });
 
+  // 팝업(전체 보기)에서는 바깥에서 확대·이동을 맡으므로 스크롤 래퍼와 안내를 뺀다.
+  const inner = (
+    <div style={{ width }}>
+      {/* 라운드 헤더 */}
+      <RoundHeaders headers={headers} width={width} />
+      <div className="relative" style={{ width, height }}>
+        <Connectors layout={layout} />
+        {boxes.map(({ m, x, y }) => (
+          <div key={m.id} className="absolute" style={{ left: x, top: y }}>
+            <MatchBox m={m} canEdit={canEdit} onPick={onPick} championId={championId} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (bare) return inner;
+
   return (
     <div className="relative">
       {/* 좁은 화면에서는 브라켓이 화면보다 넓다. 오른쪽이 그냥 잘려 보이지 않도록
@@ -196,21 +235,7 @@ export default function BracketBoard({ matches, canEdit, onPick, championId = nu
       <div className="overflow-x-auto">
         <div style={{ minWidth: width }}>
         {/* 라운드 헤더 */}
-        <div className="relative" style={{ width, height: 34 }}>
-          {headers.map((h) => {
-            const active = h.done > 0 && h.done < h.count;   // 진행 중인 라운드
-            return (
-              <div key={h.d} className="absolute top-0" style={{ left: h.x, width: BOX_W }}>
-                <div className={`flex items-baseline gap-1.5 pb-1 ${active ? 'border-b-2 border-ink' : 'border-b border-ink-200'}`}>
-                  <span className={`text-[11px] font-bold ${active ? 'text-ink' : 'text-ink'}`}>{h.ko}</span>
-                  <span className="text-[8px] tracking-[0.14em] text-ink-400">{h.en}</span>
-                  <span className="flex-1" />
-                  <span className="text-[9px] tabular-nums text-ink-400">{h.done}/{h.count}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <RoundHeaders headers={headers} width={width} />
 
         {/* 브라켓 */}
         <div className="relative" style={{ width, height }}>
