@@ -1,53 +1,67 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
-import BracketBoard from '../components/BracketBoard.jsx';
-import BracketModal from '../components/BracketModal.jsx';
-import { adminPost, adminDelete } from '../admin/adminApi.js';
+import { adminGet, adminPost, adminDelete } from '../admin/adminApi.js';
 
 /* 대회 슬러그 — 지금은 대회가 하나뿐이라 고정. 여러 개가 되면 목록에서 고르게 바꾼다. */
 const SLUG = '2026';
-
-/* 관리자 토큰이 있으면 대진표에서 바로 결과를 입력할 수 있다 */
-const isAdmin = () => !!localStorage.getItem('kendo_admin_token');
 
 const labelOf = (s) => s.kind === 'group_winner' ? `${s.group}조 우승`
                      : s.kind === 'from'         ? `${s.number}경기 승자`
                      :                             '미정';
 
-/* ── 한쪽 대진: 이름은 왼쪽, 팀은 오른쪽 정렬 (전광판처럼 읽히게) ── */
-function Side({ s, dark = false }) {
+/* ── 한쪽 대진: 이름은 왼쪽, 팀은 오른쪽 정렬 (전광판처럼 읽히게) ──
+   관리자면 이긴 선수를 눌러 결과를 입력한다. 일반 사용자는 선수 프로필로 이동. */
+function Side({ s, dark = false, canEdit = false, locked = false, onPick, isWinner = false, isLoser = false }) {
   const navigate = useNavigate();
 
   if (s.kind !== 'player') {
     return (
-      <div className="py-1">
+      <div className="py-1 pl-2">
         <span className={`text-[13px] ${dark ? 'text-lime' : 'text-ink-400'}`}>{labelOf(s)}</span>
       </div>
     );
   }
 
+  const nameColor = dark ? 'text-white'
+                  : isWinner ? 'text-ink'
+                  : isLoser  ? 'text-[#aaa]'
+                  : 'text-ink';
+  const teamColor = dark ? 'text-white/45' : isLoser ? 'text-[#c4c4c4]' : 'text-ink-400';
+
   return (
     <button
-      onClick={() => s.slug && navigate(`/players/${s.slug}`)}
-      disabled={!s.slug}
-      className="w-full flex items-baseline gap-3 py-1 text-left pressable disabled:pointer-events-none"
+      /* locked: 관리자인데 아직 상대가 안 정해진 경기. 프로필로 튀지 않도록 아예 막는다. */
+      onClick={() => (canEdit ? onPick?.(s) : s.slug && navigate(`/players/${s.slug}`))}
+      disabled={locked || (!canEdit && !s.slug)}
+      className="relative w-full flex items-baseline gap-3 py-1 pl-2 text-left pressable disabled:pointer-events-none"
     >
-      <span className={`text-[16px] font-bold tracking-[-0.02em] truncate ${dark ? 'text-white' : 'text-ink'}`}>
+      {/* 승자 표시: 왼쪽 3px 검정 바 */}
+      {isWinner && (
+        <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${dark ? 'bg-lime' : 'bg-ink'}`} aria-hidden="true" />
+      )}
+      <span className={`text-[16px] tracking-[-0.02em] truncate ${isLoser ? 'font-normal' : 'font-bold'} ${nameColor}`}>
         {s.name}
       </span>
       <span className="flex-1" />
-      <span className={`text-[11px] shrink-0 ${dark ? 'text-white/45' : 'text-ink-400'}`}>
-        {s.team}
-      </span>
+      <span className={`text-[11px] shrink-0 ${teamColor}`}>{s.team}</span>
     </button>
   );
 }
 
 /* ── 경기 한 건 (양쪽 중 실제 선수가 하나라도 있을 때) ───────── */
-function MatchRow({ m, dark = false }) {
+function MatchRow({ m, dark = false, canEdit = false, onPick }) {
   const bye = (m.a.kind === 'player') !== (m.b.kind === 'player');
+  const w = m.winner_participant_id;
+  const decided = w != null;
+  const isW = (s) => s.kind === 'player' && s.participant_id === w;
+  const isL = (s) => decided && s.kind === 'player' && s.participant_id !== w;
+
+  // 양쪽이 다 정해지기 전에는 결과를 입력할 수 없다.
+  const ready    = m.a.kind === 'player' && m.b.kind === 'player';
+  const editable = canEdit && ready;
+
   return (
     <div className="py-2.5">
       <div className="flex items-center gap-2 mb-0.5">
@@ -60,6 +74,9 @@ function MatchRow({ m, dark = false }) {
             부전승
           </span>
         )}
+        {canEdit && !ready && !decided && (
+          <span className="text-[10px] text-ink-400">앞 경기 먼저</span>
+        )}
         <span className="flex-1" />
         {m.winner && (
           <span className={`text-[10px] font-bold px-1.5 py-0.5 ${dark ? 'bg-lime text-ink' : 'bg-ink text-white'}`}>
@@ -68,9 +85,11 @@ function MatchRow({ m, dark = false }) {
         )}
       </div>
 
-      <Side s={m.a} dark={dark} />
+      <Side s={m.a} dark={dark} canEdit={editable} locked={canEdit && !ready} onPick={() => onPick?.(m, m.a)}
+            isWinner={isW(m.a)} isLoser={isL(m.a)} />
       <div className={`h-px ${dark ? 'bg-white/15' : 'bg-ink-200'}`} />
-      <Side s={m.b} dark={dark} />
+      <Side s={m.b} dark={dark} canEdit={editable} locked={canEdit && !ready} onPick={() => onPick?.(m, m.b)}
+            isWinner={isW(m.b)} isLoser={isL(m.b)} />
     </div>
   );
 }
@@ -90,7 +109,7 @@ function PendingRow({ m }) {
 /* ── 조 하나 (라운드별 구간) ────────────────────────────────── */
 const hasPlayer = (m) => m.a.kind === 'player' || m.b.kind === 'player';
 
-function RoundSection({ round }) {
+function RoundSection({ round, canEdit, onPick }) {
   // 실제 이름이 있는 경기만 펼쳐 보여주고, '승자 대기'만 있는 경기는 접어둔다.
   const live    = round.matches.filter(hasPlayer);
   const pending = round.matches.filter((m) => !hasPlayer(m));
@@ -106,13 +125,13 @@ function RoundSection({ round }) {
 
       {round.isFinal ? (
         <div className="bg-block rounded-2xl px-4 mt-2">
-          {round.matches.map((m) => <MatchRow key={m.id} m={m} dark />)}
+          {round.matches.map((m) => <MatchRow key={m.id} m={m} dark canEdit={canEdit} onPick={onPick} />)}
         </div>
       ) : (
         <>
           {live.length > 0 && (
             <div className="divide-y divide-ink-200" style={{ borderTop: '1.5px solid #111111' }}>
-              {live.map((m) => <MatchRow key={m.id} m={m} />)}
+              {live.map((m) => <MatchRow key={m.id} m={m} canEdit={canEdit} onPick={onPick} />)}
             </div>
           )}
 
@@ -139,7 +158,7 @@ function RoundSection({ round }) {
   );
 }
 
-function GroupView({ group }) {
+function GroupView({ group, canEdit, onPick }) {
   const rounds = useMemo(() => {
     const byDepth = new Map();
     for (const m of group.matches) {
@@ -165,7 +184,7 @@ function GroupView({ group }) {
         <span className="text-[11px] text-ink-400">{group.matches.length}경기</span>
       </div>
 
-      {rounds.map((r) => <RoundSection key={r.depth} round={r} />)}
+      {rounds.map((r) => <RoundSection key={r.depth} round={r} canEdit={canEdit} onPick={onPick} />)}
     </div>
   );
 }
@@ -175,13 +194,27 @@ export default function DrawPage() {
   const { data, loading, error, refetch } = useFetch(() => api.draw(SLUG), [SLUG]);
   const [divIdx, setDivIdx] = useState(0);
   const [segment, setSegment] = useState(0);   // 0,1 = 조 / 2 = 결승
-  // 기본은 목록. 대진표를 처음 만들었을 때의 화면이고, 좁은 화면에서 읽기 좋다.
-  // 브라켓(가로 토너먼트도)은 토글로 열어서 본다.
-  const [view, setView] = useState('list');    // 'list' | 'bracket'
-  const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const admin = isAdmin();
+
+  // 관리자 편집 UI는 토큰이 '있다'가 아니라 '유효하다'를 확인하고 켠다.
+  // 토큰은 계정이 아니라 기기(localStorage)에 저장되므로, 존재 여부만 보면
+  // 예전에 그 브라우저에서 관리자로 들어간 적이 있을 때 일반 계정에도 편집 UI가 보인다.
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    if (!localStorage.getItem('kendo_admin_token')) return;
+    let alive = true;
+    adminGet('/bracket/auth')
+      .then((r) => {
+        if (!alive) return;
+        setAdmin(r?.ok === true);
+        // 서버가 거부한 토큰은 쓸모없으니 지운다(다음 방문부터 확인 요청도 안 나간다).
+        // 네트워크 실패는 catch로 빠지므로 여기서 지워지지 않는다.
+        if (r?.error) localStorage.removeItem('kendo_admin_token');
+      })
+      .catch(() => { if (alive) setAdmin(false); });
+    return () => { alive = false; };
+  }, []);
 
   /* 관리자: 이긴 선수 클릭 → 저장 + 자동 진출 / 승자 재클릭 → 결과 취소(연쇄) */
   async function handlePick(m, side) {
@@ -292,87 +325,33 @@ export default function DrawPage() {
             </div>
           </div>
 
-          {/* 보기 전환 + 관리자 안내 */}
-          <div className="px-5 mt-4 flex items-center gap-2">
-            <div className="flex border border-ink-200 rounded-full overflow-hidden">
-              {[['list', '목록'], ['bracket', '브라켓']].map(([v, label]) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-                    view === v ? 'bg-ink text-white' : 'bg-paper text-ink-600'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+          {(admin || busy) && (
+            <div className="px-5 mt-4 flex items-center gap-2">
+              {admin && (
+                <span className="text-[10px] font-bold tracking-[0.1em] bg-lime text-ink px-2 py-1">
+                  ADMIN · 이긴 선수 클릭
+                </span>
+              )}
+              <span className="flex-1" />
+              {busy && <span className="text-[10px] text-ink-400">저장 중…</span>}
             </div>
-            {view === 'bracket' && (
-              <button
-                onClick={() => setExpanded(true)}
-                className="px-3 py-1.5 text-[11px] font-semibold border border-ink rounded-full text-ink pressable"
-              >
-                ⤢ 전체 보기
-              </button>
-            )}
-            <span className="flex-1" />
-            {admin && (
-              <span className="text-[10px] font-bold tracking-[0.1em] bg-lime text-ink px-2 py-1">
-                ADMIN · 이긴 선수 클릭
-              </span>
-            )}
-            {busy && <span className="text-[10px] text-ink-400">저장 중…</span>}
-          </div>
+          )}
           {err && <p className="px-5 mt-2 text-[11px] text-red-600">{err}</p>}
 
           {segment < division.groups.length ? (
-            view === 'bracket' ? (
-              <div className="mt-5 pl-5 wide-break md:px-8">
-                <BracketBoard
-                  matches={division.groups[segment].matches}
-                  canEdit={admin && !busy}
-                  onPick={handlePick}
-                  championId={null}
-                />
-              </div>
-            ) : (
-              <div className="px-5 mt-6">
-                <GroupView group={division.groups[segment]} />
-              </div>
-            )
+            <div className="px-5 mt-6">
+              <GroupView group={division.groups[segment]} canEdit={admin && !busy} onPick={handlePick} />
+            </div>
           ) : (
             <div className="px-5 mt-6">
               <div className="flex items-baseline gap-2 pb-3">
                 <h2 className="text-2xl font-bold text-ink tracking-[-0.03em]">결승</h2>
                 <span className="text-[11px] text-ink-400">A조 우승 vs B조 우승</span>
               </div>
-              {view === 'bracket' ? (
-                <BracketBoard
-                  matches={[division.final]}
-                  canEdit={admin && !busy}
-                  onPick={handlePick}
-                  championId={division.final.winner_participant_id}
-                />
-              ) : (
-                <div className="bg-block rounded-2xl px-4">
-                  <MatchRow m={division.final} dark />
-                </div>
-              )}
+              <div className="bg-block rounded-2xl px-4">
+                <MatchRow m={division.final} dark canEdit={admin && !busy} onPick={handlePick} />
+              </div>
             </div>
-          )}
-
-          {expanded && (
-            <BracketModal
-              title={`${division.label} · ${segment < division.groups.length ? `${division.groups[segment].group}조` : '결승'}`}
-              subtitle={segment < division.groups.length
-                ? `${division.groups[segment].court} · ${division.groups[segment].matches.length}경기`
-                : 'A조 우승 vs B조 우승'}
-              matches={segment < division.groups.length ? division.groups[segment].matches : [division.final]}
-              canEdit={admin && !busy}
-              onPick={handlePick}
-              championId={segment < division.groups.length ? null : division.final.winner_participant_id}
-              onClose={() => setExpanded(false)}
-            />
           )}
         </>
       )}

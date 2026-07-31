@@ -32,22 +32,6 @@ body {
   padding-bottom: 72px;
 }
 
-/* 앱은 480px 모바일 셸(.mobile-container) 안에 있다. 대진표처럼 넓어야 하는 것만
-   태블릿 이상에서 셸 밖으로 빠져나와 화면 전체를 쓴다. 모바일에서는 그대로 두고
-   내부에서 가로 스크롤한다. */
-/* 100vw는 세로 스크롤바 폭까지 포함해서, 그대로 쓰면 페이지가 스크롤바 폭만큼
-   가로로 밀린다. --sbw(스크롤바 폭)를 빼서 정확히 보이는 영역에 맞춘다.
-   --sbw는 main.jsx에서 잰다. */
-@media (min-width: 768px) {
-  .wide-break {
-    --vw: calc(100vw - var(--sbw, 0px));
-    width: var(--vw);
-    max-width: var(--vw);
-    margin-left: calc(50% - var(--vw) / 2);
-    margin-right: calc(50% - var(--vw) / 2);
-  }
-}
-
 /* 가로 스크롤 숨김 */
 .scroll-x {
   overflow-x: auto;

@@ -15,6 +15,12 @@ import { serverError } from '../utils/apiError.js';
 const router = Router();
 router.use(requireAdmin);
 
+// GET /api/admin/bracket/auth — 토큰이 실제로 유효한지 확인용.
+// 공개 대진표 페이지가 '관리자 편집 UI를 보여줄지'를 정할 때 쓴다.
+// localStorage에 값이 있다는 것만으로 판단하면, 그 기기에서 예전에 관리자로 들어간 적이
+// 있을 때 일반 계정에도 편집 UI가 보인다.
+router.get('/bracket/auth', (_req, res) => res.json({ ok: true }));
+
 const getMatch = async (id) => {
   const { rows } = await db.execute({ sql: 'SELECT * FROM bracket_matches WHERE id = ?', args: [id] });
   return rows[0] ?? null;
