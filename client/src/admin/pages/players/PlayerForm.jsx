@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Save } from 'lucide-react';
 import { adminGet, adminPost, adminPut, adminDelete } from '../../adminApi.js';
+import VideoManager from '../../../components/VideoManager.jsx';
 
 const POSITIONS  = ['선봉', '이봉', '중견', '부장', '대장'];
 const CATEGORIES = ['죽도', '호구', '도복', '하카마', '기타'];
@@ -46,6 +47,13 @@ export default function PlayerForm() {
   const { id }    = useParams();
   const navigate  = useNavigate();
   const isEdit    = !!id;
+
+  // VideoManager가 쓸 호출부. id마다 고정해야 매 렌더에 다시 불러오지 않는다.
+  const videoApi = useMemo(() => ({
+    list:   ()     => adminGet(`/players/${id}/videos`),
+    add:    (body) => adminPost(`/players/${id}/videos`, body),
+    remove: (vid)  => adminDelete(`/players/${id}/videos/${vid}`),
+  }), [id]);
 
   const [form,    setForm]    = useState(EMPTY_FORM);
   const [teams,   setTeams]   = useState([]);
@@ -247,6 +255,17 @@ export default function PlayerForm() {
             </div>
           </div>
         </div>
+
+        {/* ── 영상 링크 (저장된 선수만 — player id가 있어야 등록 가능) ── */}
+        {isEdit && (
+          <div className="border border-ink-200 p-6 mb-6">
+            <VideoManager
+              api={videoApi}
+              title="영상 링크"
+              hint="선수 페이지에 노출됩니다. 유튜브 주소는 썸네일과 재생이 자동으로 붙습니다. 선수 본인도 마이페이지에서 등록할 수 있습니다."
+            />
+          </div>
+        )}
 
         {/* ── Bio ── */}
         <div className="border border-ink-200 p-6 mb-6">

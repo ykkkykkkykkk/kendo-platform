@@ -10,6 +10,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { api, authGet, authPost, authDelete } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import PlayerVideos from '../components/PlayerVideos.jsx';
 import { haptic } from '../utils/haptic.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
 import PlayerAvatar         from '../components/PlayerAvatar.jsx';
@@ -339,6 +340,9 @@ export default function PlayerProfile({ onLoginRequest }) {
             </div>
           </section>
         )}
+
+        {/* ── 영상 ── */}
+        <PlayerVideos videos={player.videos ?? []} />
 
         {/* ── My Gear ── */}
         <section className="mt-8">

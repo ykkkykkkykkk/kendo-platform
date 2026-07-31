@@ -49,15 +49,20 @@ router.get('/:slug', async (req, res) => {
     });
     if (!player) return res.status(404).json({ error: '선수를 찾을 수 없습니다.' });
 
-    const [{ rows: [stats] }, { rows: gear }] = await Promise.all([
+    const [{ rows: [stats] }, { rows: gear }, { rows: videos }] = await Promise.all([
       db.execute({ sql: 'SELECT * FROM player_stats WHERE player_id = ?', args: [player.id] }),
       db.execute({
         sql:  'SELECT * FROM player_gear WHERE player_id = ? ORDER BY display_order',
         args: [player.id],
       }),
+      db.execute({
+        sql: `SELECT id, url, title, video_id FROM player_videos
+              WHERE player_id = ? ORDER BY display_order, id`,
+        args: [player.id],
+      }),
     ]);
 
-    res.json({ ...player, stats: stats ?? null, gear });
+    res.json({ ...player, stats: stats ?? null, gear, videos });
   } catch (e) {
     serverError(res, e);
   }

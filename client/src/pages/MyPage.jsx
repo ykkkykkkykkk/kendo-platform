@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, LogOut, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFetch } from '../hooks/useFetch.js';
-import { api, authPost } from '../api.js';
+import { api, authPost, authGet, authDelete } from '../api.js';
+import VideoManager from '../components/VideoManager.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
@@ -188,6 +189,13 @@ export default function MyPage() {
   const { data, loading, refetch } = useFetch(api.me);
   const { data: follows } = useFetch(api.myFollows);
 
+  // 선수 계정 본인 영상. 서버가 토큰의 playerId로 대상을 정하므로 선수 id를 넘기지 않는다.
+  const myVideoApi = useMemo(() => ({
+    list:   ()     => authGet('/me/videos'),
+    add:    (body) => authPost('/me/videos', body),
+    remove: (vid)  => authDelete(`/me/videos/${vid}`),
+  }), []);
+
   const [modal, setModal]       = useState(null); // 'nickname'|'logout'|'withdraw'|'dojo'
   const [nickname, setNickname] = useState(null);
 
@@ -325,6 +333,19 @@ export default function MyPage() {
         <Row label="시즌 점수" value={`${(data?.season_score ?? 0).toLocaleString()}점`}
           sub={data?.season?.name} onClick={() => navigate('/ranking')} />
       </Section>
+
+      {/* ── 선수 계정만: 내 프로필에 올릴 영상 ── */}
+      {user?.role === 'player' && (
+        <Section label="MY VIDEO" delay={0.13}>
+          <div className="px-5 py-4">
+            <VideoManager
+              api={myVideoApi}
+              title="내 영상"
+              hint="내 선수 페이지에 바로 노출됩니다. 유튜브 주소를 넣으면 썸네일과 재생이 자동으로 붙습니다."
+            />
+          </div>
+        </Section>
+      )}
 
       {/* ── SETTINGS ── */}
       <Section label="SETTINGS" delay={0.14}>
