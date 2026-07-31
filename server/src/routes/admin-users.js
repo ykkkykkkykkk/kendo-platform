@@ -12,14 +12,25 @@ router.use(requireAdmin);
 
 /* ══════════════ 회원 ══════════════ */
 
-// GET /api/admin/users?q=검색어
+// 팔로워 수를 채우려고 만든 시드 계정(가라팬). 실제 가입자가 아니라 기본으로 숨긴다.
+const SEED_PHONE_PREFIX = '검도팬_';
+const IS_SEED = `(u.phone LIKE '${SEED_PHONE_PREFIX}%')`;
+
+// GET /api/admin/users?q=검색어&include_seed=1
 router.get('/users', async (req, res) => {
   try {
     const q = (req.query.q ?? '').trim();
+    const includeSeed = req.query.include_seed === '1';
     const like = `%${q}%`;
-    const { rows } = await db.execute({
+
+    const where = [];
+    if (!includeSeed) where.push(`NOT ${IS_SEED}`);
+    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ?)');
+
+    const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.role, u.dan_grade, u.home_dojo,
                    u.created_at, u.player_id,
+                   ${IS_SEED} AS is_seed,
                    t.name  AS favorite_team,
                    d.name  AS dojo_name,
                    p.name  AS player_name,
@@ -29,11 +40,16 @@ router.get('/users', async (req, res) => {
             LEFT JOIN teams  t ON t.id = u.favorite_team_id
             LEFT JOIN dojos  d ON d.id = u.dojo_id
             LEFT JOIN players p ON p.id = u.player_id
-            ${q ? 'WHERE u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ?' : ''}
+            ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
             ORDER BY u.created_at DESC`,
       args: q ? [like, like, like] : [],
     });
-    res.json(rows);
+
+    const { rows: [{ n: seedCount }] } = await db.execute(
+      `SELECT COUNT(*) AS n FROM users u WHERE ${IS_SEED}`
+    );
+
+    res.json({ users, seed_count: seedCount });
   } catch (e) { serverError(res, e, 'admin-users'); }
 });
 

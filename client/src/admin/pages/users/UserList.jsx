@@ -5,20 +5,26 @@ import { adminGet, adminDelete } from '../../adminApi.js';
 /** 가입 회원 관리. 선수 계정(role=player)은 '선수 계정' 메뉴에서 따로 다룬다. */
 export default function UserList() {
   const [users, setUsers]     = useState([]);
+  const [seedCount, setSeed]  = useState(0);
+  const [showSeed, setShow]   = useState(false);   // 가라팬은 기본 숨김
   const [loading, setLoading] = useState(true);
   const [q, setQ]             = useState('');
   const [detail, setDetail]   = useState(null);
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
 
-  const load = useCallback(async (query = '') => {
+  const load = useCallback(async (query = '', withSeed = false) => {
     setLoading(true);
-    const rows = await adminGet(`/users${query ? `?q=${encodeURIComponent(query)}` : ''}`);
-    setUsers(Array.isArray(rows) ? rows : []);
+    const params = new URLSearchParams();
+    if (query)   params.set('q', query);
+    if (withSeed) params.set('include_seed', '1');
+    const r = await adminGet(`/users${params.toString() ? `?${params}` : ''}`);
+    setUsers(Array.isArray(r?.users) ? r.users : []);
+    setSeed(r?.seed_count ?? 0);
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(q, showSeed); /* eslint-disable-next-line */ }, [showSeed]);
 
   async function openDetail(id) {
     setDetail({ loading: true });
@@ -35,7 +41,7 @@ export default function UserList() {
       const res = await adminDelete(`/users/${u.id}`);
       if (!res.ok) throw new Error((await res.json()).error ?? '삭제 실패');
       setDetail(null);
-      await load(q);
+      await load(q, showSeed);
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
 
@@ -46,12 +52,27 @@ export default function UserList() {
         <span className="text-sm text-ink-400">{users.length}명</span>
         {busy && <Loader size={14} className="animate-spin text-ink-400" />}
       </div>
-      <p className="text-ink-400 text-sm mb-5">가입한 회원 목록입니다. 닉네임·도장으로 검색할 수 있습니다.</p>
+      <p className="text-ink-400 text-sm mb-4">가입한 회원 목록입니다. 닉네임·도장으로 검색할 수 있습니다.</p>
 
       {err && <p className="mb-4 px-3 py-2 border border-red-300 bg-red-50 text-red-700 text-[12px]">{err}</p>}
 
+      {/* 가라팬(팔로워 수 채우기용 시드 계정)은 실제 가입자가 아니라 기본으로 숨긴다 */}
+      {seedCount > 0 && (
+        <div className="flex items-center gap-2 mb-4 text-[12px]">
+          <span className="text-ink-400">
+            {showSeed ? `가라팬 ${seedCount}명 포함해서 보는 중` : `가라팬 ${seedCount}명 숨김`}
+          </span>
+          <button
+            onClick={() => setShow((v) => !v)}
+            className="px-2.5 py-1 border border-ink-200 hover:border-ink text-ink-600 transition-colors"
+          >
+            {showSeed ? '숨기기' : '가라팬 보기'}
+          </button>
+        </div>
+      )}
+
       <form
-        onSubmit={(e) => { e.preventDefault(); load(q); }}
+        onSubmit={(e) => { e.preventDefault(); load(q, showSeed); }}
         className="flex items-center gap-2 mb-4 max-w-md"
       >
         <div className="flex-1 flex items-center gap-2 border border-ink-200 px-3 py-2">
@@ -63,7 +84,7 @@ export default function UserList() {
             className="flex-1 text-sm outline-none bg-transparent"
           />
           {q && (
-            <button type="button" onClick={() => { setQ(''); load(''); }} className="text-ink-400">
+            <button type="button" onClick={() => { setQ(''); load('', showSeed); }} className="text-ink-400">
               <X size={14} />
             </button>
           )}
@@ -98,6 +119,11 @@ export default function UserList() {
                     {u.role !== 'fan' && (
                       <span className="ml-1.5 text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold">
                         {u.role === 'player' ? `선수${u.player_name ? `·${u.player_name}` : ''}` : u.role}
+                      </span>
+                    )}
+                    {!!u.is_seed && (
+                      <span className="ml-1.5 text-[10px] border border-ink-200 text-ink-400 px-1.5 py-0.5">
+                        가라팬
                       </span>
                     )}
                   </td>
