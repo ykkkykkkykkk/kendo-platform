@@ -21,9 +21,12 @@ router.get('/', async (_req, res) => {
 // 각 경기의 양쪽은 선수(kind:'player')이거나 앞선 경기의 승자(kind:'from')다.
 router.get('/:slug/draw', async (req, res) => {
   try {
+    // 공개 페이지는 slug로, 관리자 페이지는 id로 부른다. 둘 다 받는다.
+    const key = req.params.slug;
     const { rows: [tournament] } = await db.execute({
-      sql:  'SELECT id, name, slug, venue, status, start_date, end_date FROM tournaments WHERE slug = ?',
-      args: [req.params.slug],
+      sql: `SELECT id, name, slug, venue, status, start_date, end_date
+            FROM tournaments WHERE slug = ?${/^\d+$/.test(key) ? ' OR id = ?' : ''}`,
+      args: /^\d+$/.test(key) ? [key, Number(key)] : [key],
     });
     if (!tournament) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
 

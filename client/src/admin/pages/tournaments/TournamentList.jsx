@@ -106,8 +106,10 @@ export default function TournamentList() {
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{t.match_count}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      {/* 실제 대진표(bracket_matches) 결과 입력.
+                          옛 matches 테이블용 화면은 /matches 경로에 그대로 남아 있다. */}
                       <button
-                        onClick={() => navigate(`/admin/tournaments/${t.id}/matches`)}
+                        onClick={() => navigate(`/admin/tournaments/${t.id}/bracket`)}
                         className="flex items-center gap-1 text-xs text-ink border border-ink-200
                                    hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
                       >

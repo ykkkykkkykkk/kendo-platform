@@ -11,6 +11,7 @@ import TournamentList    from './pages/tournaments/TournamentList.jsx';
 import TournamentForm    from './pages/tournaments/TournamentForm.jsx';
 import TournamentMatches    from './pages/tournaments/TournamentMatches.jsx';
 import TournamentPickResults from './pages/tournaments/TournamentPickResults.jsx';
+import TournamentBracket   from './pages/tournaments/TournamentBracket.jsx';
 import ClinicList        from './pages/clinics/ClinicList.jsx';
 import ClinicForm        from './pages/clinics/ClinicForm.jsx';
 import SponsorshipList   from './pages/sponsorships/SponsorshipList.jsx';
@@ -47,6 +48,7 @@ export default function AdminApp() {
         <Route path="tournaments/:id/edit"         element={<TournamentForm />} />
         <Route path="tournaments/:id/matches"      element={<TournamentMatches />} />
         <Route path="tournaments/:id/picks"       element={<TournamentPickResults />} />
+        <Route path="tournaments/:id/bracket"      element={<TournamentBracket />} />
 
         <Route path="clinics"                      element={<ClinicList />} />
         <Route path="clinics/new"                  element={<ClinicForm />} />
