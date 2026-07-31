@@ -256,7 +256,7 @@ export default function PlayerProfile({ onLoginRequest }) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium uppercase">
-              PLAYER{player.position ? ` — ${player.position}` : ''}
+              PLAYER
             </p>
             <h1 className="text-5xl font-bold text-ink tracking-[-0.04em] leading-[0.95] mt-2">
               {player.name}

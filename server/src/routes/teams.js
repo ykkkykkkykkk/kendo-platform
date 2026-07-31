@@ -32,9 +32,9 @@ router.get('/:slug', async (req, res) => {
             FROM players p
             LEFT JOIN player_stats ps ON ps.player_id = p.id
             WHERE p.team_id = ?
-            ORDER BY CASE p.position
-              WHEN '대장' THEN 1 WHEN '부장' THEN 2 WHEN '중견' THEN 3
-              WHEN '이봉' THEN 4 WHEN '선봉' THEN 5 ELSE 6 END`,
+            -- 단체전 오더(선봉~대장)는 화면에 안 보이므로 그 순서로 정렬하면 근거 없이 섞인 것처럼 보인다.
+            -- 단 높은 순, 같으면 이름 순.
+            ORDER BY p.dan_grade DESC NULLS LAST, p.name`,
       args: [team.id],
     });
 

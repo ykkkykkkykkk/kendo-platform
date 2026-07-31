@@ -94,16 +94,16 @@ export default function TeamDetail() {
               >
                 <PlayerAvatar slug={p.slug} name={p.name} color={team.color_primary} size={40} />
                 <div className="flex-1 min-w-0">
+                  {/* 선봉·이봉·중견·부장·대장(단체전 오더)은 표시하지 않는다.
+                      데이터는 남아 있고 관리자에서만 다룬다. */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-ink text-[15px]">{p.name}</span>
-                    {p.position && (
-                      <span className="text-[10px] px-2 py-0.5 border border-ink-200 text-ink-600 font-medium">
-                        {p.position}
-                      </span>
-                    )}
                   </div>
+                  {/* 단이 없으면 '단'만 덩그러니 남지 않도록 있는 항목만 이어 붙인다 */}
                   <p className="text-ink-400 text-xs mt-0.5">
-                    {p.dan_grade}단{p.birth_year ? ` · ${p.birth_year}년생` : ''}
+                    {[p.dan_grade ? `${p.dan_grade}단` : null,
+                      p.birth_year ? `${p.birth_year}년생` : null]
+                      .filter(Boolean).join(' · ')}
                   </p>
                 </div>
                 <span className="text-ink-400 text-sm flex-none">→</span>
