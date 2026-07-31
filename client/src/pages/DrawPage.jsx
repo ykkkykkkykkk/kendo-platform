@@ -175,7 +175,9 @@ export default function DrawPage() {
   const { data, loading, error, refetch } = useFetch(() => api.draw(SLUG), [SLUG]);
   const [divIdx, setDivIdx] = useState(0);
   const [segment, setSegment] = useState(0);   // 0,1 = 조 / 2 = 결승
-  const [view, setView] = useState('bracket'); // 'bracket' | 'list'
+  // 기본은 목록. 대진표를 처음 만들었을 때의 화면이고, 좁은 화면에서 읽기 좋다.
+  // 브라켓(가로 토너먼트도)은 토글로 열어서 본다.
+  const [view, setView] = useState('list');    // 'list' | 'bracket'
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -293,7 +295,7 @@ export default function DrawPage() {
           {/* 보기 전환 + 관리자 안내 */}
           <div className="px-5 mt-4 flex items-center gap-2">
             <div className="flex border border-ink-200 rounded-full overflow-hidden">
-              {[['bracket', '브라켓'], ['list', '목록']].map(([v, label]) => (
+              {[['list', '목록'], ['bracket', '브라켓']].map(([v, label]) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}

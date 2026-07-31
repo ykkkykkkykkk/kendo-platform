@@ -206,7 +206,8 @@ export function parseBracketFile(file) {
 
 /* ── CLI ─────────────────────────────────────────────────────── */
 // 한글 경로는 import.meta.url에서 URL 인코딩되므로 pathToFileURL로 비교해야 한다.
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// (모듈로 import될 때는 argv[1]이 없을 수 있으므로 먼저 확인한다)
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const DUMP = process.argv.includes('--dump');
   let fail = 0;
 

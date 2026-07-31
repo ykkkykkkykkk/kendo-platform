@@ -66,11 +66,18 @@ router.post('/bracket/matches/:id/result', async (req, res) => {
     const match = await getMatch(matchId);
     if (!match) return res.status(404).json({ error: '경기를 찾을 수 없습니다.' });
 
+    // 양쪽이 모두 정해진 뒤에만 승자를 기록할 수 있다.
+    // (한쪽이 '앞 경기 승자'로 비어 있는데 다른 쪽을 눌러 승리 처리되는 오클릭을 막는다)
+    if (match.a_participant_id == null || match.b_participant_id == null)
+      return res.status(400).json({
+        error: '아직 상대가 정해지지 않았습니다. 앞 경기 결과를 먼저 입력해 주세요.',
+      });
+
     // 승자는 반드시 이 경기에 배정된 두 선수 중 하나여야 한다.
     const winner = Number(winner_participant_id);
     if (![match.a_participant_id, match.b_participant_id].includes(winner))
       return res.status(400).json({
-        error: '이 경기의 참가자가 아닙니다. 앞 라운드 결과가 먼저 입력되어야 합니다.',
+        error: '이 경기의 참가자가 아닙니다.',
         a: match.a_participant_id, b: match.b_participant_id,
       });
 

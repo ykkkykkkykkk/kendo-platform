@@ -126,19 +126,23 @@ function MatchBox({ m, canEdit, onPick, championId }) {
   const isW = (s) => s.kind === 'player' && s.participant_id === w;
   const isL = (s) => decided && s.kind === 'player' && s.participant_id !== w;
 
+  // 양쪽이 다 정해지기 전에는 결과를 입력할 수 없다. 한쪽만 채워진 상태에서
+  // 누르면 상대 없이 승리 처리돼 버린다(실제로 그렇게 잘못 입력된 적 있음).
+  const ready    = m.a.kind === 'player' && m.b.kind === 'player';
+  const editable = canEdit && ready;
+
   return (
     <div className="border border-ink-200 bg-paper" style={{ width: BOX_W }}>
       <div className="flex items-center gap-1.5 px-2 h-[18px] border-b border-ink-200">
         <span className="text-[9px] font-bold tabular-nums text-ink-600">{m.number}</span>
-        {!decided && <span className="text-[9px] text-ink-400">예정</span>}
-        {decided && <span className="text-[9px] text-ink-400">종료</span>}
+        <span className="text-[9px] text-ink-400">{decided ? '종료' : ready ? '예정' : '대기'}</span>
       </div>
       <Cell side={m.a} isWinner={isW(m.a)} isLoser={isL(m.a)}
-            canEdit={canEdit} onPick={() => onPick(m, m.a)}
+            canEdit={editable} onPick={() => onPick(m, m.a)}
             champion={championId != null && isW(m.a) && m.a.participant_id === championId} />
       <div className="h-px bg-ink-200" />
       <Cell side={m.b} isWinner={isW(m.b)} isLoser={isL(m.b)}
-            canEdit={canEdit} onPick={() => onPick(m, m.b)}
+            canEdit={editable} onPick={() => onPick(m, m.b)}
             champion={championId != null && isW(m.b) && m.b.participant_id === championId} />
     </div>
   );
