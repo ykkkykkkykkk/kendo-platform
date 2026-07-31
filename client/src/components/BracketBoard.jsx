@@ -186,8 +186,15 @@ export default function BracketBoard({ matches, canEdit, onPick, championId = nu
   });
 
   return (
-    <div className="overflow-x-auto">
-      <div style={{ minWidth: width }}>
+    <div className="relative">
+      {/* 좁은 화면에서는 브라켓이 화면보다 넓다. 오른쪽이 그냥 잘려 보이지 않도록
+          페이드와 안내를 둔다(태블릿 이상에서는 다 들어가므로 숨김). */}
+      <div className="md:hidden absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none
+                      bg-gradient-to-l from-paper to-transparent" />
+      <p className="md:hidden text-[10px] text-ink-400 pb-1.5">← 좌우로 넘겨서 보기</p>
+
+      <div className="overflow-x-auto">
+        <div style={{ minWidth: width }}>
         {/* 라운드 헤더 */}
         <div className="relative" style={{ width, height: 34 }}>
           {headers.map((h) => {
@@ -213,6 +220,7 @@ export default function BracketBoard({ matches, canEdit, onPick, championId = nu
               <MatchBox m={m} canEdit={canEdit} onPick={onPick} championId={championId} />
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>

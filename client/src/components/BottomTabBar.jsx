@@ -11,28 +11,33 @@ const tabs = [
 
 export default function BottomTabBar() {
   return (
+    /* 바는 화면 전체 폭으로 깔고 탭만 가운데 480px에 모은다.
+       예전처럼 480px 바가 가운데 떠 있으면, 대진표처럼 넓은 화면에서
+       브라켓 한복판을 흰 섬이 가려 내용이 잘린 것처럼 보인다. */
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile flex z-50 bg-paper"
-      style={{ height: 60, borderTop: '1.5px solid #111111' }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-paper"
+      style={{ borderTop: '1.5px solid #111111' }}
     >
-      {tabs.map(({ to, label, icon: Icon, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          className={({ isActive }) =>
-            `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold tracking-[0.2em] transition-colors
-             ${isActive ? 'text-ink' : 'text-ink-400'}`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <Icon active={isActive} />
-              <span>{label}</span>
-            </>
-          )}
-        </NavLink>
-      ))}
+      <div className="mx-auto w-full max-w-mobile flex" style={{ height: 60 }}>
+        {tabs.map(({ to, label, icon: Icon, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold tracking-[0.2em] transition-colors
+               ${isActive ? 'text-ink' : 'text-ink-400'}`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon active={isActive} />
+                <span>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   );
 }
