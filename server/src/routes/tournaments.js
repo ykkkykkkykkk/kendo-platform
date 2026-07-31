@@ -38,6 +38,7 @@ router.get('/:slug/draw', async (req, res) => {
       sql: `SELECT bm.id, bm.division_id, bm.group_label, bm.court_label,
                    bm.match_number, bm.round_depth, bm.is_group_final, bm.is_final,
                    bm.status, bm.score_a, bm.score_b,
+                   bm.a_participant_id, bm.b_participant_id, bm.winner_participant_id,
                    pa.name AS a_name, pa.slug AS a_slug, dpa.seed_number AS a_seed, ta.name AS a_team,
                    pb.name AS b_name, pb.slug AS b_slug, dpb.seed_number AS b_seed, tb.name AS b_team,
                    ma.match_number AS a_from_number, ma.group_label AS a_from_group,
@@ -64,8 +65,9 @@ router.get('/:slug/draw', async (req, res) => {
 
     // 조 결승 승자를 가리킬 때는 '{조}조 우승'으로 구분한다 —
     // A조·B조의 조 결승은 경기번호가 같아서 '28경기 승자'만으로는 구분이 안 된다.
-    const sideOf = (name, slug, team, seed, from) => {
-      if (name) return { kind: 'player', name, slug, team, seed };
+    const sideOf = (participantId, name, slug, team, seed, from) => {
+      // participant_id로 비교해야 한다 — 동명이인이 실제로 있다(5단부 이창훈 2명).
+      if (name) return { kind: 'player', participant_id: participantId, name, slug, team, seed };
       if (from.number == null) return { kind: 'tbd' };
       return from.isGroupFinal && from.group
         ? { kind: 'group_winner', group: from.group, number: from.number }
@@ -81,11 +83,16 @@ router.get('/:slug/draw', async (req, res) => {
       status:         m.status,
       score_a:        m.score_a,
       score_b:        m.score_b,
-      a:              sideOf(m.a_name, m.a_slug, m.a_team, m.a_seed,
+      a:              sideOf(m.a_participant_id, m.a_name, m.a_slug, m.a_team, m.a_seed,
                              { number: m.a_from_number, group: m.a_from_group, isGroupFinal: !!m.a_from_is_group_final }),
-      b:              sideOf(m.b_name, m.b_slug, m.b_team, m.b_seed,
+      b:              sideOf(m.b_participant_id, m.b_name, m.b_slug, m.b_team, m.b_seed,
                              { number: m.b_from_number, group: m.b_from_group, isGroupFinal: !!m.b_from_is_group_final }),
+      // 승자 강조는 participant_id로 판단한다 (이름 비교는 동명이인 때문에 틀린다)
+      winner_participant_id: m.winner_participant_id,
       winner:         m.winner_name ? { name: m.winner_name, slug: m.winner_slug } : null,
+      // 대진 연결선을 그리려면 이 경기의 승자가 어디서 왔는지 알아야 한다
+      a_from_number:  m.a_from_number,
+      b_from_number:  m.b_from_number,
     });
 
     const result = divisions.map((d) => {

@@ -32,6 +32,18 @@ body {
   padding-bottom: 72px;
 }
 
+/* 앱은 480px 모바일 셸(.mobile-container) 안에 있다. 대진표처럼 넓어야 하는 것만
+   태블릿 이상에서 셸 밖으로 빠져나와 화면 전체를 쓴다. 모바일에서는 그대로 두고
+   내부에서 가로 스크롤한다. */
+@media (min-width: 768px) {
+  .wide-break {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+}
+
 /* 가로 스크롤 숨김 */
 .scroll-x {
   overflow-x: auto;
