@@ -32,9 +32,9 @@ router.get('/:slug', async (req, res) => {
             FROM players p
             LEFT JOIN player_stats ps ON ps.player_id = p.id
             WHERE p.team_id = ?
-            -- 단체전 오더(선봉~대장)는 화면에 안 보이므로 그 순서로 정렬하면 근거 없이 섞인 것처럼 보인다.
-            -- 단 높은 순, 같으면 이름 순.
-            ORDER BY p.dan_grade DESC NULLS LAST, p.name`,
+            -- 별도 정렬 없이 등록된 순서 그대로 보여준다.
+            -- (ORDER BY를 아예 빼면 순서가 보장되지 않으므로 id로 고정만 해둔다)
+            ORDER BY p.id`,
       args: [team.id],
     });
 
