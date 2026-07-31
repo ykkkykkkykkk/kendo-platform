@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Trophy, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Trophy, Star, Users } from 'lucide-react';
 import { adminGet, adminDelete } from '../../adminApi.js';
 
 const STATUS_TABS = ['전체', '예정', '진행', '종료'];
@@ -115,6 +115,14 @@ export default function TournamentList() {
                       >
                         <Trophy size={12} />
                         대진표
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/tournaments/${t.id}/user-picks`)}
+                        className="flex items-center gap-1 text-xs text-ink border border-ink-200
+                                   hover:border-ink px-2.5 py-1.5 rounded-full transition-colors"
+                      >
+                        <Users size={12} />
+                        회원 픽
                       </button>
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/picks`)}
