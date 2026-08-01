@@ -75,6 +75,20 @@ export const api = {
   submitPick: (divId, body)      => authPost(`/divisions/${divId}/pick`, body),
   lockPick:   (divId)            => authPost(`/divisions/${divId}/pick/lock`, {}),
 
+  // 선수 포스팅 · 피드 · 알림
+  feed:          (before)      => authGet(`/feed?limit=20${before ? `&before=${before}` : ''}`),
+  playerPosts:   (slug)        => get(`/players/${slug}/posts`),
+  myPosts:       ()            => authGet('/player/posts'),
+  createPost:    (body)        => authPost('/player/posts', body),
+  deletePost:    (id)          => authDelete(`/player/posts/${id}`),
+  likePost:      (id)          => authPost(`/posts/${id}/like`, {}),
+  postComments:  (id)          => get(`/posts/${id}/comments`),
+  addComment:    (id, content) => authPost(`/posts/${id}/comment`, { content }),
+  playerHeart:   (cid)         => authPost(`/player/comments/${cid}/like`, {}),
+  playerReply:   (cid, content)=> authPost(`/player/comments/${cid}/reply`, { content }),
+  notifications: ()            => authGet('/notifications'),
+  readNotifications: (id)      => authPut('/notifications/read', id ? { id } : {}),
+
   // 마이페이지
   me:           ()          => authGet('/me'),
   updateMe:     (body)      => authPost('/me', body),

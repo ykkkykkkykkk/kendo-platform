@@ -8,6 +8,7 @@ import { SkeletonCard } from '../components/Skeleton.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import WelcomeModal from '../components/WelcomeModal.jsx';
+import NotificationBell from '../components/NotificationBell.jsx';
 
 /* ── D-day: "D—9" (em dash) ────────────────────────────── */
 function dday(dateStr) {
@@ -141,6 +142,7 @@ export default function Home({ onLoginRequest }) {
             </h1>
           </div>
           <div className="flex items-center gap-2 pt-1">
+            <NotificationBell />
             <button
               onClick={() => navigate('/search')}
               className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable"

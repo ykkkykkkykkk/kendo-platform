@@ -19,6 +19,7 @@ import PredictionsPage           from './pages/PredictionsPage.jsx';
 import PredictionTournamentPage  from './pages/PredictionTournamentPage.jsx';
 import PickInputPage             from './pages/PickInputPage.jsx';
 import DrawPage                  from './pages/DrawPage.jsx';
+import FeedPage                  from './pages/FeedPage.jsx';
 import RankingPage               from './pages/RankingPage.jsx';
 import SearchPage                from './pages/SearchPage.jsx';
 import Shop                from './pages/Shop.jsx';
@@ -72,6 +73,9 @@ export default function App() {
           <Route path="/tournaments/:slug" element={<Navigate to="/predictions" replace />} />
           <Route path="/draw" element={
             <PageTransition><DrawPage /></PageTransition>
+          } />
+          <Route path="/feed" element={
+            <PageTransition><FeedPage onLoginRequest={openLogin} /></PageTransition>
           } />
           <Route path="/predictions" element={
             <PageTransition><PredictionsPage onLoginRequest={openLogin} /></PageTransition>
