@@ -334,7 +334,13 @@ export default function MyPage() {
           sub={data?.season?.name} onClick={() => navigate('/ranking')} />
       </Section>
 
-      {/* ── 선수 계정만: 내 프로필에 올릴 영상 ── */}
+      {/* ── 선수 계정만 ── */}
+      {user?.role === 'player' && (
+        <Section label="PLAYER" delay={0.125}>
+          <Row label="선수 홈" value="소식 · 질문 · 응원" onClick={() => navigate('/player')} />
+        </Section>
+      )}
+
       {user?.role === 'player' && (
         <Section label="MY VIDEO" delay={0.13}>
           <div className="px-5 py-4">

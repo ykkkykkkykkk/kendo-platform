@@ -86,6 +86,7 @@ export const api = {
   addComment:    (id, content) => authPost(`/posts/${id}/comment`, { content }),
   playerHeart:   (cid)         => authPost(`/player/comments/${cid}/like`, {}),
   playerReply:   (cid, content)=> authPost(`/player/comments/${cid}/reply`, { content }),
+  playerInbox:   ()            => authGet('/player/inbox'),
   notifications: ()            => authGet('/notifications'),
   readNotifications: (id)      => authPut('/notifications/read', id ? { id } : {}),
 

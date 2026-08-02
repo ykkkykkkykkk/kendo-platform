@@ -4,7 +4,6 @@ import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import PostCard from '../components/PostCard.jsx';
-import PostComposer from '../components/PostComposer.jsx';
 
 /** 내가 팔로우한 선수들의 소식 */
 export default function FeedPage({ onLoginRequest }) {
@@ -65,10 +64,18 @@ export default function FeedPage({ onLoginRequest }) {
     <main className="page-body bg-paper min-h-screen">
       {Header}
 
-      {/* 선수 계정이면 여기서 바로 글을 올린다 */}
+      {/* 선수 계정이면 글쓰기·질문·응원을 한 곳에서 처리하는 선수 홈으로 안내 */}
       {user.role === 'player' && (
         <div className="px-5 mt-5">
-          <PostComposer onPosted={() => load()} />
+          <button
+            onClick={() => navigate('/player')}
+            className="w-full flex items-center gap-2 border border-ink px-4 py-3 pressable"
+          >
+            <span className="text-[10px] font-bold tracking-[0.1em] bg-lime text-ink px-2 py-1">선수</span>
+            <span className="text-[13px] text-ink font-medium">소식 올리기 · 질문/응원 답하기</span>
+            <span className="flex-1" />
+            <span className="text-ink-400 text-sm">→</span>
+          </button>
         </div>
       )}
 

@@ -324,6 +324,57 @@ router.post('/player/comments/:id/reply', requireAuth, async (req, res) => {
   } catch (e) { serverError(res, e, 'player-reply'); }
 });
 
+/* ════════════ 선수 통합함 ════════════ */
+
+// GET /api/player/inbox — 선수가 답할 것들을 한 곳에서 본다
+// (질문은 프로필에서, 댓글은 피드에서 따로 찾아다녀야 했다)
+router.get('/player/inbox', requireAuth, async (req, res) => {
+  try {
+    const playerId = playerOf(req, res); if (!playerId) return;
+
+    const { rows: [player] } = await db.execute({
+      sql: `SELECT p.id, p.name, p.slug, t.name AS team_name
+            FROM players p LEFT JOIN teams t ON t.id = p.team_id WHERE p.id = ?`,
+      args: [playerId],
+    });
+
+    // 팬 질문 — 미답변 먼저
+    const { rows: questions } = await db.execute({
+      sql: `SELECT q.id, q.question, q.answer, q.answered_at, q.created_at, u.nickname
+            FROM player_questions q JOIN users u ON u.id = q.user_id
+            WHERE q.player_id = ?
+            ORDER BY (q.answer IS NOT NULL), q.created_at DESC`,
+      args: [playerId],
+    });
+
+    // 내 글에 달린 팬 댓글 — 내가 아직 답하지 않은 것 먼저
+    const { rows: comments } = await db.execute({
+      sql: `SELECT c.id, c.post_id, c.content, c.created_at, c.liked_by_player,
+                   u.nickname,
+                   p.content AS post_content, p.type AS post_type,
+                   EXISTS(SELECT 1 FROM post_comments r
+                          WHERE r.parent_id = c.id AND r.is_player = 1) AS replied
+            FROM post_comments c
+            JOIN posts p ON p.id = c.post_id
+            JOIN users u ON u.id = c.user_id
+            WHERE p.player_id = ? AND c.is_player = 0
+            ORDER BY replied, c.created_at DESC
+            LIMIT 100`,
+      args: [playerId],
+    });
+
+    res.json({
+      player,
+      questions,
+      comments,
+      counts: {
+        unanswered:  questions.filter((q) => !q.answer).length,
+        unreplied:   comments.filter((c) => !c.replied).length,
+      },
+    });
+  } catch (e) { serverError(res, e, 'player-inbox'); }
+});
+
 /* ════════════ 5. 알림함 ════════════ */
 
 // GET /api/notifications
