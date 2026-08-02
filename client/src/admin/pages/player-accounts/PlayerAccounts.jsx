@@ -26,6 +26,22 @@ export default function PlayerAccounts() {
   const [saving,   setSaving]   = useState(false);
   const [resetId,  setResetId]  = useState(null);
   const [newPw,    setNewPw]    = useState('');
+  // 설문으로 아이디만 먼저 받은 계정은 선수가 비어 있어 나중에 여기서 연결한다
+  const [linkId,     setLinkId]     = useState(null);
+  const [linkPlayer, setLinkPlayer] = useState('');
+
+  const handleLink = async (accountId) => {
+    setError(null);
+    const res = await fetch(`/api/admin/player-accounts/${accountId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': localStorage.getItem(TOKEN_KEY) ?? '' },
+      body: JSON.stringify({ player_id: Number(linkPlayer) }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setError(data.error ?? '연결 실패'); return; }
+    setLinkId(null); setLinkPlayer('');
+    await load();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -167,10 +183,23 @@ export default function PlayerAccounts() {
             <div key={a.id} className="border border-ink-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-ink">{a.player_name ?? a.nickname}</p>
-                  <p className="text-sm text-ink-400">{a.team_name} · 아이디: <span className="font-mono text-ink-600">{a.username}</span></p>
+                  <p className="font-bold text-ink">
+                    {a.player_name ?? a.nickname}
+                    {!a.player_name && (
+                      <span className="ml-2 text-[10px] font-bold bg-lime text-ink px-1.5 py-0.5">선수 연결 필요</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-ink-400">
+                    {a.player_name ? `${a.team_name} · ` : ''}아이디: <span className="font-mono text-ink-600">{a.username}</span>
+                  </p>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => { setLinkId(linkId === a.id ? null : a.id); setLinkPlayer(''); }}
+                    className="text-xs px-2.5 py-1.5 text-ink border border-ink-200 hover:border-ink rounded-full transition-colors"
+                  >
+                    {a.player_name ? '선수 변경' : '선수 연결'}
+                  </button>
                   <button
                     onClick={() => { setResetId(a.id); setNewPw(generatePassword()); }}
                     className="text-xs px-2.5 py-1.5 text-ink border border-ink-200 hover:border-ink rounded-full transition-colors"
@@ -185,6 +214,27 @@ export default function PlayerAccounts() {
                   </button>
                 </div>
               </div>
+              {linkId === a.id && (
+                <div className="mt-3 flex gap-2">
+                  <select
+                    value={linkPlayer}
+                    onChange={(e) => setLinkPlayer(e.target.value)}
+                    className="flex-1 border border-ink-200 px-3 py-1.5 text-sm text-ink focus:outline-none focus:border-ink"
+                  >
+                    <option value="">-- 선수 선택 --</option>
+                    {players.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.team_name ?? '팀 없음'})</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => handleLink(a.id)}
+                    disabled={!linkPlayer}
+                    className="px-3 py-1.5 bg-ink text-white text-sm rounded-full hover:bg-ink/90 disabled:opacity-40 transition-colors"
+                  >
+                    연결
+                  </button>
+                </div>
+              )}
               {resetId === a.id && (
                 <div className="mt-3 flex gap-2">
                   <input

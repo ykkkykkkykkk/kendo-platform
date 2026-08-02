@@ -847,6 +847,61 @@ router.post('/player-accounts', async (req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+// PUT /api/admin/player-accounts/:id — 계정에 선수를 연결하거나 바꾼다.
+// 설문으로 아이디만 먼저 받아둔 계정은 player_id가 비어 있어 로그인만 되고
+// 글쓰기·답변이 막힌다. 나중에 누구인지 확인되면 여기서 연결한다.
+router.put('/player-accounts/:id', async (req, res) => {
+  try {
+    const { player_id, password } = req.body;
+
+    const { rows: [acct] } = await db.execute({
+      sql: "SELECT id, username FROM users WHERE id = ? AND role = 'player'",
+      args: [req.params.id],
+    });
+    if (!acct) return res.status(404).json({ error: '선수 계정을 찾을 수 없습니다.' });
+
+    if (player_id !== undefined) {
+      if (player_id === null || player_id === '') {
+        await db.execute({ sql: 'UPDATE users SET player_id = NULL WHERE id = ?', args: [acct.id] });
+      } else {
+        const { rows: [player] } = await db.execute({
+          sql: 'SELECT id, name FROM players WHERE id = ?', args: [player_id],
+        });
+        if (!player) return res.status(404).json({ error: '선수를 찾을 수 없습니다.' });
+
+        // 한 선수에 계정이 둘 붙으면 누가 그 선수인지 알 수 없다
+        const { rows: dup } = await db.execute({
+          sql: "SELECT id FROM users WHERE player_id = ? AND role = 'player' AND id <> ?",
+          args: [player_id, acct.id],
+        });
+        if (dup.length) return res.status(409).json({ error: '이미 계정이 연결된 선수입니다.' });
+
+        // 닉네임도 선수 이름으로 맞춘다 (댓글·답글에 표시되는 이름)
+        await db.execute({
+          sql: 'UPDATE users SET player_id = ?, nickname = ? WHERE id = ?',
+          args: [player_id, player.name, acct.id],
+        });
+      }
+    }
+
+    if (password) {
+      if (password.length < 4) return res.status(400).json({ error: '비밀번호가 너무 짧습니다.' });
+      await db.execute({
+        sql: 'UPDATE users SET password_hash = ? WHERE id = ?',
+        args: [await bcrypt.hash(password, 10), acct.id],
+      });
+    }
+
+    const { rows: [updated] } = await db.execute({
+      sql: `SELECT u.id, u.username, u.nickname, p.name AS player_name, t.name AS team_name
+            FROM users u LEFT JOIN players p ON p.id = u.player_id
+            LEFT JOIN teams t ON t.id = p.team_id WHERE u.id = ?`,
+      args: [acct.id],
+    });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
 // DELETE /api/admin/player-accounts/:id — 선수 계정 삭제
 router.delete('/player-accounts/:id', async (req, res) => {
   try {
