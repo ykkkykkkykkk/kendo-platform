@@ -30,12 +30,13 @@ export default function PlayerAccounts() {
   const [linkId,     setLinkId]     = useState(null);
   const [linkPlayer, setLinkPlayer] = useState('');
 
-  const handleLink = async (accountId) => {
+  // playerId를 직접 넘기면(팔로우 단서 버튼) 그걸 쓰고, 아니면 드롭다운 선택값을 쓴다
+  const handleLink = async (accountId, playerId) => {
     setError(null);
     const res = await fetch(`/api/admin/player-accounts/${accountId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': localStorage.getItem(TOKEN_KEY) ?? '' },
-      body: JSON.stringify({ player_id: Number(linkPlayer) }),
+      body: JSON.stringify({ player_id: Number(playerId ?? linkPlayer) }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? '연결 실패'); return; }
@@ -214,6 +215,26 @@ export default function PlayerAccounts() {
                   </button>
                 </div>
               </div>
+              {/* 본인이 자기 프로필에 팬 등록을 누르면 그게 신원 단서가 된다 */}
+              {!a.player_name && a.follow_hints?.length > 0 && (
+                <div className="mt-3 border border-lime bg-lime/10 px-3 py-2">
+                  <p className="text-[11px] text-ink-600 mb-1.5">
+                    이 계정이 팬 등록한 선수 — 본인일 가능성이 높습니다
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {a.follow_hints.map((h) => (
+                      <button
+                        key={h.id}
+                        onClick={() => handleLink(a.id, h.id)}
+                        className="text-xs px-2.5 py-1.5 bg-ink text-white rounded-full hover:bg-ink/90 transition-colors"
+                      >
+                        {h.name} ({h.team_name ?? '팀 없음'}) 로 연결
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {linkId === a.id && (
                 <div className="mt-3 flex gap-2">
                   <select

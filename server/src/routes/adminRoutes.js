@@ -797,7 +797,7 @@ router.put('/matches/:id/result', async (req, res) => {
 router.get('/player-accounts', async (_req, res) => {
   try {
     const { rows } = await db.execute(`
-      SELECT u.id, u.username, u.nickname, u.created_at,
+      SELECT u.id, u.username, u.nickname, u.created_at, u.player_id,
              p.name AS player_name, p.slug AS player_slug,
              t.name AS team_name
       FROM users u
@@ -806,6 +806,20 @@ router.get('/player-accounts', async (_req, res) => {
       WHERE u.role = 'player'
       ORDER BY u.created_at DESC
     `);
+
+    // 아직 선수가 연결되지 않은 계정은 그 계정이 팔로우한 선수를 단서로 준다.
+    // (본인에게 '자기 프로필에 팬 등록을 눌러달라'고 안내하고 있다)
+    for (const a of rows.filter((r) => !r.player_id)) {
+      const { rows: hints } = await db.execute({
+        sql: `SELECT p.id, p.name, t.name AS team_name
+              FROM follows f JOIN players p ON p.id = f.player_id
+              LEFT JOIN teams t ON t.id = p.team_id
+              WHERE f.user_id = ? ORDER BY f.created_at DESC LIMIT 5`,
+        args: [a.id],
+      });
+      a.follow_hints = hints;
+    }
+
     res.json(rows);
   } catch (e) { serverError(res, e); }
 });

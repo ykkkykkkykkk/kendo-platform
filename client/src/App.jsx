@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
 import NickLoginModal    from './components/NickLoginModal.jsx';
+import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import PlayerLoginModal  from './components/PlayerLoginModal.jsx';
 import IOSInstallBanner  from './components/IOSInstallBanner.jsx';
 import PageTransition  from './components/PageTransition.jsx';
@@ -114,6 +115,7 @@ export default function App() {
       <BottomTabBar />
       <Toaster />
       <IOSInstallBanner />
+      <PlayerLinkNotice />
 
       <AnimatePresence>
         {showLogin && !user && (
