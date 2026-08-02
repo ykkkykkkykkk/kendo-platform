@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import PostCard from '../components/PostCard.jsx';
+import { QuestionRow, CommentRow } from '../components/PlayerTodo.jsx';
 
 /** 내가 팔로우한 선수들의 소식 */
 export default function FeedPage({ onLoginRequest }) {
@@ -17,6 +18,11 @@ export default function FeedPage({ onLoginRequest }) {
   const [loading, setLoading] = useState(true);
   const [more, setMore]       = useState(false);
 
+  // 선수 계정이면 받은 질문·응원을 함께 띄운다.
+  // 선수는 자기 자신을 팔로우하지 않아 피드가 비기 쉬운데, 거기에
+  // '선수를 팔로우하세요' 안내를 띄우는 건 선수에게 맞지 않는다.
+  const [inbox, setInbox] = useState(null);
+
   const load = useCallback(async (cursor = null) => {
     cursor ? setMore(true) : setLoading(true);
     const r = await api.feed(cursor);
@@ -29,10 +35,23 @@ export default function FeedPage({ onLoginRequest }) {
     cursor ? setMore(false) : setLoading(false);
   }, []);
 
+  const loadInbox = useCallback(async () => {
+    const d = await api.playerInbox();
+    if (d && !d.error) setInbox(d);
+  }, []);
+
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     load();
-  }, [user, load]);
+    if (user.role === 'player') loadInbox();
+  }, [user, load, loadInbox]);
+
+  const isPlayer = user?.role === 'player';
+  // 아직 답하지 않은 것 먼저, 그 다음 이미 답한 것
+  const qs   = (inbox?.questions ?? []).map((q) => ({ ...q, kind: 'q', pending: !q.answer }));
+  const cms  = (inbox?.comments  ?? []).map((c) => ({ ...c, kind: 'c', pending: !c.replied }));
+  const todo     = [...qs, ...cms].filter((x) => x.pending);
+  const answered = [...qs, ...cms].filter((x) => !x.pending);
 
   const Header = (
     <header className="px-5 pt-12">
@@ -79,25 +98,59 @@ export default function FeedPage({ onLoginRequest }) {
         </div>
       )}
 
+      {/* 선수: 팬이 남긴 질문·응원. 피드가 비어 있어도 여기서 바로 답한다 */}
+      {isPlayer && (todo.length > 0 || answered.length > 0) && (
+        <div className="px-5 mt-6">
+          <div className="flex items-baseline gap-2 mb-1">
+            <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">FROM FANS</p>
+            <span className="text-[11px] text-ink-400">팬이 남긴 질문과 응원</span>
+            <span className="flex-1" />
+            {todo.length > 0 && (
+              <span className="text-[10px] font-bold bg-lime text-ink px-1.5 py-0.5">{todo.length}건 대기</span>
+            )}
+          </div>
+          <div style={{ borderTop: '1.5px solid #111111' }}>
+            {todo.map((it) => (it.kind === 'q'
+              ? <QuestionRow key={`q${it.id}`} q={it} onAnswered={loadInbox} />
+              : <CommentRow  key={`c${it.id}`} c={it} onChanged={loadInbox} />))}
+            {todo.length === 0 && answered.slice(0, 3).map((it) => (it.kind === 'q'
+              ? <QuestionRow key={`q${it.id}`} q={it} onAnswered={loadInbox} />
+              : <CommentRow  key={`c${it.id}`} c={it} onChanged={loadInbox} />))}
+          </div>
+        </div>
+      )}
+
       <div className="px-5 mt-6">
         {loading ? (
           <div className="space-y-4">
             {[0, 1, 2].map((i) => <div key={i} className="h-40 bg-ink-200 animate-pulse" />)}
           </div>
         ) : posts.length === 0 ? (
-          /* 빈 상태 */
-          <div className="py-16 text-center" style={{ borderTop: '1.5px solid #111111' }}>
-            <p className="text-ink text-[15px] font-semibold mt-10">
-              응원할 선수를 팔로우하면 여기에 소식이 떠요
-            </p>
-            <p className="text-ink-400 text-sm mt-2">
-              {followCount > 0 ? '아직 올라온 소식이 없어요' : '아직 팔로우한 선수가 없습니다'}
-            </p>
-            <button onClick={() => navigate('/teams')}
-                    className="mt-5 px-5 py-2.5 border border-ink text-ink text-sm font-medium rounded-full pressable">
-              선수 둘러보기
-            </button>
-          </div>
+          /* 빈 상태 — 선수에게는 '선수를 팔로우하세요'가 맞지 않는다 */
+          isPlayer ? (
+            <div className="py-10 text-center" style={{ borderTop: '1.5px solid #111111' }}>
+              <p className="text-ink-400 text-sm mt-6">
+                {followCount > 0 ? '팔로우한 선수의 새 소식이 아직 없어요' : '다른 선수를 팔로우하면 그 소식도 여기에 떠요'}
+              </p>
+              <button onClick={() => navigate('/player')}
+                      className="mt-4 px-5 py-2.5 bg-lime hover:bg-lime-dark text-ink text-sm font-medium rounded-full pressable">
+                내 소식 올리기
+              </button>
+            </div>
+          ) : (
+            <div className="py-16 text-center" style={{ borderTop: '1.5px solid #111111' }}>
+              <p className="text-ink text-[15px] font-semibold mt-10">
+                응원할 선수를 팔로우하면 여기에 소식이 떠요
+              </p>
+              <p className="text-ink-400 text-sm mt-2">
+                {followCount > 0 ? '아직 올라온 소식이 없어요' : '아직 팔로우한 선수가 없습니다'}
+              </p>
+              <button onClick={() => navigate('/teams')}
+                      className="mt-5 px-5 py-2.5 border border-ink text-ink text-sm font-medium rounded-full pressable">
+                선수 둘러보기
+              </button>
+            </div>
+          )
         ) : (
           <>
             {posts.map((p, i) => (
