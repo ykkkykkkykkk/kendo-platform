@@ -28,7 +28,8 @@ const SOURCES = [
 const CHO  = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
 const JUNG = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
 const JONG = ['','k','k','ks','n','nj','nh','t','l','lk','lm','lb','ls','lt','lp','lh','m','p','ps','t','t','ng','t','t','k','t','p','h'];
-const SURNAME = { '김':'kim', '이':'lee', '박':'bak', '최':'choi', '신':'shin', '윤':'yoon' };
+// 성씨는 통용 표기를 쓴다 (박은 기계 변환이면 bak이지만 실제로는 park)
+const SURNAME = { '김':'kim', '이':'lee', '박':'park', '최':'choi', '신':'shin', '윤':'yoon' };
 function romanize(kor) {
   let out = '';
   for (const ch of kor) {
