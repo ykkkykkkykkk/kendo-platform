@@ -14,7 +14,9 @@ router.use(requireAdmin);
 
 // 팔로워 수를 채우려고 만든 시드 계정(가라팬). 실제 가입자가 아니라 기본으로 숨긴다.
 const SEED_PHONE_PREFIX = '검도팬_';
-const IS_SEED = `(u.phone LIKE '${SEED_PHONE_PREFIX}%')`;
+// phone이 NULL이면 LIKE 결과도 NULL이라 NOT을 씌워도 참이 되지 않는다.
+// 그대로 두면 phone 없이 만든 계정(설문으로 아이디만 받은 선수 계정)이 통째로 사라진다.
+const IS_SEED = `(u.phone IS NOT NULL AND u.phone LIKE '${SEED_PHONE_PREFIX}%')`;
 
 // GET /api/admin/users?q=검색어&include_seed=1
 router.get('/users', async (req, res) => {
@@ -28,7 +30,7 @@ router.get('/users', async (req, res) => {
     if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ?)');
 
     const { rows: users } = await db.execute({
-      sql: `SELECT u.id, u.nickname, u.phone, u.role, u.dan_grade, u.home_dojo,
+      sql: `SELECT u.id, u.nickname, u.phone, u.username, u.role, u.dan_grade, u.home_dojo,
                    u.created_at, u.last_seen_at, u.player_id,
                    ${IS_SEED} AS is_seed,
                    t.name  AS favorite_team,

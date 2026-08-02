@@ -130,8 +130,13 @@ export default function UserList() {
                     </button>
                     {u.role !== 'fan' && (
                       <span className="ml-1.5 text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold">
-                        {u.role === 'player' ? `선수${u.player_name ? `·${u.player_name}` : ''}` : u.role}
+                        {u.role === 'player'
+                          ? (u.player_name ? `선수·${u.player_name}` : '선수·연결필요')
+                          : u.role}
                       </span>
+                    )}
+                    {u.username && (
+                      <span className="ml-1.5 text-[10px] text-ink-400 font-mono">{u.username}</span>
                     )}
                     {!!u.is_seed && (
                       <span className="ml-1.5 text-[10px] border border-ink-200 text-ink-400 px-1.5 py-0.5">
