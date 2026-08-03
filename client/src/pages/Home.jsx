@@ -8,6 +8,7 @@ import { SkeletonCard } from '../components/Skeleton.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import WelcomeModal from '../components/WelcomeModal.jsx';
+import AugustEventBanner from '../components/AugustEventBanner.jsx';
 import NotificationBell from '../components/NotificationBell.jsx';
 
 /* ── D-day: "D—9" (em dash) ────────────────────────────── */
@@ -163,6 +164,9 @@ export default function Home({ onLoginRequest }) {
         </div>
         <div className="mt-4" style={{ borderBottom: '1.5px solid #111111' }} />
       </header>
+
+      {/* 8월 도장 이벤트 — 기간이 지나면 스스로 사라진다 */}
+      <AugustEventBanner onLoginRequest={onLoginRequest} />
 
       {/* ── 대회 히어로 (초대형 타이포) ───────────────── */}
       <section className="px-5 pt-7">
