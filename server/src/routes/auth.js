@@ -201,6 +201,10 @@ router.post('/kakao/code', async (req, res) => {
     if (!code || !redirectUri)
       return res.status(400).json({ error: '인가 정보가 없습니다. 다시 시도해주세요.' });
 
+    // 키가 없으면 카카오에 물어봐야 알 수 있는 실패로 뭉뚱그려지지 않게 따로 알린다
+    if (!KAKAO_CLIENT_ID)
+      return res.status(503).json({ error: '카카오 로그인이 서버에 설정되지 않았습니다.', config_missing: true });
+
     const accessToken = await exchangeCode(code, redirectUri);
     if (!accessToken)
       return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });

@@ -19,3 +19,8 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false          # 예: https://your-app.vercel.app
+      # 카카오 JavaScript 키. 클라이언트 번들에 그대로 실려 나가는 공개 키라
+      # 여기 적어도 위험하지 않다(보안은 카카오 콘솔의 도메인 화이트리스트가 담당).
+      # 인가 코드를 토큰으로 바꿀 때 client_id로 쓴다.
+      - key: KAKAO_JS_KEY
+        value: fe63f88df84b6fe161e4e7437293a7ff
