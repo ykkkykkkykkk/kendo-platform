@@ -8,6 +8,15 @@ import { serverError } from '../utils/apiError.js';
 
 const router = Router();
 
+/* 닉네임+휴대폰 끝 4자리 신규 가입을 닫는다(카카오 전면 전환).
+ *
+ * 이 방식은 본인 확인이 안 돼 한 사람이 계정을 몇 개든 만들 수 있었다.
+ * 다만 '로그인'은 막지 않는다 — 아직 카카오를 연결하지 않은 기존 회원이
+ * 갑자기 못 들어오면 안 된다. 새 계정이 만들어지는 순간만 거절한다.
+ * 문제가 생기면 FAN_SIGNUP_OPEN=1로 되돌릴 수 있다(재배포 불필요).
+ */
+const FAN_SIGNUP_OPEN = process.env.FAN_SIGNUP_OPEN === '1';
+
 // POST /api/auth/register — 팬 가입/로그인
 // body: { nickname, phone, home_dojo? }
 router.post('/register', async (req, res) => {
@@ -27,7 +36,15 @@ router.post('/register', async (req, res) => {
 
   let user = existing;
   if (!user) {
-    // 새 계정이 생기는 순간이다. 예전에는 여기서 조용히 만들어버려서,
+    // 여기부터가 새 계정이 생기는 길목이다. 전면 전환 후에는 이 길을 막는다.
+    if (!FAN_SIGNUP_OPEN) {
+      return res.status(403).json({
+        error: '이제 카카오로 시작해주세요.\n쓰시던 계정이 있으면 카카오 로그인 후 ‘전에 쓰던 계정이 있어요’를 눌러 가져올 수 있습니다.',
+        signup_closed: true,
+      });
+    }
+
+    // 예전에는 여기서 조용히 만들어버려서,
     // 닉네임이나 번호를 한 글자만 잘못 입력해도 기존 계정에 못 들어가고
     // 계정이 하나 더 생겼다(픽·팔로우가 그대로 남겨진 채로).
     // 그래서 확인을 받고, 비슷한 기존 계정이 있으면 알려준다.
