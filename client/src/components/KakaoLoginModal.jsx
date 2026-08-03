@@ -24,6 +24,8 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const [kakaoNick, setKNick] = useState('');
   const [nickname, setNickname] = useState('');
   const [phone,   setPhone]   = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
@@ -81,6 +83,13 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
     catch (e) { setError(e.message); setLoading(false); }
   };
 
+  const linkPlayer = async () => {
+    if (!username.trim() || !password) { setError('아이디와 비밀번호를 입력해주세요.'); return; }
+    setLoading(true); setError(null);
+    try { done(await post('kakao/link', { ticket: token, username: username.trim(), password })); }
+    catch (e) { setError(e.message); setLoading(false); }
+  };
+
   const linkOld = async () => {
     if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
     setLoading(true); setError(null);
@@ -112,12 +121,15 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
           </div>
           <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">MINOR—STAR®</p>
           <h2 className="text-ink font-bold text-lg tracking-tight">
-            {step === 'link' ? '쓰던 계정 가져오기' : '마이너스타 시작하기'}
+            {step === 'link'   && '쓰던 계정 가져오기'}
+            {step === 'player' && '선수 계정 연결'}
+            {(step === 'start' || step === 'choice') && '마이너스타 시작하기'}
           </h2>
           <p className="text-ink-400 text-sm mt-1">
             {step === 'start'  && '카카오로 3초면 시작해요'}
             {step === 'choice' && '처음이신가요?'}
             {step === 'link'   && '전에 쓰시던 닉네임과 번호를 넣어주세요'}
+            {step === 'player' && '선수용 아이디와 비밀번호를 넣어주세요'}
           </p>
         </div>
 
@@ -156,6 +168,51 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
               className="w-full mt-2.5 text-ink-600 text-sm py-2 underline"
             >
               전에 쓰던 계정이 있어요
+            </button>
+            <button
+              onClick={() => { setError(null); setPassword(''); setStep('player'); }}
+              className="w-full text-ink-600 text-sm py-2 underline"
+            >
+              선수 계정이 있어요
+            </button>
+          </>
+        )}
+
+        {step === 'player' && (
+          <>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">선수용 아이디</label>
+            <input
+              type="text" autoCapitalize="none" autoCorrect="off" value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="관리자에게 받은 아이디"
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3 placeholder:text-ink-400/60"
+            />
+            <label className="text-xs font-medium text-ink-600 mb-1 block">비밀번호</label>
+            <input
+              type="password" value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') linkPlayer(); }}
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3"
+            />
+            <button
+              onClick={linkPlayer}
+              disabled={loading}
+              className="w-full bg-lime hover:bg-lime-dark text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable disabled:opacity-50"
+            >
+              {loading ? '연결 중…' : '선수 계정 연결'}
+            </button>
+            <p className="text-ink-400 text-[11px] text-center mt-2.5 leading-[1.5]">
+              연결하면 다음부터 카카오로 바로 들어옵니다.<br />
+              아이디로 로그인하는 방법도 그대로 쓸 수 있어요.
+            </p>
+            <button
+              onClick={() => { setError(null); setStep('choice'); }}
+              className="w-full mt-2 text-ink-400 text-xs py-2"
+            >
+              뒤로
             </button>
           </>
         )}

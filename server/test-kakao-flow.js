@@ -53,12 +53,17 @@ async function cleanup(oldUserId) {
   // 기존 계정에 붙였던 연결 해제
   await db.execute({ sql: `UPDATE users SET kakao_id = NULL, kakao_linked_at = NULL WHERE kakao_id IN (${marks})`, args: KAKAO_IDS });
   if (oldUserId) await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [oldUserId] });
+  await db.execute({ sql: 'DELETE FROM users WHERE username = ?', args: [PLAYER_ID] });
 }
 
 await new Promise((r) => mock.listen(PORT, r));
 console.log(`가짜 카카오 서버 :${PORT}\n`);
 
 // 연결 대상으로 쓸 예전 방식 계정 하나를 만든다 (실제 회원은 건드리지 않는다)
+// 선수 계정 연동 시험용 (실제 선수 계정은 건드리지 않는다)
+const PLAYER_ID = 'test_player_kakao';
+const PLAYER_PW = 'testpw1234';
+
 const OLD_NICK = '테스트옛계정';
 const OLD_PHONE = '9911';
 await db.execute({
@@ -68,7 +73,19 @@ await db.execute({
 const { rows: [old] } = await db.execute({
   sql: 'SELECT id FROM users WHERE phone = ?', args: [`${OLD_NICK}_${OLD_PHONE}`],
 });
-console.log(`연결 시험용 옛 계정 생성: ${OLD_NICK}_${OLD_PHONE} (user${old.id})\n`);
+
+// 선수 계정도 하나 만든다 (실제 선수 계정은 건드리지 않는다)
+const bcrypt = (await import('bcryptjs')).default;
+await db.execute({
+  sql: `INSERT INTO users (nickname, username, password_hash, role, player_id)
+        VALUES (?, ?, ?, 'player', (SELECT id FROM players LIMIT 1))`,
+  args: ['테스트선수', PLAYER_ID, await bcrypt.hash(PLAYER_PW, 10)],
+});
+const { rows: [tp] } = await db.execute({
+  sql: 'SELECT id FROM users WHERE username = ?', args: [PLAYER_ID],
+});
+console.log(`연결 시험용 옛 계정 생성: ${OLD_NICK}_${OLD_PHONE} (user${old.id})`);
+console.log(`연결 시험용 선수 계정 생성: ${PLAYER_ID} (user${tp.id})\n`);
 
 try {
   console.log('1) 위조 토큰 차단');
@@ -113,6 +130,20 @@ try {
   console.log('\n8) 연결한 계정으로 재로그인');
   r = await post('kakao', { accessToken: 'tok-old' });
   check('예전 계정으로 들어감', r.status === 200 && nickOf(r.body.token) === OLD_NICK);
+
+  console.log('\n9) 선수 계정 연결');
+  const roleOf = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()); } catch { return {}; } };
+  r = await post('kakao/link', { accessToken: 'tok-other', username: PLAYER_ID, password: '틀린비번' });
+  check('비밀번호 틀리면 거부', r.status === 401, r.body.error);
+  r = await post('kakao/link', { accessToken: 'tok-other', username: '없는아이디', password: PLAYER_PW });
+  check('없는 아이디도 같은 문구로 거부', r.status === 401, r.body.error);
+  r = await post('kakao/link', { accessToken: 'tok-other', username: PLAYER_ID, password: PLAYER_PW });
+  check('맞으면 연결됨', r.status === 200 && r.body.linked === true, r.body.error ?? '');
+  const pt = roleOf(r.body.token ?? '');
+  check('선수 권한으로 로그인됨', pt.role === 'player', `role=${pt.role}`);
+  check('선수 번호가 토큰에 실림', pt.playerId != null, `playerId=${pt.playerId}`);
+  r = await post('kakao', { accessToken: 'tok-other' });
+  check('다음부터 카카오로 바로 선수 로그인', roleOf(r.body.token ?? '').role === 'player');
 } finally {
   await cleanup(old.id);
   mock.close();

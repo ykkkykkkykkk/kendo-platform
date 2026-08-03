@@ -261,15 +261,19 @@ router.post('/kakao/signup', async (req, res) => {
 });
 
 // POST /api/auth/kakao/link — 쓰던 계정을 카카오에 연결
-// body: { accessToken, nickname, phone }  ← 예전 로그인 정보 그대로
+// 팬:   { ticket, nickname, phone }      ← 예전 로그인 정보 그대로
+// 선수: { ticket, username, password }   ← 선수용 아이디/비밀번호
 router.post('/kakao/link', async (req, res) => {
   try {
-    const { nickname, phone } = req.body ?? {};
+    const { nickname, phone, username, password } = req.body ?? {};
     const info = await identify(req.body);
     if (!info) return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
 
-    if (!nickname?.trim() || !/^\d{4}$/.test(phone ?? ''))
+    const asPlayer = Boolean(username);
+    if (!asPlayer && (!nickname?.trim() || !/^\d{4}$/.test(phone ?? '')))
       return res.status(400).json({ error: '쓰시던 닉네임과 휴대폰 끝 4자리를 입력해주세요.' });
+    if (asPlayer && !password)
+      return res.status(400).json({ error: '선수용 아이디와 비밀번호를 입력해주세요.' });
 
     // 이 카카오 계정이 이미 다른 계정에 물려 있으면 막는다
     const { rows: [already] } = await db.execute({
@@ -278,12 +282,26 @@ router.post('/kakao/link', async (req, res) => {
     if (already)
       return res.status(409).json({ error: `이 카카오 계정은 이미 '${already.nickname}'에 연결돼 있습니다.` });
 
-    const phoneKey = `${nickname.trim().slice(0, 10)}_${phone}`;
-    const { rows: [target] } = await db.execute({
-      sql: 'SELECT * FROM users WHERE phone = ?', args: [phoneKey],
-    });
-    if (!target)
-      return res.status(404).json({ error: '그 정보로 가입된 계정이 없습니다. 닉네임과 번호를 다시 확인해주세요.' });
+    let target;
+    if (asPlayer) {
+      // 선수 계정은 phone이 없다. 아이디+비밀번호로 본인 확인한다.
+      const { rows: [p] } = await db.execute({
+        sql: "SELECT * FROM users WHERE username = ? AND role = 'player'", args: [username.trim()],
+      });
+      // 아이디가 없든 비번이 틀리든 같은 문구로 답한다 (어떤 아이디가 있는지 알려주지 않는다)
+      if (!p?.password_hash || !(await bcrypt.compare(password, p.password_hash)))
+        return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+      target = p;
+    } else {
+      const phoneKey = `${nickname.trim().slice(0, 10)}_${phone}`;
+      const { rows: [f] } = await db.execute({
+        sql: 'SELECT * FROM users WHERE phone = ?', args: [phoneKey],
+      });
+      if (!f)
+        return res.status(404).json({ error: '그 정보로 가입된 계정이 없습니다. 닉네임과 번호를 다시 확인해주세요.' });
+      target = f;
+    }
+
     if (target.kakao_id)
       return res.status(409).json({ error: '이 계정은 이미 다른 카카오 계정에 연결돼 있습니다.' });
 
