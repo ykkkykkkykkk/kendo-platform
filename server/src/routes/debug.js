@@ -4,6 +4,21 @@ import { serverError } from '../utils/apiError.js';
 
 const router = Router();
 
+/* GET /api/debug/ip — 요청자 본인의 IP가 어떻게 보이는지 확인한다.
+   프록시가 몇 단인지 모르면 trust proxy 값을 잘못 잡아 엉뚱한 주소가 기록된다.
+   자기 자신의 접속 정보만 돌려주므로 남의 정보는 새지 않는다. */
+router.get('/ip', (req, res) => {
+  res.json({
+    req_ip:   req.ip,                                   // trust proxy 설정에 따라 결정된 값
+    req_ips:  req.ips,                                  // 신뢰 체인에서 추려낸 목록
+    x_forwarded_for: req.headers['x-forwarded-for'] ?? null,
+    x_real_ip:       req.headers['x-real-ip'] ?? null,
+    cf_connecting_ip: req.headers['cf-connecting-ip'] ?? null,
+    socket:   req.socket?.remoteAddress ?? null,        // 바로 앞 홉
+    trust_proxy_setting: req.app.get('trust proxy'),
+  });
+});
+
 // GET /api/debug — DB 상태 확인 (프로덕션 차단)
 router.get('/', async (_req, res) => {
   if (process.env.NODE_ENV === 'production')
