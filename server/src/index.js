@@ -40,8 +40,11 @@ const PORT = process.env.PORT || 4000;
 
 /* Render는 프록시 뒤에서 돌아간다. 이걸 켜지 않으면 req.ip가 전부 프록시 주소로 찍혀
    접속 IP 기록도, IP 기준 rate limit도 무의미해진다.
-   프록시가 한 단이라 1로 둔다 (true로 열면 클라이언트가 X-Forwarded-For를 위조할 수 있다). */
-app.set('trust proxy', 1);
+   실제 체인은 세 단이다 (/api/debug/ip로 확인):
+     X-Forwarded-For: <사용자>, <Cloudflare>, <Render 내부>
+   1로 뒀더니 맨 오른쪽 Render 사설주소(10.x)가 클라이언트로 잡혔다.
+   true로 열면 클라이언트가 헤더를 위조할 수 있으므로 홉 수를 명시한다. */
+app.set('trust proxy', 3);
 
 /* ── CORS ──
    허용 출처: ALLOWED_ORIGINS(env) + 마이너스타 도메인 + 모든 *.vercel.app(프로덕션/프리뷰).

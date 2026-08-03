@@ -1,15 +1,29 @@
 import jwt from 'jsonwebtoken';
 import { db } from '../db.js';
 
+/** 10.x / 172.16~31.x / 192.168.x / 127.x / ::1 — 인터넷에 없는 주소. 이게 잡히면 잘못 읽은 것이다. */
+function isPrivate(ip) {
+  return /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|fc|fd)/i.test(ip);
+}
+
 /**
- * 요청자의 IP. Render 프록시 뒤라 req.ip는 X-Forwarded-For에서 온다
- * (index.js의 trust proxy 설정에 기댄다).
- * IPv4-mapped IPv6(::ffff:1.2.3.4)는 보기 불편해서 IPv4로 되돌린다.
+ * 요청자의 IP.
+ *
+ * Render 앞에 Cloudflare가 있어 X-Forwarded-For가 세 단이다. index.js의
+ * trust proxy 설정으로 req.ip가 맨 앞(실제 사용자)을 가리키게 해두었지만,
+ * 체인 길이가 달라지면 사설 주소가 잡힐 수 있다. Cloudflare가 직접 넣어주는
+ * cf-connecting-ip를 먼저 보고, 그게 없을 때만 req.ip를 쓴다.
+ * 그래도 사설 주소면 잘못 읽은 것이므로 기록하지 않는다(엉뚱한 값으로 같은 IP처럼
+ * 묶여 중복 가입으로 오해하는 게 기록이 없는 것보다 나쁘다).
  */
 export function clientIp(req) {
-  const ip = req.ip ?? req.socket?.remoteAddress ?? null;
-  if (!ip) return null;
-  return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+  const raw = req.headers['cf-connecting-ip']
+           ?? req.ip
+           ?? req.socket?.remoteAddress
+           ?? null;
+  if (!raw) return null;
+  const ip = String(raw).startsWith('::ffff:') ? String(raw).slice(7) : String(raw);
+  return isPrivate(ip) ? null : ip;
 }
 
 /**
