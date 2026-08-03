@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
 import NickLoginModal    from './components/NickLoginModal.jsx';
 import KakaoLoginModal   from './components/KakaoLoginModal.jsx';
+import KakaoCallback     from './pages/KakaoCallback.jsx';
 import { initKakao, kakaoConfigured } from './utils/kakaoSdk.js';
 import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import AugustEventPopup  from './components/AugustEventPopup.jsx';
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/draw" element={
             <PageTransition><DrawPage /></PageTransition>
           } />
+          <Route path="/oauth/kakao" element={<KakaoCallback />} />
           <Route path="/feed" element={
             <PageTransition><FeedPage onLoginRequest={openLogin} /></PageTransition>
           } />

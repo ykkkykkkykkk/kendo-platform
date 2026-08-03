@@ -109,8 +109,45 @@ router.post('/player-login', async (req, res) => {
  */
 
 // 테스트에서 가짜 카카오 서버로 바꿔 끼울 수 있게 env로 뺀다. 평소에는 진짜 카카오다.
-const KAKAO_API = process.env.KAKAO_API_BASE ?? 'https://kapi.kakao.com';
-const KAKAO_ME  = `${KAKAO_API}/v2/user/me`;
+const KAKAO_API  = process.env.KAKAO_API_BASE  ?? 'https://kapi.kakao.com';
+const KAKAO_AUTH = process.env.KAKAO_AUTH_BASE ?? 'https://kauth.kakao.com';
+const KAKAO_ME   = `${KAKAO_API}/v2/user/me`;
+// 인가 코드를 토큰으로 바꿀 때 쓰는 키. 카카오가 JS 키를 안 받으면 REST 키를 넣는다.
+const KAKAO_CLIENT_ID = process.env.KAKAO_REST_KEY ?? process.env.KAKAO_JS_KEY ?? '';
+
+/** 인가 코드 → 액세스 토큰. 실패 사유를 그대로 남겨야 원인을 알 수 있다. */
+async function exchangeCode(code, redirectUri) {
+  const r = await fetch(`${KAKAO_AUTH}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: KAKAO_CLIENT_ID,
+      redirect_uri: redirectUri,
+      code,
+    }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || !data.access_token) {
+    console.error('[kakao] 토큰 교환 실패', r.status, data);
+    return null;
+  }
+  return data.access_token;
+}
+
+/* 로그인 도중에만 쓰는 짧은 표. 카카오 액세스 토큰을 브라우저에 들고 다니게 하지 않으려고
+   신원만 담아 10분짜리로 서명해 넘긴다. */
+const TICKET_KIND = 'kakao_ticket';
+const signTicket = (info) => jwt.sign(
+  { kind: TICKET_KIND, kakaoId: info.kakaoId, nickname: info.nickname },
+  process.env.JWT_SECRET, { expiresIn: '10m' },
+);
+function readTicket(ticket) {
+  try {
+    const p = jwt.verify(ticket, process.env.JWT_SECRET);
+    return p?.kind === TICKET_KIND ? { kakaoId: p.kakaoId, nickname: p.nickname } : null;
+  } catch { return null; }
+}
 
 /** 액세스 토큰으로 카카오에 신원을 확인한다. 위조 토큰은 여기서 걸린다. */
 async function verifyKakao(accessToken) {
@@ -134,24 +171,53 @@ const signFan = (user) => jwt.sign(
   { expiresIn: '365d' },
 );
 
-// POST /api/auth/kakao — 카카오 로그인 (기존 연결 계정이 있으면 바로 입장)
+/** 요청 본문에서 카카오 신원을 얻는다. 표(ticket)가 우선, 없으면 액세스 토큰. */
+async function identify(body) {
+  if (body?.ticket) return readTicket(body.ticket);
+  if (body?.accessToken) return verifyKakao(body.accessToken);
+  return null;
+}
+
+/** 이미 연결된 계정이면 로그인시키고, 처음이면 선택을 요구한다. */
+async function loginOrChoice(req, res, info) {
+  const { rows: [user] } = await db.execute({
+    sql: 'SELECT * FROM users WHERE kakao_id = ?', args: [info.kakaoId],
+  });
+  if (user) {
+    touchLastSeen(user.id, clientIp(req));
+    delete user.password_hash;
+    return res.json({ token: signFan(user), user });
+  }
+  // 처음 보는 카카오 계정. 새로 만들지, 쓰던 계정에 붙일지 물어봐야 한다.
+  res.json({ needs_choice: true, kakao_nickname: info.nickname, ticket: signTicket(info) });
+}
+
+// POST /api/auth/kakao/code — 리디렉트로 받은 인가 코드로 로그인
+// body: { code, redirectUri }
+// SDK v2에는 팝업 로그인이 없어 authorize() 리디렉트만 쓸 수 있다.
+router.post('/kakao/code', async (req, res) => {
+  try {
+    const { code, redirectUri } = req.body ?? {};
+    if (!code || !redirectUri)
+      return res.status(400).json({ error: '인가 정보가 없습니다. 다시 시도해주세요.' });
+
+    const accessToken = await exchangeCode(code, redirectUri);
+    if (!accessToken)
+      return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
+
+    const info = await verifyKakao(accessToken);
+    if (!info) return res.status(401).json({ error: '카카오 정보를 가져오지 못했습니다.' });
+
+    await loginOrChoice(req, res, info);
+  } catch (e) { serverError(res, e, 'kakao-code'); }
+});
+
+// POST /api/auth/kakao — 액세스 토큰으로 로그인 (앱에서 네이티브 SDK를 쓸 때)
 router.post('/kakao', async (req, res) => {
   try {
-    const info = await verifyKakao(req.body?.accessToken);
+    const info = await identify(req.body);
     if (!info) return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
-
-    const { rows: [user] } = await db.execute({
-      sql: 'SELECT * FROM users WHERE kakao_id = ?', args: [info.kakaoId],
-    });
-
-    if (user) {
-      touchLastSeen(user.id, clientIp(req));
-      delete user.password_hash;
-      return res.json({ token: signFan(user), user });
-    }
-
-    // 처음 보는 카카오 계정. 새로 만들지, 쓰던 계정에 붙일지 물어봐야 한다.
-    res.json({ needs_choice: true, kakao_nickname: info.nickname });
+    await loginOrChoice(req, res, info);
   } catch (e) { serverError(res, e, 'kakao-login'); }
 });
 
@@ -159,7 +225,7 @@ router.post('/kakao', async (req, res) => {
 // body: { accessToken, nickname?, home_dojo? }
 router.post('/kakao/signup', async (req, res) => {
   try {
-    const info = await verifyKakao(req.body?.accessToken);
+    const info = await identify(req.body);
     if (!info) return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
 
     // 이미 만들어져 있으면 그대로 로그인시킨다 (버튼 두 번 눌러도 계정이 두 개 생기지 않게)
@@ -195,7 +261,7 @@ router.post('/kakao/signup', async (req, res) => {
 router.post('/kakao/link', async (req, res) => {
   try {
     const { nickname, phone } = req.body ?? {};
-    const info = await verifyKakao(req.body?.accessToken);
+    const info = await identify(req.body);
     if (!info) return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
 
     if (!nickname?.trim() || !/^\d{4}$/.test(phone ?? ''))

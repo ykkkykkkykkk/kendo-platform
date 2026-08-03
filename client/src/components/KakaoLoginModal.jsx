@@ -14,10 +14,13 @@ import { useAuth } from '../context/AuthContext.jsx';
  *   choice 처음 보는 카카오 계정 → 새로 시작할지, 쓰던 계정에 붙일지 고른다
  *   link   쓰던 닉네임 + 끝 4자리를 넣어 예전 계정을 넘겨받는다
  */
-export default function KakaoLoginModal({ onClose }) {
+export const KAKAO_REDIRECT_URI = `${window.location.origin}/oauth/kakao`;
+export const RETURN_KEY = 'kakao_return_to';
+
+export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const { login } = useAuth();
   const [step,    setStep]    = useState('start');
-  const [token,   setToken]   = useState(null);   // 카카오 access token (연결 단계에서 다시 쓴다)
+  const [token,   setToken]   = useState(null);   // 서버가 준 표(ticket). 다음 단계에서 신원 증명에 쓴다
   const [kakaoNick, setKNick] = useState('');
   const [nickname, setNickname] = useState('');
   const [phone,   setPhone]   = useState('');
@@ -39,41 +42,49 @@ export default function KakaoLoginModal({ onClose }) {
 
   const done = (data) => { login(data.token); onClose(); };
 
+  /* SDK v2에는 팝업 로그인(Auth.login)이 없다. authorize()로 카카오에 다녀오면
+     redirectUri에 ?code=... 를 달고 돌아오고, 그 코드를 서버가 토큰으로 바꾼다. */
   const startKakao = () => {
     if (!window.Kakao?.isInitialized?.()) {
       setError('카카오 로그인이 아직 준비되지 않았습니다.\n잠시 후 다시 시도해주세요.');
       return;
     }
     setLoading(true); setError(null);
-    window.Kakao.Auth.login({
-      scope: 'profile_nickname',
-      success: async ({ access_token }) => {
-        try {
-          setToken(access_token);
-          const data = await post('kakao', { accessToken: access_token });
-          if (data.needs_choice) {          // 처음 오신 분 — 새로 만들지 물어본다
-            setKNick(data.kakao_nickname ?? '');
-            setStep('choice');
-          } else {
-            done(data);                      // 이미 연결된 계정 — 바로 입장
-          }
-        } catch (e) { setError(e.message); } finally { setLoading(false); }
-      },
-      fail: () => { setError('카카오 로그인에 실패했습니다.'); setLoading(false); },
-    });
+    // 로그인 마치고 보던 화면으로 돌려보내려고 남겨둔다
+    sessionStorage.setItem(RETURN_KEY, window.location.pathname + window.location.search);
+    window.Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI, scope: 'profile_nickname' });
   };
+
+  /* 카카오에서 돌아왔을 때(=code를 들고 열렸을 때) 이어서 처리한다.
+     KakaoCallback이 코드를 넘겨주면 그때부터 '선택' 단계로 들어간다. */
+  useEffect(() => {
+    if (!resumeCode) return;
+    setLoading(true);
+    (async () => {
+      try {
+        const data = await post('kakao/code', { code: resumeCode, redirectUri: KAKAO_REDIRECT_URI });
+        if (data.needs_choice) {           // 처음 오신 분 — 새로 만들지 물어본다
+          setKNick(data.kakao_nickname ?? '');
+          setToken(data.ticket);           // 다음 단계에서 신원을 증명할 표
+          setStep('choice');
+        } else {
+          done(data);                       // 이미 연결된 계정 — 바로 입장
+        }
+      } catch (e) { setError(e.message); } finally { setLoading(false); }
+    })();
+  }, [resumeCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const signup = async () => {
     if (!nickname.trim()) { setError('닉네임을 입력해주세요.'); return; }
     setLoading(true); setError(null);
-    try { done(await post('kakao/signup', { accessToken: token, nickname: nickname.trim() })); }
+    try { done(await post('kakao/signup', { ticket: token, nickname: nickname.trim() })); }
     catch (e) { setError(e.message); setLoading(false); }
   };
 
   const linkOld = async () => {
     if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
     setLoading(true); setError(null);
-    try { done(await post('kakao/link', { accessToken: token, nickname: nickname.trim(), phone })); }
+    try { done(await post('kakao/link', { ticket: token, nickname: nickname.trim(), phone })); }
     catch (e) { setError(e.message); setLoading(false); }
   };
 
