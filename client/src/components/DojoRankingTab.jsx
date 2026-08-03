@@ -28,7 +28,7 @@ function SeasonRow({ season }) {
           <p className="text-ink font-bold text-lg tabular-nums">D—{season.days_remaining}</p>
         </div>
         <p className="text-ink-400 text-xs mt-2">
-          {season.end_date} 마감 · 시즌 종료 시 <span className="bg-lime text-ink px-1 font-semibold">1·2·3위 도장</span>에 선수 초청권 지급
+          시즌 종료 시 <span className="bg-lime text-ink px-1 font-semibold">1·2·3위 도장</span>에 선수 초청권 지급
         </p>
       </div>
     </div>

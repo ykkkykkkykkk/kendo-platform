@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import DojoRankingTab from '../components/DojoRankingTab.jsx';
 import LoginPrompt from '../components/LoginPrompt.jsx';
+import DojoJoinModal from '../components/DojoJoinModal.jsx';
 
 function totalMyScore(t) {
   return t.divisions.reduce((s, d) => s + (d.my_score ?? 0), 0);
@@ -18,6 +20,7 @@ export default function RankingPage({ onLoginRequest }) {
   const myUserId = user?.id ?? null;
 
   const [mainTab, setMainTab] = useState('individual'); // 'individual' | 'dojo'
+  const [joinOpen, setJoinOpen] = useState(false);
   const { data, loading } = useFetch(api.tournamentsWithDivisions);
   const [tab, setTab] = useState('ongoing');
   const [selectedId, setSelectedId] = useState(null);
@@ -81,7 +84,9 @@ export default function RankingPage({ onLoginRequest }) {
       </div>
 
       {mainTab === 'dojo' ? (
-        <DojoRankingTab />
+        // 도장이 없으면 로그인 여부에 따라 가입 모달 / 도장 등록 모달로 보낸다.
+        // (onJoinClick을 안 넘기면 '가입하기' 버튼이 아무 동작도 하지 않는다)
+        <DojoRankingTab onJoinClick={() => (user ? setJoinOpen(true) : onLoginRequest?.())} />
       ) : (
         <>
           {/* 개인 랭킹 서브탭 */}
@@ -122,6 +127,10 @@ export default function RankingPage({ onLoginRequest }) {
       )}
       </>
       )}
+
+      <AnimatePresence>
+        {joinOpen && <DojoJoinModal key="dojo-join" onClose={() => setJoinOpen(false)} />}
+      </AnimatePresence>
     </main>
   );
 }

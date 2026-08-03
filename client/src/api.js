@@ -104,5 +104,6 @@ export const api = {
   myDojo:       ()    => authGet('/dojos/my'),
   joinDojo:     (name) => authPost('/dojos/join', { name }),
   dojoChangeRequest: (body) => authPost('/dojos/change-request', body),
+  augustEvent:  ()    => get('/dojos/august-event'),
   pastSeasons:  ()    => get('/seasons/past?limit=4'),
 };

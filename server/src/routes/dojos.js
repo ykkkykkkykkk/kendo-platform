@@ -14,6 +14,50 @@ function daysRemaining(endDate) {
   return Math.max(0, Math.ceil((new Date(endDate) - Date.now()) / 86400000));
 }
 
+/* ── 8월 도장 유입 이벤트 ───────────────────────────────────────
+ * 8월 한 달간 신규 가입 관원이 가장 많은 도장에 죽도 10자루.
+ *
+ * created_at은 datetime('now') 즉 UTC라 그냥 비교하면 한국 시간 기준 8/1 새벽
+ * 가입자가 7월로 밀린다. +9시간 해서 KST 날짜로 바꿔 센다.
+ * 팔로워 수 채우기용 시드 계정(가라팬)은 실제 가입자가 아니라 제외한다.
+ */
+const EVENT_START = '2026-08-01';
+const EVENT_END   = '2026-08-31';
+const NOT_SEED    = "(u.phone IS NULL OR u.phone NOT LIKE '검도팬_%')";
+// 가입할 때 도장을 안 적어서 '없음'으로 들어간 사람들. 도장을 등록한 게 아니라 집계에서 뺀다.
+// (도장 행 자체는 지우지 않는다 — 소속 기록은 그대로 둔다)
+const NOT_BLANK   = "d.name NOT IN ('없음', '무소속', '-')";
+
+// GET /api/dojos/august-event — 이벤트 현황 (공개)
+router.get('/dojos/august-event', async (req, res) => {
+  try {
+    const { rows } = await db.execute({
+      sql: `SELECT d.id, d.name, COUNT(u.id) AS new_members
+            FROM dojos d
+            JOIN users u ON u.dojo_id = d.id
+                        AND date(u.created_at, '+9 hours') BETWEEN ? AND ?
+                        AND ${NOT_SEED}
+            WHERE ${NOT_BLANK}
+            GROUP BY d.id
+            HAVING new_members > 0
+            ORDER BY new_members DESC, d.name`,
+      args: [EVENT_START, EVENT_END],
+    });
+
+    res.json({
+      start_date: EVENT_START,
+      end_date:   EVENT_END,
+      // 공동 순위: 같은 인원이면 같은 등수
+      top: rows.slice(0, 3).map((r, i) => ({
+        ...r,
+        rank: rows.findIndex((x) => x.new_members === r.new_members) + 1,
+      })),
+      participating_dojos: rows.length,
+      total_new_members:   rows.reduce((sum, r) => sum + Number(r.new_members), 0),
+    });
+  } catch (e) { serverError(res, e, 'august-event'); }
+});
+
 // ── A-1. 도장 검색 (자동완성) ────────────────────────────────────
 // GET /api/dojos/search?q=강남
 router.get('/dojos/search', async (req, res) => {
