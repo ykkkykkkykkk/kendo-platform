@@ -105,5 +105,9 @@ export const api = {
   joinDojo:     (name) => authPost('/dojos/join', { name }),
   dojoChangeRequest: (body) => authPost('/dojos/change-request', body),
   augustEvent:  ()    => get('/dojos/august-event'),
+
+  // 카카오 연결 (로그인된 계정에 붙이기)
+  kakaoStatus:  ()     => authGet('/auth/kakao/status'),
+  kakaoConnect: (body) => authPost('/auth/kakao/connect', body),
   pastSeasons:  ()    => get('/seasons/past?limit=4'),
 };

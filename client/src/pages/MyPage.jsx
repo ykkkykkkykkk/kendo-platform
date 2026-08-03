@@ -10,6 +10,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import DojoChangeModal from '../components/DojoChangeModal.jsx';
+import KakaoConnectRow from '../components/KakaoConnectRow.jsx';
 import NickLoginModal from '../components/NickLoginModal.jsx';
 import PlayerLoginModal from '../components/PlayerLoginModal.jsx';
 
@@ -355,6 +356,8 @@ export default function MyPage() {
 
       {/* ── SETTINGS ── */}
       <Section label="SETTINGS" delay={0.14}>
+        {/* 기존 회원은 로그아웃하지 않으면 로그인 화면을 볼 일이 없어 연결 기회가 없다 */}
+        <KakaoConnectRow />
         <Row label="알림 설정" value="곧 공개" disabled />
         <Row label="이용 약관" onClick={() => {}} />
         <Row label="오픈소스 라이선스" onClick={() => {}} />

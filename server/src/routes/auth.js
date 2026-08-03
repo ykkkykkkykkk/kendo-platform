@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
 import { findSimilarAccounts } from '../utils/similarNickname.js';
-import { touchLastSeen, clientIp } from '../middleware/auth.js';
+import { touchLastSeen, clientIp, requireAuth } from '../middleware/auth.js';
 import { serverError } from '../utils/apiError.js';
 
 const router = Router();
@@ -258,6 +258,56 @@ router.post('/kakao/signup', async (req, res) => {
     delete created.password_hash;
     res.json({ token: signFan(created), user: created, created: true });
   } catch (e) { serverError(res, e, 'kakao-signup'); }
+});
+
+/* POST /api/auth/kakao/connect — 지금 로그인해 있는 계정에 카카오를 붙인다.
+ *
+ * 기존 회원은 토큰이 1년짜리라 로그아웃하지 않는 한 로그인 화면을 볼 일이 없다.
+ * 그러면 연결할 기회 자체가 없어서, 마이페이지에서 바로 붙일 수 있게 한다.
+ * 본인 토큰으로 요청하므로 닉네임+끝4자리를 묻는 link보다 안전하다(사칭 여지가 없다).
+ * body: { code, redirectUri } 또는 { ticket }
+ */
+router.post('/kakao/connect', requireAuth, async (req, res) => {
+  try {
+    let info;
+    if (req.body?.code) {
+      if (!KAKAO_CLIENT_ID)
+        return res.status(503).json({ error: '카카오 로그인이 서버에 설정되지 않았습니다.' });
+      const at = await exchangeCode(req.body.code, req.body.redirectUri);
+      info = at ? await verifyKakao(at) : null;
+    } else {
+      info = await identify(req.body);
+    }
+    if (!info) return res.status(401).json({ error: '카카오 인증에 실패했습니다. 다시 시도해주세요.' });
+
+    const { rows: [owner] } = await db.execute({
+      sql: 'SELECT id, nickname FROM users WHERE kakao_id = ?', args: [info.kakaoId],
+    });
+    if (owner && owner.id !== req.user.userId)
+      return res.status(409).json({ error: `이 카카오 계정은 이미 '${owner.nickname}'에 연결돼 있습니다.` });
+
+    const { rows: [me] } = await db.execute({
+      sql: 'SELECT kakao_id FROM users WHERE id = ?', args: [req.user.userId],
+    });
+    if (me?.kakao_id && me.kakao_id !== info.kakaoId)
+      return res.status(409).json({ error: '이 계정에는 이미 다른 카카오 계정이 연결돼 있습니다.' });
+
+    await db.execute({
+      sql: `UPDATE users SET kakao_id = ?, kakao_linked_at = datetime('now') WHERE id = ?`,
+      args: [info.kakaoId, req.user.userId],
+    });
+    res.json({ connected: true, kakao_nickname: info.nickname });
+  } catch (e) { serverError(res, e, 'kakao-connect'); }
+});
+
+// GET /api/auth/kakao/status — 내 계정에 카카오가 붙어 있는지
+router.get('/kakao/status', requireAuth, async (req, res) => {
+  try {
+    const { rows: [me] } = await db.execute({
+      sql: 'SELECT kakao_id, kakao_linked_at FROM users WHERE id = ?', args: [req.user.userId],
+    });
+    res.json({ connected: Boolean(me?.kakao_id), linked_at: me?.kakao_linked_at ?? null });
+  } catch (e) { serverError(res, e, 'kakao-status'); }
 });
 
 // POST /api/auth/kakao/link — 쓰던 계정을 카카오에 연결
