@@ -1,103 +1,201 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
+/**
+ * 카카오 로그인.
+ *
+ * 닉네임+휴대폰 끝 4자리 방식은 본인 확인이 안 돼 같은 사람이 계정을 몇 개든 만들 수 있었다.
+ * 카카오는 회원 고유번호를 주므로 한 사람당 계정 하나로 묶인다.
+ *
+ * 화면 흐름
+ *   start  카카오로 시작하기
+ *   choice 처음 보는 카카오 계정 → 새로 시작할지, 쓰던 계정에 붙일지 고른다
+ *   link   쓰던 닉네임 + 끝 4자리를 넣어 예전 계정을 넘겨받는다
+ */
 export default function KakaoLoginModal({ onClose }) {
   const { login } = useAuth();
+  const [step,    setStep]    = useState('start');
+  const [token,   setToken]   = useState(null);   // 카카오 access token (연결 단계에서 다시 쓴다)
+  const [kakaoNick, setKNick] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [phone,   setPhone]   = useState('');
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
-  const handleKakaoLogin = () => {
-    if (!window.Kakao?.isInitialized()) {
-      setError('카카오 SDK가 초기화되지 않았습니다.\n.env에 VITE_KAKAO_APP_KEY를 확인해주세요.');
+  useEffect(() => { if (step === 'choice') setNickname(kakaoNick); }, [step, kakaoNick]);
+
+  const post = async (path, body) => {
+    const res  = await fetch(`/api/auth/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? '요청에 실패했습니다.');
+    return data;
+  };
+
+  const done = (data) => { login(data.token); onClose(); };
+
+  const startKakao = () => {
+    if (!window.Kakao?.isInitialized?.()) {
+      setError('카카오 로그인이 아직 준비되지 않았습니다.\n잠시 후 다시 시도해주세요.');
       return;
     }
-
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError(null);
     window.Kakao.Auth.login({
+      scope: 'profile_nickname',
       success: async ({ access_token }) => {
         try {
-          const res = await fetch('/api/auth/kakao', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ accessToken: access_token }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error);
-          login(data.user);
-          onClose();
-        } catch (e) {
-          setError(e.message);
-        } finally {
-          setLoading(false);
-        }
+          setToken(access_token);
+          const data = await post('kakao', { accessToken: access_token });
+          if (data.needs_choice) {          // 처음 오신 분 — 새로 만들지 물어본다
+            setKNick(data.kakao_nickname ?? '');
+            setStep('choice');
+          } else {
+            done(data);                      // 이미 연결된 계정 — 바로 입장
+          }
+        } catch (e) { setError(e.message); } finally { setLoading(false); }
       },
-      fail: (err) => {
-        setError('카카오 로그인에 실패했습니다.');
-        setLoading(false);
-        console.error(err);
-      },
+      fail: () => { setError('카카오 로그인에 실패했습니다.'); setLoading(false); },
     });
   };
 
+  const signup = async () => {
+    if (!nickname.trim()) { setError('닉네임을 입력해주세요.'); return; }
+    setLoading(true); setError(null);
+    try { done(await post('kakao/signup', { accessToken: token, nickname: nickname.trim() })); }
+    catch (e) { setError(e.message); setLoading(false); }
+  };
+
+  const linkOld = async () => {
+    if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
+    setLoading(true); setError(null);
+    try { done(await post('kakao/link', { accessToken: token, nickname: nickname.trim(), phone })); }
+    catch (e) { setError(e.message); setLoading(false); }
+  };
+
   return (
-    /* 딤 배경 */
-    <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center"
+    <motion.div
+      className="fixed inset-0 bg-black/40 z-[90] flex items-end justify-center"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      {/* 바텀 시트 */}
-      <div
-        className="w-full max-w-mobile bg-paper rounded-t-2xl px-6 pt-6 pb-10"
+      <motion.div
+        className="w-full max-w-mobile bg-paper rounded-t-2xl px-6 pt-5 pb-10"
         style={{ borderTop: '1.5px solid #111111' }}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-label="카카오 로그인"
       >
-        <div className="w-10 h-1 bg-ink-200 rounded-full mx-auto mb-6" />
+        <div className="flex justify-end">
+          <button onClick={onClose} aria-label="닫기" className="text-ink-400 pressable"><X size={18} /></button>
+        </div>
 
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden">
+        <div className="text-center mb-5 -mt-2">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 overflow-hidden">
             <img src="/logo.svg" alt="마이너스타" className="w-full h-full" />
           </div>
           <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">MINOR—STAR®</p>
-          <h2 className="text-ink font-bold text-lg tracking-tight">마이너스타 시작하기</h2>
-          <p className="text-ink-400 text-sm mt-1">로그인하고 경기 예측에 참여하세요</p>
+          <h2 className="text-ink font-bold text-lg tracking-tight">
+            {step === 'link' ? '쓰던 계정 가져오기' : '마이너스타 시작하기'}
+          </h2>
+          <p className="text-ink-400 text-sm mt-1">
+            {step === 'start'  && '카카오로 3초면 시작해요'}
+            {step === 'choice' && '처음이신가요?'}
+            {step === 'link'   && '전에 쓰시던 닉네임과 번호를 넣어주세요'}
+          </p>
         </div>
 
-        {error && (
-          <p className="text-red-600 text-xs text-center mb-3 whitespace-pre-line">{error}</p>
+        {error && <p className="text-red-600 text-xs text-center mb-3 whitespace-pre-line">{error}</p>}
+
+        {step === 'start' && (
+          <button
+            onClick={startKakao}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2.5 bg-[#FEE500] text-[#3C1E1E]
+                       font-bold py-3.5 rounded-xl text-sm pressable disabled:opacity-60"
+          >
+            {loading ? '연결 중…' : <><KakaoIcon /> 카카오로 시작하기</>}
+          </button>
         )}
 
-        <button
-          onClick={handleKakaoLogin}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-[#FEE500] text-[#3C1E1E]
-                     font-bold py-3.5 rounded-xl text-sm active:opacity-80 disabled:opacity-60"
-        >
-          {loading ? (
-            <span>로그인 중...</span>
-          ) : (
-            <>
-              <KakaoIcon />
-              카카오로 시작하기
-            </>
-          )}
-        </button>
+        {step === 'choice' && (
+          <>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">닉네임</label>
+            <input
+              type="text" maxLength={10} value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3"
+            />
+            <button
+              onClick={signup}
+              disabled={loading}
+              className="w-full bg-lime hover:bg-lime-dark text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable disabled:opacity-50"
+            >
+              {loading ? '만드는 중…' : '새로 시작하기'}
+            </button>
+            <button
+              onClick={() => { setError(null); setPhone(''); setStep('link'); }}
+              className="w-full mt-2.5 text-ink-600 text-sm py-2 underline"
+            >
+              전에 쓰던 계정이 있어요
+            </button>
+          </>
+        )}
 
-        <button
-          onClick={onClose}
-          className="w-full mt-3 text-ink-400 text-sm py-2"
-        >
-          닫기
-        </button>
-      </div>
-    </div>
+        {step === 'link' && (
+          <>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">쓰시던 닉네임</label>
+            <input
+              type="text" maxLength={10} value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="예전에 쓰던 닉네임"
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3 placeholder:text-ink-400/60"
+            />
+            <label className="text-xs font-medium text-ink-600 mb-1 block">휴대폰 끝 4자리</label>
+            <input
+              type="tel" inputMode="numeric" maxLength={4} value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={(e) => { if (e.key === 'Enter') linkOld(); }}
+              placeholder="0000"
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3 placeholder:text-ink-400/60"
+            />
+            <button
+              onClick={linkOld}
+              disabled={loading}
+              className="w-full bg-lime hover:bg-lime-dark text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable disabled:opacity-50"
+            >
+              {loading ? '연결 중…' : '내 계정 가져오기'}
+            </button>
+            <p className="text-ink-400 text-[11px] text-center mt-2.5 leading-[1.5]">
+              연결하면 예전 픽·팔로우가 그대로 따라옵니다.<br />
+              다음부터는 카카오로만 들어오시면 됩니다.
+            </p>
+            <button
+              onClick={() => { setError(null); setStep('choice'); }}
+              className="w-full mt-2 text-ink-400 text-xs py-2"
+            >
+              뒤로
+            </button>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 
 function KakaoIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <path fillRule="evenodd" clipRule="evenodd"
         d="M9 1C4.58 1 1 3.91 1 7.5c0 2.3 1.48 4.32 3.72 5.5L3.9 16.1a.3.3 0 00.45.32L8.1 14.1c.29.03.59.04.9.04 4.42 0 8-2.91 8-6.5S13.42 1 9 1z"
         fill="#3C1E1E"/>

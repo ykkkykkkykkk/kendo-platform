@@ -5,6 +5,8 @@ import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
 import NickLoginModal    from './components/NickLoginModal.jsx';
+import KakaoLoginModal   from './components/KakaoLoginModal.jsx';
+import { initKakao, kakaoConfigured } from './utils/kakaoSdk.js';
 import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import AugustEventPopup  from './components/AugustEventPopup.jsx';
 import PlayerLoginModal  from './components/PlayerLoginModal.jsx';
@@ -36,6 +38,14 @@ export default function App() {
   // 둘러보기 먼저: 랜딩 시 로그인 강제하지 않음 (참여 액션에서만 로그인 유도)
   const [showLogin,       setShowLogin]       = useState(false);
   const [showPlayerLogin, setShowPlayerLogin] = useState(false);
+
+  /* 카카오가 준비됐으면 카카오 로그인을, 아니면 기존 닉네임 로그인을 띄운다.
+     앱 키가 없거나 SDK를 못 받아온 상황에서 가입 자체가 막히면 안 되므로 폴백을 둔다. */
+  const [kakaoReady, setKakaoReady] = useState(false);
+  useEffect(() => {
+    if (!kakaoConfigured()) return;
+    initKakao().then(setKakaoReady);
+  }, []);
 
   // 방문 기록: 경로 바뀔 때마다 1건 핑 (어드민 경로는 제외 — 운영자 접속은 통계에서 뺌)
   useEffect(() => {
@@ -121,11 +131,15 @@ export default function App() {
 
       <AnimatePresence>
         {showLogin && !user && (
-          <NickLoginModal
-            key="login-modal"
-            onClose={() => setShowLogin(false)}
-            onSwitchToPlayer={() => { setShowLogin(false); setShowPlayerLogin(true); }}
-          />
+          kakaoReady ? (
+            <KakaoLoginModal key="kakao-login-modal" onClose={() => setShowLogin(false)} />
+          ) : (
+            <NickLoginModal
+              key="login-modal"
+              onClose={() => setShowLogin(false)}
+              onSwitchToPlayer={() => { setShowLogin(false); setShowPlayerLogin(true); }}
+            />
+          )
         )}
         {showPlayerLogin && !user && (
           <PlayerLoginModal

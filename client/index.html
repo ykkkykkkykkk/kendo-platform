@@ -37,6 +37,14 @@
   </head>
   <body class="font-pretendard">
     <div id="root"></div>
+    <!-- 카카오 로그인 SDK. defer라 앱 렌더를 막지 않는다.
+         초기화는 앱 코드(kakaoSdk.js)에서 VITE_KAKAO_APP_KEY로 한다. -->
+    <script
+      defer
+      src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+      integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+      crossorigin="anonymous"
+    ></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
