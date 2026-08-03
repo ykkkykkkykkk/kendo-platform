@@ -18,21 +18,24 @@ const SEED_PHONE_PREFIX = '검도팬_';
 // 그대로 두면 phone 없이 만든 계정(설문으로 아이디만 받은 선수 계정)이 통째로 사라진다.
 const IS_SEED = `(u.phone IS NOT NULL AND u.phone LIKE '${SEED_PHONE_PREFIX}%')`;
 
-// GET /api/admin/users?q=검색어&include_seed=1
+// GET /api/admin/users?q=검색어&include_seed=1&kakao=linked|unlinked
 router.get('/users', async (req, res) => {
   try {
     const q = (req.query.q ?? '').trim();
     const includeSeed = req.query.include_seed === '1';
+    const kakao = req.query.kakao;              // 전환 진행 상황을 보려고 거른다
     const like = `%${q}%`;
 
     const where = [];
     if (!includeSeed) where.push(`NOT ${IS_SEED}`);
-    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ?)');
+    if (kakao === 'linked')   where.push('u.kakao_id IS NOT NULL');
+    if (kakao === 'unlinked') where.push('u.kakao_id IS NULL');
+    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ? OR u.username LIKE ?)');
 
     const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.username, u.role, u.dan_grade, u.home_dojo,
                    u.created_at, u.last_seen_at, u.player_id,
-                   u.last_ip, u.signup_ip,
+                   u.last_ip, u.signup_ip, u.kakao_id, u.kakao_linked_at,
                    -- 같은 IP를 쓰는 다른 계정 수. 중복 가입을 가려낼 단서로 쓴다.
                    -- 가족이나 같은 도장에서 접속하면 자연스럽게 겹칠 수 있으니 참고용이다.
                    (SELECT COUNT(*) FROM users o
@@ -51,14 +54,25 @@ router.get('/users', async (req, res) => {
             LEFT JOIN players p ON p.id = u.player_id
             ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
             ORDER BY u.created_at DESC`,
-      args: q ? [like, like, like] : [],
+      args: q ? [like, like, like, like] : [],
     });
 
     const { rows: [{ n: seedCount }] } = await db.execute(
       `SELECT COUNT(*) AS n FROM users u WHERE ${IS_SEED}`
     );
 
-    res.json({ users, seed_count: seedCount });
+    // 카카오 전환 진행 상황 (가라팬 제외)
+    const { rows: [k] } = await db.execute(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN u.kakao_id IS NOT NULL THEN 1 ELSE 0 END) AS linked
+       FROM users u WHERE NOT ${IS_SEED}`
+    );
+
+    res.json({
+      users,
+      seed_count: seedCount,
+      kakao: { total: Number(k.total), linked: Number(k.linked ?? 0) },
+    });
   } catch (e) { serverError(res, e, 'admin-users'); }
 });
 

@@ -18,24 +18,28 @@ export default function UserList() {
   const [users, setUsers]     = useState([]);
   const [seedCount, setSeed]  = useState(0);
   const [showSeed, setShow]   = useState(false);   // 가라팬은 기본 숨김
+  const [kakao,    setKakao]  = useState('');     // '' | 'linked' | 'unlinked'
+  const [kstat,    setKstat]  = useState(null);   // 카카오 전환 진행 상황
   const [loading, setLoading] = useState(true);
   const [q, setQ]             = useState('');
   const [detail, setDetail]   = useState(null);
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
 
-  const load = useCallback(async (query = '', withSeed = false) => {
+  const load = useCallback(async (query = '', withSeed = false, kakaoFilter = '') => {
     setLoading(true);
     const params = new URLSearchParams();
     if (query)   params.set('q', query);
     if (withSeed) params.set('include_seed', '1');
+    if (kakaoFilter) params.set('kakao', kakaoFilter);
     const r = await adminGet(`/users${params.toString() ? `?${params}` : ''}`);
     setUsers(Array.isArray(r?.users) ? r.users : []);
     setSeed(r?.seed_count ?? 0);
+    setKstat(r?.kakao ?? null);
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(q, showSeed); /* eslint-disable-next-line */ }, [showSeed]);
+  useEffect(() => { load(q, showSeed, kakao); /* eslint-disable-next-line */ }, [showSeed, kakao]);
 
   async function openDetail(id) {
     setDetail({ loading: true });
@@ -52,7 +56,7 @@ export default function UserList() {
       const res = await adminDelete(`/users/${u.id}`);
       if (!res.ok) throw new Error((await res.json()).error ?? '삭제 실패');
       setDetail(null);
-      await load(q, showSeed);
+      await load(q, showSeed, kakao);
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
 
@@ -82,8 +86,34 @@ export default function UserList() {
         </div>
       )}
 
+      {/* 카카오 전환 진행 상황. 누가 아직 연결 안 했는지 골라볼 수 있다 */}
+      {kstat && (
+        <div className="flex items-center gap-2 mb-4 text-[12px] flex-wrap">
+          <span className="text-ink-400">
+            카카오 연결 <span className="text-ink font-semibold">{kstat.linked}</span>
+            {' / '}{kstat.total}명
+            {kstat.total > 0 && (
+              <span className="text-ink-400"> ({Math.round((kstat.linked / kstat.total) * 100)}%)</span>
+            )}
+          </span>
+          <div className="flex">
+            {[['', '전체'], ['linked', '연결됨'], ['unlinked', '미연결']].map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setKakao(v)}
+                className={`px-2.5 py-1 border transition-colors ${
+                  kakao === v ? 'border-ink bg-ink text-white' : 'border-ink-200 hover:border-ink text-ink-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <form
-        onSubmit={(e) => { e.preventDefault(); load(q, showSeed); }}
+        onSubmit={(e) => { e.preventDefault(); load(q, showSeed, kakao); }}
         className="flex items-center gap-2 mb-4 max-w-md"
       >
         <div className="flex-1 flex items-center gap-2 border border-ink-200 px-3 py-2">
@@ -91,11 +121,11 @@ export default function UserList() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="닉네임 · 도장"
+            placeholder="닉네임 · 도장 · 아이디"
             className="flex-1 text-sm outline-none bg-transparent"
           />
           {q && (
-            <button type="button" onClick={() => { setQ(''); load('', showSeed); }} className="text-ink-400">
+            <button type="button" onClick={() => { setQ(''); load('', showSeed, kakao); }} className="text-ink-400">
               <X size={14} />
             </button>
           )}
@@ -117,6 +147,7 @@ export default function UserList() {
                 <th className="px-4 py-3 font-medium">팔로우</th>
                 <th className="px-4 py-3 font-medium">픽</th>
                 <th className="px-4 py-3 font-medium">마지막 접속</th>
+                <th className="px-4 py-3 font-medium">카카오</th>
                 <th className="px-4 py-3 font-medium">접속 IP</th>
                 <th className="px-4 py-3 font-medium">가입일</th>
                 <th className="px-4 py-3 font-medium"></th>
@@ -156,6 +187,11 @@ export default function UserList() {
                       : <span className="text-ink-400">기록 없음</span>}
                   </td>
                   <td className="px-4 py-3 text-xs whitespace-nowrap">
+                    {u.kakao_id
+                      ? <span className="text-[10px] bg-[#FEE500] text-[#3C1E1E] px-1.5 py-0.5 font-bold">연결됨</span>
+                      : <span className="text-ink-400">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs whitespace-nowrap">
                     {u.last_ip ? (
                       <>
                         <span className="font-mono text-ink-600">{u.last_ip}</span>
@@ -186,7 +222,7 @@ export default function UserList() {
                 </tr>
               ))}
               {!users.length && (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
               )}
             </tbody>
           </table>
@@ -215,6 +251,14 @@ export default function UserList() {
                     접속 IP · <span className="font-mono">{detail.last_ip ?? '기록 없음'}</span>
                     {detail.signup_ip && detail.signup_ip !== detail.last_ip && (
                       <span className="text-ink-400 text-xs"> (가입 시 {detail.signup_ip})</span>
+                    )}
+                  </p>
+                  <p className="text-ink-600">
+                    카카오 · {detail.kakao_id
+                      ? <span className="bg-[#FEE500] text-[#3C1E1E] px-1.5 py-0.5 text-xs font-bold">연결됨</span>
+                      : <span className="text-ink-400">미연결</span>}
+                    {detail.kakao_linked_at && (
+                      <span className="text-ink-400 text-xs"> · {seenAt(detail.kakao_linked_at)} 연결</span>
                     )}
                   </p>
                   <p className="text-ink-400 text-xs">가입 {detail.created_at}</p>
