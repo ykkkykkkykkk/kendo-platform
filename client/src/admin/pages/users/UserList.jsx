@@ -117,6 +117,7 @@ export default function UserList() {
                 <th className="px-4 py-3 font-medium">팔로우</th>
                 <th className="px-4 py-3 font-medium">픽</th>
                 <th className="px-4 py-3 font-medium">마지막 접속</th>
+                <th className="px-4 py-3 font-medium">접속 IP</th>
                 <th className="px-4 py-3 font-medium">가입일</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
@@ -154,6 +155,24 @@ export default function UserList() {
                       ? <span className="text-ink">{seenAt(u.last_seen_at)}</span>
                       : <span className="text-ink-400">기록 없음</span>}
                   </td>
+                  <td className="px-4 py-3 text-xs whitespace-nowrap">
+                    {u.last_ip ? (
+                      <>
+                        <span className="font-mono text-ink-600">{u.last_ip}</span>
+                        {/* 같은 IP를 쓰는 계정이 있으면 중복 가입일 수 있다 (가족·도장 공용일 수도 있음) */}
+                        {u.same_ip_count > 0 && (
+                          <span
+                            title="같은 IP를 쓰는 다른 계정이 있습니다. 닉네임을 눌러 확인하세요."
+                            className="ml-1.5 text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold"
+                          >
+                            +{u.same_ip_count}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-ink-400">기록 없음</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-ink-400 text-xs tabular-nums">{(u.created_at ?? '').slice(0, 10)}</td>
                   <td className="px-4 py-3">
                     <button
@@ -167,7 +186,7 @@ export default function UserList() {
                 </tr>
               ))}
               {!users.length && (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
+                <tr><td colSpan={10} className="px-4 py-10 text-center text-ink-400 text-sm">회원이 없습니다.</td></tr>
               )}
             </tbody>
           </table>
@@ -192,8 +211,37 @@ export default function UserList() {
                   <p className="text-ink-600">도장 · {detail.dojo_name ?? detail.home_dojo ?? '—'}</p>
                   <p className="text-ink-600">단 · {detail.dan_grade ? `${detail.dan_grade}단` : '—'}</p>
                   <p className="text-ink-600">응원팀 · {detail.favorite_team ?? '—'}</p>
+                  <p className="text-ink-600">
+                    접속 IP · <span className="font-mono">{detail.last_ip ?? '기록 없음'}</span>
+                    {detail.signup_ip && detail.signup_ip !== detail.last_ip && (
+                      <span className="text-ink-400 text-xs"> (가입 시 {detail.signup_ip})</span>
+                    )}
+                  </p>
                   <p className="text-ink-400 text-xs">가입 {detail.created_at}</p>
                 </div>
+
+                {/* 같은 IP 계정 — 중복 가입 판별용. 겹친다고 무조건 같은 사람은 아니다 */}
+                {detail.same_ip?.length > 0 && (
+                  <div className="px-5 pb-4">
+                    <h3 className="text-[11px] font-bold tracking-wider text-ink-400 mb-2">
+                      같은 IP를 쓰는 계정 {detail.same_ip.length}개
+                    </h3>
+                    {detail.same_ip.map((s) => (
+                      <div key={s.id} className="flex items-center gap-2 py-1.5 border-t border-ink-200 text-sm">
+                        <span className="text-ink font-medium">{s.nickname}</span>
+                        {s.username && <span className="text-[11px] text-ink-400 font-mono">{s.username}</span>}
+                        {s.role !== 'fan' && (
+                          <span className="text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold">{s.role}</span>
+                        )}
+                        <span className="flex-1" />
+                        <span className="text-ink-400 text-xs tabular-nums">{(s.created_at ?? '').slice(0, 10)}</span>
+                      </div>
+                    ))}
+                    <p className="text-ink-400 text-[11px] mt-2">
+                      같은 집·도장·통신사에서 접속하면 겹칠 수 있습니다. 중복 가입 확인용 참고 자료입니다.
+                    </p>
+                  </div>
+                )}
 
                 <div className="px-5 pb-4">
                   <h3 className="text-[11px] font-bold tracking-wider text-ink-400 mb-2">

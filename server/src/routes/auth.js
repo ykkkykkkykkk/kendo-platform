@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
 import { findSimilarAccounts } from '../utils/similarNickname.js';
-import { touchLastSeen } from '../middleware/auth.js';
+import { touchLastSeen, clientIp } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -43,8 +43,8 @@ router.post('/register', async (req, res) => {
     }
 
     await db.execute({
-      sql:  'INSERT INTO users (phone, nickname, home_dojo) VALUES (?, ?, ?)',
-      args: [phoneKey, trimmedNick, home_dojo?.trim() || null],
+      sql:  'INSERT INTO users (phone, nickname, home_dojo, signup_ip) VALUES (?, ?, ?, ?)',
+      args: [phoneKey, trimmedNick, home_dojo?.trim() || null, clientIp(req)],
     });
     const { rows: [newUser] } = await db.execute({
       sql:  'SELECT * FROM users WHERE phone = ?',
@@ -53,7 +53,7 @@ router.post('/register', async (req, res) => {
     user = newUser;
   }
 
-  touchLastSeen(user.id);
+  touchLastSeen(user.id, clientIp(req));
 
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: user.role ?? 'fan' },
@@ -83,7 +83,7 @@ router.post('/player-login', async (req, res) => {
   if (!valid)
     return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
 
-  touchLastSeen(user.id);
+  touchLastSeen(user.id, clientIp(req));
 
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: 'player', playerId: user.player_id },
