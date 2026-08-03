@@ -317,6 +317,20 @@ router.post('/kakao/connect', requireAuth, async (req, res) => {
   } catch (e) { serverError(res, e, 'kakao-connect'); }
 });
 
+/* POST /api/auth/refresh — 지금 DB 상태로 토큰을 다시 발급한다.
+ * 선수 신청이 승인되면 role과 player_id가 바뀌는데, 토큰은 1년짜리라
+ * 다시 로그인하지 않으면 계속 예전 권한으로 다닌다. */
+router.post('/refresh', requireAuth, async (req, res) => {
+  try {
+    const { rows: [user] } = await db.execute({
+      sql: 'SELECT * FROM users WHERE id = ?', args: [req.user.userId],
+    });
+    if (!user) return res.status(404).json({ error: '회원을 찾을 수 없습니다.' });
+    delete user.password_hash;
+    res.json({ token: signFan(user), user });
+  } catch (e) { serverError(res, e, 'refresh'); }
+});
+
 // GET /api/auth/kakao/status — 내 계정에 카카오가 붙어 있는지
 router.get('/kakao/status', requireAuth, async (req, res) => {
   try {

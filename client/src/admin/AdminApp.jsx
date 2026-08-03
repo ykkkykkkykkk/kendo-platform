@@ -19,6 +19,7 @@ import ClinicForm        from './pages/clinics/ClinicForm.jsx';
 import SponsorshipList   from './pages/sponsorships/SponsorshipList.jsx';
 import SponsorshipForm   from './pages/sponsorships/SponsorshipForm.jsx';
 import PlayerAccounts    from './pages/player-accounts/PlayerAccounts.jsx';
+import PlayerClaims      from './pages/player-claims/PlayerClaims.jsx';
 import InquiryList      from './pages/inquiries/InquiryList.jsx';
 import QuestionList     from './pages/questions/QuestionList.jsx';
 
@@ -64,6 +65,7 @@ export default function AdminApp() {
         <Route path="sponsorships/:id/edit"        element={<SponsorshipForm />} />
 
         <Route path="player-accounts"              element={<PlayerAccounts />} />
+        <Route path="player-claims"                element={<PlayerClaims />} />
         <Route path="inquiries"                    element={<InquiryList />} />
         <Route path="questions"                    element={<QuestionList />} />
       </Routes>

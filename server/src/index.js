@@ -25,6 +25,8 @@ import inquiriesRouter   from './routes/inquiries.js';
 import questionsRouter    from './routes/questions.js';
 import trackRouter        from './routes/track.js';
 
+import playerClaimsRouter      from './routes/player-claims.js';
+import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
 import { authLimiter, predictionLimiter, adminLimiter, trackLimiter } from './middleware/rateLimits.js';
 
 /* ── 필수 환경변수 검증 (없으면 서버 시작 거부) ── */
@@ -84,6 +86,8 @@ app.use('/api/admin',       adminLimiter,      adminRouter);
 app.use('/api/admin',       adminLimiter,      adminPicksRouter);
 app.use('/api/admin',       adminLimiter,      adminBracketRouter);
 app.use('/api/admin',       adminLimiter,      adminUsersRouter);
+app.use('/api/admin',       adminLimiter,      adminPlayerClaimsRouter);
+app.use('/api',                                playerClaimsRouter);
 app.use('/api/admin',       adminLimiter,      adminVideoRouter);
 app.use('/api/me',                             myVideoRouter);
 app.use('/api',                                postsRouter);

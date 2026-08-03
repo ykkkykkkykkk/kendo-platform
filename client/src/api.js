@@ -109,5 +109,11 @@ export const api = {
   // 카카오 연결 (로그인된 계정에 붙이기)
   kakaoStatus:  ()     => authGet('/auth/kakao/status'),
   kakaoConnect: (body) => authPost('/auth/kakao/connect', body),
+  refreshToken: ()     => authPost('/auth/refresh', {}),
+
+  // 선수 본인 신청
+  myClaim:      ()     => authGet('/player-claims/me'),
+  claimPlayer:  (body) => authPost('/player-claims', body),
+  cancelClaim:  ()     => authDelete('/player-claims/me'),
   pastSeasons:  ()    => get('/seasons/past?limit=4'),
 };

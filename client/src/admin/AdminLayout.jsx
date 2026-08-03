@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut,
+  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck,
 } from 'lucide-react';
 
 const NAV = [
   { to: '/admin',              label: '대시보드',   icon: LayoutDashboard, end: true },
   { to: '/admin/players',      label: '선수 관리',  icon: Users },
   { to: '/admin/users',        label: '회원 관리',  icon: UserCircle },
+  { to: '/admin/player-claims',label: '선수 신청',  icon: BadgeCheck },
   { to: '/admin/teams',        label: '팀 관리',    icon: Shield },
   { to: '/admin/tournaments',  label: '대회 관리',  icon: Trophy },
   { to: '/admin/clinics',      label: '클리닉',     icon: Dumbbell },
