@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Check } from 'lucide-react';
+import { X, Check, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 
@@ -39,10 +39,17 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const [mePick,   setMePick]   = useState(null);
   const [note,     setNote]     = useState('');
 
+  /* 가입 직후 팬 등록(follow) 단계.
+     가입만 하고 아무것도 안 하는 사람이 절반을 넘어, 처음에 선수 3명을 고르게 한다.
+     여기서 고른 선수는 그대로 팬으로 쌓인다(= 선수 프로필의 팬 수). */
+  const FOLLOW_TARGET = 3;
+  const [fanPicks, setFanPicks] = useState([]);
+  const [fanQuery, setFanQuery] = useState('');
+
   useEffect(() => { if (step === 'choice') setNickname(kakaoNick); }, [step, kakaoNick]);
 
   useEffect(() => {
-    if (step !== 'newPlayer' || roster) return;
+    if ((step !== 'newPlayer' && step !== 'follow') || roster) return;
     api.players()
       .then((r) => setRoster(Array.isArray(r) ? r : (r?.players ?? [])))
       .catch(() => setError('선수 명단을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'));
@@ -53,6 +60,20 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const teamRoster = (roster ?? [])
     .filter((p) => p.team_name === teamPick)
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
+  /* 팬 등록 후보: 검색어가 있으면 이름·팀으로 찾고, 없으면 팬이 많은 선수부터 보여준다.
+     처음 온 사람은 누굴 골라야 할지 모르므로 빈 화면 대신 인기순을 깔아준다. */
+  const fanTerm = fanQuery.trim().replace(/\s/g, '');
+  const fanCandidates = (roster ?? [])
+    .filter((p) => !fanTerm
+      || p.name?.replace(/\s/g, '').includes(fanTerm)
+      || p.team_name?.replace(/\s/g, '').includes(fanTerm))
+    .sort((a, b) => (b.fan_count ?? 0) - (a.fan_count ?? 0))
+    .slice(0, 40);
+  const toggleFan = (p) =>
+    setFanPicks((prev) => prev.some((x) => x.id === p.id)
+      ? prev.filter((x) => x.id !== p.id)
+      : [...prev, p]);
 
   const post = async (path, body) => {
     const res  = await fetch(`/api/auth/${path}`, {
@@ -102,8 +123,21 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const signup = async () => {
     if (!nickname.trim()) { setError('닉네임을 입력해주세요.'); return; }
     setLoading(true); setError(null);
-    try { done(await post('kakao/signup', { ticket: token, nickname: nickname.trim() })); }
-    catch (e) { setError(e.message); setLoading(false); }
+    try {
+      const data = await post('kakao/signup', { ticket: token, nickname: nickname.trim() });
+      login(data.token);          // 팬 등록에 토큰이 필요하니 먼저 로그인시킨다
+      setLoading(false);
+      setStep('follow');          // 바로 닫지 않고 선수 3명 고르는 화면으로
+    } catch (e) { setError(e.message); setLoading(false); }
+  };
+
+  /* 고른 선수를 팬으로 등록한다. 하나쯤 실패해도 가입 자체는 이미 끝났으므로 막지 않는다. */
+  const submitFans = async () => {
+    setLoading(true); setError(null);
+    for (const p of fanPicks) {
+      try { await api.follow(p.id); } catch { /* 개별 실패는 넘어간다 */ }
+    }
+    onClose();
   };
 
   const linkPlayer = async () => {
@@ -128,7 +162,8 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
       const res  = await api.claimPlayer({ player_id: mePick.id, note: note.trim() });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? '선수 신청에 실패했습니다.');
-      onClose();
+      setLoading(false);
+      setStep('follow');          // 선수도 마찬가지로 좋아하는 선수를 고르게 한다
     } catch (e) {
       // 가입은 됐는데 신청만 실패한 경우를 구분해준다 (다시 가입할 필요는 없다)
       setError(joined
@@ -172,6 +207,7 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
             {step === 'link'      && '쓰던 계정 가져오기'}
             {step === 'player'    && '선수 계정 연결'}
             {step === 'newPlayer' && '선수 등록 신청'}
+            {step === 'follow'    && '좋아하는 선수 고르기'}
             {(step === 'start' || step === 'choice') && '마이너스타 시작하기'}
           </h2>
           <p className="text-ink-400 text-sm mt-1">
@@ -180,6 +216,7 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
             {step === 'link'      && '전에 쓰시던 닉네임과 번호를 넣어주세요'}
             {step === 'player'    && '선수용 아이디와 비밀번호를 넣어주세요'}
             {step === 'newPlayer' && '소속팀과 본인 이름만 골라주세요'}
+            {step === 'follow'    && `${FOLLOW_TARGET}명만 고르면 준비 끝이에요`}
           </p>
         </div>
 
@@ -231,6 +268,70 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
               className="w-full mt-2.5 text-ink-600 text-sm py-2 underline"
             >
               선수 계정이 있어요
+            </button>
+          </>
+        )}
+
+        {step === 'follow' && (
+          <>
+            <div className="flex items-center gap-2 border border-ink-200 px-3 py-2.5 rounded-xl mb-2">
+              <Search size={15} className="text-ink-400 flex-none" />
+              <input
+                value={fanQuery}
+                onChange={(e) => setFanQuery(e.target.value)}
+                placeholder="선수 이름 또는 소속팀"
+                className="flex-1 text-sm text-ink outline-none bg-transparent placeholder:text-ink-400/60"
+              />
+            </div>
+
+            <div className="border border-ink-200 rounded-xl max-h-56 overflow-y-auto mb-3">
+              {!roster && <p className="text-ink-400 text-[12px] px-4 py-3">명단 불러오는 중…</p>}
+              {fanCandidates.map((p) => {
+                const on = fanPicks.some((x) => x.id === p.id);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => toggleFan(p)}
+                    className={`w-full text-left px-4 py-2.5 border-b border-ink-200 last:border-0
+                                flex items-center gap-2 ${on ? 'bg-lime' : 'hover:bg-ink-200/20'}`}
+                  >
+                    {on && <Check size={14} className="flex-none" />}
+                    <span className="text-sm text-ink font-medium">{p.name}</span>
+                    <span className="text-[11px] text-ink-400 truncate">{p.team_name}</span>
+                    {p.fan_count > 0 && (
+                      <span className="ml-auto text-[11px] text-ink-400 tabular-nums flex-none">
+                        팬 {p.fan_count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              {roster && !fanCandidates.length && (
+                <p className="text-ink-400 text-[12px] px-4 py-3">찾는 선수가 없습니다.</p>
+              )}
+            </div>
+
+            <button
+              onClick={submitFans}
+              disabled={fanPicks.length < FOLLOW_TARGET || loading}
+              className="w-full bg-lime hover:bg-lime-dark text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable disabled:opacity-40"
+            >
+              {loading
+                ? '등록 중…'
+                : fanPicks.length < FOLLOW_TARGET
+                  ? `${FOLLOW_TARGET - fanPicks.length}명 더 골라주세요`
+                  : `${fanPicks.length}명 팬 등록하고 시작하기`}
+            </button>
+            <p className="text-ink-400 text-[11px] text-center mt-2.5 leading-[1.5]">
+              고른 선수의 소식과 경기 결과를 먼저 받아볼 수 있어요.<br />
+              나중에 마이페이지에서 언제든 바꿀 수 있습니다.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full mt-2 text-ink-400 text-xs py-2"
+            >
+              나중에 할게요
             </button>
           </>
         )}

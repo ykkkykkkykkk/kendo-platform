@@ -93,6 +93,7 @@ export const api = {
   // 마이페이지
   me:           ()          => authGet('/me'),
   updateMe:     (body)      => authPost('/me', body),
+  follow:       (playerId)  => authPost('/follows', { playerId }),
   myFollows:    ()          => authGet('/me/follows'),
   myPicks:      ()          => authGet('/me/picks'),
   unfollow:     (playerId)  => authDelete(`/me/follows/${playerId}`),
