@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { api } from '../api.js';
 
 /**
  * 카카오 로그인.
@@ -13,6 +14,8 @@ import { useAuth } from '../context/AuthContext.jsx';
  *   start  카카오로 시작하기
  *   choice 처음 보는 카카오 계정 → 새로 시작할지, 쓰던 계정에 붙일지 고른다
  *   link   쓰던 닉네임 + 끝 4자리를 넣어 예전 계정을 넘겨받는다
+ *   player 관리자에게 아이디를 미리 받은 선수가 그 계정에 카카오를 붙인다
+ *   newPlayer 아이디를 받은 적 없는 선수 — 팀·이름만 고르면 가입과 동시에 승인 신청이 들어간다
  */
 export const KAKAO_REDIRECT_URI = `${window.location.origin}/oauth/kakao`;
 export const RETURN_KEY = 'kakao_return_to';
@@ -29,7 +32,27 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
+  /* 선수 가입(newPlayer)용 — 팀을 고르면 그 팀 선수만 보여준다.
+     카카오로 신원이 잡히므로 아이디·비밀번호는 받지 않는다. */
+  const [roster,   setRoster]   = useState(null);   // null = 아직 못 불러옴
+  const [teamPick, setTeamPick] = useState('');
+  const [mePick,   setMePick]   = useState(null);
+  const [note,     setNote]     = useState('');
+
   useEffect(() => { if (step === 'choice') setNickname(kakaoNick); }, [step, kakaoNick]);
+
+  useEffect(() => {
+    if (step !== 'newPlayer' || roster) return;
+    api.players()
+      .then((r) => setRoster(Array.isArray(r) ? r : (r?.players ?? [])))
+      .catch(() => setError('선수 명단을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'));
+  }, [step, roster]);
+
+  // 팀 목록은 명단에서 뽑는다 (팀이 없는 선수는 제외)
+  const teamNames = [...new Set((roster ?? []).map((p) => p.team_name).filter(Boolean))].sort();
+  const teamRoster = (roster ?? [])
+    .filter((p) => p.team_name === teamPick)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
   const post = async (path, body) => {
     const res  = await fetch(`/api/auth/${path}`, {
@@ -90,6 +113,31 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
     catch (e) { setError(e.message); setLoading(false); }
   };
 
+  /* 아이디 없는 선수의 가입.
+     계정을 먼저 만들고(=승인 전까지는 일반 회원) 곧바로 승인 신청을 넣는다.
+     관리자가 어드민에서 확인하고 승인하면 그때 선수 계정이 된다. */
+  const signupAsPlayer = async () => {
+    if (!mePick) { setError('소속팀과 본인 이름을 골라주세요.'); return; }
+    setLoading(true); setError(null);
+    let joined = false;
+    try {
+      const data = await post('kakao/signup', { ticket: token, nickname: mePick.name.slice(0, 10) });
+      login(data.token);                      // 다음 요청에 토큰이 실리도록 먼저 저장한다
+      joined = true;
+
+      const res  = await api.claimPlayer({ player_id: mePick.id, note: note.trim() });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? '선수 신청에 실패했습니다.');
+      onClose();
+    } catch (e) {
+      // 가입은 됐는데 신청만 실패한 경우를 구분해준다 (다시 가입할 필요는 없다)
+      setError(joined
+        ? `가입은 완료됐습니다.\n다만 선수 신청이 되지 않았습니다: ${e.message}\n마이페이지에서 다시 신청해주세요.`
+        : e.message);
+      setLoading(false);
+    }
+  };
+
   const linkOld = async () => {
     if (!/^\d{4}$/.test(phone)) { setError('휴대폰 끝 4자리를 숫자로 입력해주세요.'); return; }
     setLoading(true); setError(null);
@@ -121,15 +169,17 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
           </div>
           <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-1">MINOR—STAR®</p>
           <h2 className="text-ink font-bold text-lg tracking-tight">
-            {step === 'link'   && '쓰던 계정 가져오기'}
-            {step === 'player' && '선수 계정 연결'}
+            {step === 'link'      && '쓰던 계정 가져오기'}
+            {step === 'player'    && '선수 계정 연결'}
+            {step === 'newPlayer' && '선수 등록 신청'}
             {(step === 'start' || step === 'choice') && '마이너스타 시작하기'}
           </h2>
           <p className="text-ink-400 text-sm mt-1">
-            {step === 'start'  && '카카오로 3초면 시작해요'}
-            {step === 'choice' && '처음이신가요?'}
-            {step === 'link'   && '전에 쓰시던 닉네임과 번호를 넣어주세요'}
-            {step === 'player' && '선수용 아이디와 비밀번호를 넣어주세요'}
+            {step === 'start'     && '카카오로 3초면 시작해요'}
+            {step === 'choice'    && '처음이신가요?'}
+            {step === 'link'      && '전에 쓰시던 닉네임과 번호를 넣어주세요'}
+            {step === 'player'    && '선수용 아이디와 비밀번호를 넣어주세요'}
+            {step === 'newPlayer' && '소속팀과 본인 이름만 골라주세요'}
           </p>
         </div>
 
@@ -170,10 +220,94 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
               전에 쓰던 계정이 있어요
             </button>
             <button
+              onClick={() => { setError(null); setTeamPick(''); setMePick(null); setNote(''); setStep('newPlayer'); }}
+              className="w-full mt-2.5 border border-ink text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable"
+            >
+              저는 선수입니다
+            </button>
+            <button
               onClick={() => { setError(null); setPassword(''); setStep('player'); }}
-              className="w-full text-ink-600 text-sm py-2 underline"
+              className="w-full mt-2.5 text-ink-600 text-sm py-2 underline"
             >
               선수 계정이 있어요
+            </button>
+          </>
+        )}
+
+        {step === 'newPlayer' && (
+          <>
+            <label className="text-xs font-medium text-ink-600 mb-1 block">소속팀</label>
+            <select
+              value={teamPick}
+              onChange={(e) => { setTeamPick(e.target.value); setMePick(null); }}
+              disabled={!roster}
+              className="w-full border border-ink-200 px-4 py-3 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3 bg-transparent disabled:opacity-50"
+            >
+              <option value="">{roster ? '팀을 골라주세요' : '명단 불러오는 중…'}</option>
+              {teamNames.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+
+            {teamPick && (
+              <>
+                <label className="text-xs font-medium text-ink-600 mb-1 block">본인 이름</label>
+                <div className="border border-ink-200 rounded-xl max-h-44 overflow-y-auto mb-3">
+                  {teamRoster.map((p) => {
+                    const on = mePick?.id === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setMePick(on ? null : p)}
+                        className={`w-full text-left px-4 py-2.5 border-b border-ink-200 last:border-0
+                                    flex items-center gap-2 ${on ? 'bg-lime' : 'hover:bg-ink-200/20'}`}
+                      >
+                        {on && <Check size={14} className="flex-none" />}
+                        <span className="text-sm text-ink font-medium">{p.name}</span>
+                        {p.dan_grade ? <span className="text-[11px] text-ink-400">{p.dan_grade}단</span> : null}
+                      </button>
+                    );
+                  })}
+                  {!teamRoster.length && (
+                    <p className="text-ink-400 text-[12px] px-4 py-3">이 팀에 등록된 선수가 없습니다.</p>
+                  )}
+                </div>
+                {/* 명단은 기존 선수 DB라서 신규 선수는 아직 없을 수 있다 */}
+                <p className="text-ink-400 text-[11px] -mt-1 mb-3 leading-[1.5]">
+                  본인 이름이 없나요? 아직 명단에 없는 선수일 수 있습니다.
+                  일단 <span className="text-ink-600">새로 시작하기</span>로 가입하신 뒤 운영자에게 알려주세요.
+                </p>
+              </>
+            )}
+
+            <label className="text-xs font-medium text-ink-600 mb-1 block">
+              본인 확인에 도움이 될 내용 <span className="text-ink-400/60">(선택)</span>
+            </label>
+            <textarea
+              rows={2} maxLength={200} value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="예: 8월 대회 5단부 출전, 인스타 @아이디"
+              className="w-full border border-ink-200 px-3 py-2.5 rounded-xl text-sm text-ink
+                         outline-none focus:border-ink mb-3 placeholder:text-ink-400/60 resize-none"
+            />
+
+            <button
+              onClick={signupAsPlayer}
+              disabled={!mePick || loading}
+              className="w-full bg-lime hover:bg-lime-dark text-ink font-bold py-3.5 rounded-full
+                         text-sm pressable disabled:opacity-40"
+            >
+              {loading ? '신청 중…' : '가입하고 선수 신청'}
+            </button>
+            <p className="text-ink-400 text-[11px] text-center mt-2.5 leading-[1.5]">
+              카카오로 확인되니 아이디·비밀번호는 없어도 됩니다.<br />
+              운영자가 본인 확인 후 선수 계정으로 바꿔드립니다.
+            </p>
+            <button
+              onClick={() => { setError(null); setStep('choice'); }}
+              className="w-full mt-2 text-ink-400 text-xs py-2"
+            >
+              뒤로
             </button>
           </>
         )}

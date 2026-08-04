@@ -600,6 +600,55 @@ router.delete('/tournaments/:id', async (req, res) => {
 });
 
 /* ════════════════════════════════════════
+   대회 픽 마감
+   픽 가능 여부는 tournaments.pick_deadline 하나로 결정된다
+   (서버 차단: picks.js의 픽 저장 시 마감 시각 비교).
+   그동안 이 값을 만질 화면이 없어 마이그레이션 SQL로만 넣었다.
+════════════════════════════════════════ */
+
+// POST /api/admin/tournaments/:id/close-picks — 지금 즉시 마감
+// 시각은 UTC ISO(Z 포함)로 넣는다. 서버·브라우저 타임존이 달라도 같은 순간으로 읽힌다.
+router.post('/tournaments/:id/close-picks', async (req, res) => {
+  try {
+    const { rows: [t] } = await db.execute({
+      sql: 'SELECT id, name FROM tournaments WHERE id = ?', args: [req.params.id],
+    });
+    if (!t) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
+
+    await db.execute({
+      sql: 'UPDATE tournaments SET pick_deadline = ? WHERE id = ?',
+      args: [new Date().toISOString(), req.params.id],
+    });
+
+    const { rows: [updated] } = await db.execute({
+      sql: 'SELECT * FROM tournaments WHERE id = ?', args: [req.params.id],
+    });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
+// POST /api/admin/tournaments/:id/reopen-picks — 마감 해제(실수로 눌렀을 때 되돌리기)
+// pick_deadline을 비우면 '마감 미정'이라 다시 픽할 수 있게 된다.
+// 원래 잡아뒀던 마감 시각은 복원되지 않으므로, 필요하면 다시 지정해야 한다.
+router.post('/tournaments/:id/reopen-picks', async (req, res) => {
+  try {
+    const { rows: [t] } = await db.execute({
+      sql: 'SELECT id FROM tournaments WHERE id = ?', args: [req.params.id],
+    });
+    if (!t) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
+
+    await db.execute({
+      sql: 'UPDATE tournaments SET pick_deadline = NULL WHERE id = ?', args: [req.params.id],
+    });
+
+    const { rows: [updated] } = await db.execute({
+      sql: 'SELECT * FROM tournaments WHERE id = ?', args: [req.params.id],
+    });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
+/* ════════════════════════════════════════
    매치 조회
 ════════════════════════════════════════ */
 

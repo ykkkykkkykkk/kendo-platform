@@ -1,7 +1,9 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck,
 } from 'lucide-react';
+import { adminGet } from './adminApi.js';
 
 const NAV = [
   { to: '/admin',              label: '대시보드',   icon: LayoutDashboard, end: true },
@@ -17,6 +19,16 @@ const NAV = [
 
 export default function AdminLayout({ children, onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /* 선수 신청은 본인이 기다리고 있는 건이라 쌓여 있으면 바로 보여야 한다.
+     화면을 옮길 때마다 다시 세어 승인 직후에도 숫자가 맞는다. */
+  const [pendingClaims, setPendingClaims] = useState(0);
+  useEffect(() => {
+    adminGet('/player-claims?status=pending')
+      .then((d) => setPendingClaims(d?.pending_count ?? 0))
+      .catch(() => {});
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('kendo_admin_token');
@@ -56,8 +68,21 @@ export default function AdminLayout({ children, onLogout }) {
                 }`
               }
             >
-              <Icon size={16} />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon size={16} />
+                  {label}
+                  {/* 선택된 메뉴는 배경이 라임이라 뱃지도 라임이면 묻힌다 */}
+                  {to === '/admin/player-claims' && pendingClaims > 0 && (
+                    <span className={`ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full
+                                      text-[11px] font-bold text-center tabular-nums ${
+                      isActive ? 'bg-ink text-lime' : 'bg-lime text-ink'
+                    }`}>
+                      {pendingClaims}
+                    </span>
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
