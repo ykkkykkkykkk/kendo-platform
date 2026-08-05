@@ -13,6 +13,32 @@ function seenAt(s) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/* 검색어가 걸린 부분을 라임으로 칠한다.
+   '검도인'처럼 도장 이름이면서 닉네임이기도 한 말이 있어, 표시가 없으면
+   이 행이 도장 때문에 나온 건지 닉네임 때문인지 구분이 안 된다. */
+function Hit({ text, term }) {
+  const s = text ?? '';
+  if (!term) return <>{s}</>;
+  const i = s.replace(/\s/g, '').indexOf(term);
+  if (i < 0) return <>{s}</>;
+  // 공백을 뺀 기준으로 찾았으므로 원문에서의 위치를 다시 잡는다
+  let seen = 0, start = -1, end = -1;
+  for (let k = 0; k < s.length; k++) {
+    if (/\s/.test(s[k])) continue;
+    if (seen === i) start = k;
+    if (seen === i + term.length - 1) { end = k + 1; break; }
+    seen++;
+  }
+  if (start < 0 || end < 0) return <>{s}</>;
+  return (
+    <>
+      {s.slice(0, start)}
+      <mark className="bg-lime text-ink px-0.5">{s.slice(start, end)}</mark>
+      {s.slice(end)}
+    </>
+  );
+}
+
 /** 가입 회원 관리. 선수 계정(role=player)은 '선수 계정' 메뉴에서 따로 다룬다. */
 export default function UserList() {
   const [users, setUsers]     = useState([]);
@@ -41,6 +67,15 @@ export default function UserList() {
       .map(([name, n]) => ({ name, n }))
       .sort((a, b) => b.n - a.n);
   }, [users, q]);
+
+  // 화면에 칠할 검색어 (지금 목록을 만든 검색어)
+  const term = q.trim().replace(/\s/g, '');
+
+  // 닉네임 때문에 걸린 건수. '검도인'처럼 도장이면서 닉네임인 말이 있어 따로 센다.
+  const nickHits = useMemo(
+    () => (term ? users.filter((u) => (u.nickname ?? '').replace(/\s/g, '').includes(term)).length : 0),
+    [users, term],
+  );
 
   const load = useCallback(async (query = '', withSeed = false, kakaoFilter = '') => {
     setLoading(true);
@@ -151,7 +186,7 @@ export default function UserList() {
 
       {/* 도장으로 검색했으면 그 도장 소속이 몇 명인지 바로 보여준다.
           이름이 겹쳐 여러 도장이 걸릴 수 있으므로 도장별로 나눠 센다. */}
-      {dojoCounts.length > 0 && (
+      {(dojoCounts.length > 0 || nickHits > 0) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {dojoCounts.map(({ name, n }) => (
             <span key={name} className="inline-flex items-baseline gap-1.5 border border-ink px-3 py-1.5 text-sm">
@@ -160,6 +195,12 @@ export default function UserList() {
               <span className="font-bold text-ink tabular-nums">{n}명</span>
             </span>
           ))}
+          {nickHits > 0 && (
+            <span className="inline-flex items-baseline gap-1.5 border border-ink-200 px-3 py-1.5 text-sm">
+              <span className="text-ink-400 text-xs">닉네임에 포함</span>
+              <span className="font-bold text-ink tabular-nums">{nickHits}명</span>
+            </span>
+          )}
           {!showSeed && seedCount > 0 && (
             <span className="text-[11px] text-ink-400 self-center">가라팬 제외</span>
           )}
@@ -191,7 +232,7 @@ export default function UserList() {
                 <tr key={u.id} className="border-b border-ink-200 last:border-0 hover:bg-ink-200/20">
                   <td className="px-4 py-3">
                     <button onClick={() => openDetail(u.id)} className="font-semibold text-ink hover:underline">
-                      {u.nickname}
+                      <Hit text={u.nickname} term={term} />
                     </button>
                     {u.role !== 'fan' && (
                       <span className="ml-1.5 text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold">
@@ -221,7 +262,7 @@ export default function UserList() {
                         title={`${u.dojo_name ?? u.home_dojo} 관원 보기`}
                         className="underline decoration-ink-200 underline-offset-2 hover:text-ink hover:decoration-ink"
                       >
-                        {u.dojo_name ?? u.home_dojo}
+                        <Hit text={u.dojo_name ?? u.home_dojo} term={term} />
                       </button>
                     ) : '—'}
                   </td>
