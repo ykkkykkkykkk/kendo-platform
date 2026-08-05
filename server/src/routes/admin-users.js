@@ -30,8 +30,23 @@ router.get('/users', async (req, res) => {
     if (!includeSeed) where.push(`NOT ${IS_SEED}`);
     if (kakao === 'linked')   where.push('u.kakao_id IS NOT NULL');
     if (kakao === 'unlinked') where.push('u.kakao_id IS NULL');
-    // 도장 이름은 dojos 테이블에 있다. home_dojo(자유입력 옛 값)만 보면 도장으로 못 찾는다.
-    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ? OR u.username LIKE ? OR d.name LIKE ?)');
+    /* 검색 범위. '검도인'처럼 도장 이름이면서 닉네임이기도 한 말이 있어
+       어느 쪽으로 찾을지 고를 수 있어야 한다.
+       도장 이름은 dojos 테이블에 있다 — home_dojo(자유입력 옛 값)만 보면 못 찾는다. */
+    const field = req.query.field === 'dojo' || req.query.field === 'nickname' ? req.query.field : 'all';
+    const likeArgs = [];
+    if (q) {
+      if (field === 'dojo') {
+        where.push('(u.home_dojo LIKE ? OR d.name LIKE ?)');
+        likeArgs.push(like, like);
+      } else if (field === 'nickname') {
+        where.push('u.nickname LIKE ?');
+        likeArgs.push(like);
+      } else {
+        where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ? OR u.username LIKE ? OR d.name LIKE ?)');
+        likeArgs.push(like, like, like, like, like);
+      }
+    }
 
     const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.username, u.role, u.dan_grade, u.home_dojo,
@@ -55,7 +70,7 @@ router.get('/users', async (req, res) => {
             LEFT JOIN players p ON p.id = u.player_id
             ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
             ORDER BY u.created_at DESC`,
-      args: q ? [like, like, like, like, like] : [],
+      args: likeArgs,
     });
 
     const { rows: [{ n: seedCount }] } = await db.execute(

@@ -48,6 +48,7 @@ export default function UserList() {
   const [kstat,    setKstat]  = useState(null);   // 카카오 전환 진행 상황
   const [loading, setLoading] = useState(true);
   const [q, setQ]             = useState('');
+  const [field, setField]     = useState('all');   // 'all' | 'dojo' | 'nickname'
   const [detail, setDetail]   = useState(null);
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
@@ -77,12 +78,13 @@ export default function UserList() {
     [users, term],
   );
 
-  const load = useCallback(async (query = '', withSeed = false, kakaoFilter = '') => {
+  const load = useCallback(async (query = '', withSeed = false, kakaoFilter = '', scope = 'all') => {
     setLoading(true);
     const params = new URLSearchParams();
     if (query)   params.set('q', query);
     if (withSeed) params.set('include_seed', '1');
     if (kakaoFilter) params.set('kakao', kakaoFilter);
+    if (scope !== 'all') params.set('field', scope);
     const r = await adminGet(`/users${params.toString() ? `?${params}` : ''}`);
     setUsers(Array.isArray(r?.users) ? r.users : []);
     setSeed(r?.seed_count ?? 0);
@@ -90,7 +92,7 @@ export default function UserList() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(q, showSeed, kakao); /* eslint-disable-next-line */ }, [showSeed, kakao]);
+  useEffect(() => { load(q, showSeed, kakao, field); /* eslint-disable-next-line */ }, [showSeed, kakao, field]);
 
   async function openDetail(id) {
     setDetail({ loading: true });
@@ -107,7 +109,7 @@ export default function UserList() {
       const res = await adminDelete(`/users/${u.id}`);
       if (!res.ok) throw new Error((await res.json()).error ?? '삭제 실패');
       setDetail(null);
-      await load(q, showSeed, kakao);
+      await load(q, showSeed, kakao, field);
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
 
@@ -164,19 +166,35 @@ export default function UserList() {
       )}
 
       <form
-        onSubmit={(e) => { e.preventDefault(); load(q, showSeed, kakao); }}
-        className="flex items-center gap-2 mb-4 max-w-md"
+        onSubmit={(e) => { e.preventDefault(); load(q, showSeed, kakao, field); }}
+        className="flex items-center gap-2 mb-4 max-w-xl"
       >
+        {/* 검색 범위 — '검도인'처럼 도장이면서 닉네임인 말이 있어 골라서 찾는다 */}
+        <div className="flex flex-none">
+          {[['all', '전체'], ['dojo', '도장'], ['nickname', '닉네임']].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setField(v)}
+              className={`px-2.5 py-2 text-[12px] border transition-colors ${
+                field === v ? 'border-ink bg-ink text-white' : 'border-ink-200 hover:border-ink text-ink-600'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex-1 flex items-center gap-2 border border-ink-200 px-3 py-2">
           <Search size={14} className="text-ink-400" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="닉네임 · 도장 · 아이디"
+            placeholder={field === 'dojo' ? '도장 이름' : field === 'nickname' ? '닉네임' : '닉네임 · 도장 · 아이디'}
             className="flex-1 text-sm outline-none bg-transparent"
           />
           {q && (
-            <button type="button" onClick={() => { setQ(''); load('', showSeed, kakao); }} className="text-ink-400">
+            <button type="button" onClick={() => { setQ(''); load('', showSeed, kakao, field); }} className="text-ink-400">
               <X size={14} />
             </button>
           )}
@@ -257,7 +275,8 @@ export default function UserList() {
                         onClick={() => {
                           const name = u.dojo_name ?? u.home_dojo;
                           setQ(name);
-                          load(name, showSeed, kakao);
+                          setField('dojo');
+                          load(name, showSeed, kakao, 'dojo');
                         }}
                         title={`${u.dojo_name ?? u.home_dojo} 관원 보기`}
                         className="underline decoration-ink-200 underline-offset-2 hover:text-ink hover:decoration-ink"
