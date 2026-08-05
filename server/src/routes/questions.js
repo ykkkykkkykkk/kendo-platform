@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { serverError } from '../utils/apiError.js';
+import { notify, userIdOfPlayer } from '../utils/notify.js';
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.post('/players/:slug/questions', requireAuth, async (req, res) => {
     if (question.trim().length > 200) return res.status(400).json({ error: '200자 이내로 입력해주세요.' });
 
     const { rows: [player] } = await db.execute({
-      sql: 'SELECT id FROM players WHERE slug = ?', args: [req.params.slug],
+      sql: 'SELECT id, name, slug FROM players WHERE slug = ?', args: [req.params.slug],
     });
     if (!player) return res.status(404).json({ error: '선수를 찾을 수 없습니다.' });
 
@@ -80,6 +81,13 @@ router.post('/players/:slug/questions', requireAuth, async (req, res) => {
       args: [req.user.userId],
     });
 
+    // 선수 본인에게 알린다. 그동안 알림이 없어 질문이 와도 모르고 있었다.
+    await notify([await userIdOfPlayer(player.id)], {
+      type: 'question_new',
+      message: `팬이 질문을 남겼어요 — "${question.trim().slice(0, 30)}${question.trim().length > 30 ? '…' : ''}"`,
+      link: `/players/${player.slug}`,
+    });
+
     const { rows: [q] } = await db.execute({
       sql: `${SELECT_Q} WHERE q.id = ?`, args: [Number(lastInsertRowid)],
     });
@@ -95,7 +103,7 @@ router.post('/questions/:id/answer', requireAuth, async (req, res) => {
     if (answer.trim().length > 300) return res.status(400).json({ error: '300자 이내로 입력해주세요.' });
 
     const { rows: [q] } = await db.execute({
-      sql: 'SELECT player_id FROM player_questions WHERE id = ?', args: [req.params.id],
+      sql: 'SELECT player_id, user_id FROM player_questions WHERE id = ?', args: [req.params.id],
     });
     if (!q) return res.status(404).json({ error: '질문을 찾을 수 없습니다.' });
     if (!(req.user.role === 'player' && req.user.playerId === q.player_id))
@@ -104,6 +112,16 @@ router.post('/questions/:id/answer', requireAuth, async (req, res) => {
     await db.execute({
       sql: "UPDATE player_questions SET answer = ?, answered_at = datetime('now') WHERE id = ?",
       args: [answer.trim(), req.params.id],
+    });
+
+    // 질문한 팬에게 알린다
+    const { rows: [p] } = await db.execute({
+      sql: 'SELECT name, slug FROM players WHERE id = ?', args: [q.player_id],
+    });
+    await notify([q.user_id], {
+      type: 'question_answered',
+      message: `${p?.name ?? '선수'} 선수가 회원님 질문에 답했어요`,
+      link: `/players/${p?.slug ?? ''}`,
     });
 
     const { rows: [updated] } = await db.execute({

@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { normalizeVideoUrl } from '../utils/videoUrl.js';
+import { notify, userIdOfPlayer } from '../utils/notify.js';
 import { serverError } from '../utils/apiError.js';
 
 const router = Router();
@@ -20,19 +21,6 @@ function playerOf(req, res) {
     return null;
   }
   return pid;
-}
-
-/** 알림 쌓기. 실패해도 본 동작을 막지 않는다. */
-async function notify(userIds, { type, message, link }) {
-  const ids = [...new Set(userIds.filter(Boolean))];
-  for (const uid of ids) {
-    try {
-      await db.execute({
-        sql: 'INSERT INTO notifications (user_id, type, message, link) VALUES (?, ?, ?, ?)',
-        args: [uid, type, message, link ?? null],
-      });
-    } catch { /* 알림 실패가 글쓰기를 막을 이유는 없다 */ }
-  }
 }
 
 const playerName = async (playerId) => {
@@ -237,7 +225,9 @@ router.post('/posts/:id/comment', requireAuth, async (req, res) => {
     const content = String(req.body?.content ?? '').trim().slice(0, 500);
     if (!content) return res.status(400).json({ error: '응원 내용을 입력해주세요.' });
 
-    const { rows: [post] } = await db.execute({ sql: 'SELECT id FROM posts WHERE id = ?', args: [postId] });
+    const { rows: [post] } = await db.execute({
+      sql: 'SELECT id, player_id FROM posts WHERE id = ?', args: [postId],
+    });
     if (!post) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
 
     await db.execute({
@@ -248,6 +238,20 @@ router.post('/posts/:id/comment', requireAuth, async (req, res) => {
       sql: 'UPDATE posts SET comment_count = (SELECT COUNT(*) FROM post_comments WHERE post_id = ?) WHERE id = ?',
       args: [postId, postId],
     });
+
+    // 글쓴 선수에게 알린다. 본인이 단 댓글이면 보내지 않는다.
+    const ownerId = await userIdOfPlayer(post.player_id);
+    if (ownerId && ownerId !== userId) {
+      const { rows: [me] } = await db.execute({
+        sql: 'SELECT nickname FROM users WHERE id = ?', args: [userId],
+      });
+      await notify([ownerId], {
+        type: 'post_comment',
+        message: `${me?.nickname ?? '팬'}님이 응원을 남겼어요 — "${content.slice(0, 30)}${content.length > 30 ? '…' : ''}"`,
+        link: '/feed',
+      });
+    }
+
     res.status(201).json({ ok: true });
   } catch (e) { serverError(res, e, 'comment-create'); }
 });
