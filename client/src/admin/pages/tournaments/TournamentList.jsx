@@ -15,6 +15,17 @@ const STATUS_BADGE = {
 const isPickClosed = (t) =>
   !!t.pick_deadline && Date.now() > new Date(t.pick_deadline).getTime();
 
+/* 개인전·단체전을 따로 여닫는다 (부문별 마감). */
+const GROUPS = {
+  individual: ['male_individual', 'female_individual'],
+  team:       ['male_team', 'female_team'],
+};
+const FOREVER = '9999-12-31T23:59:59.000Z';   // 무기한 열림
+
+const groupDivs = (t, group) =>
+  (t.divisions ?? []).filter((d) => GROUPS[group].includes(d.division_type));
+const allClosed = (divs) => divs.length > 0 && divs.every((d) => d.picks_closed);
+
 const fmtDeadline = (v) => {
   if (!v) return null;
   const d = new Date(v);
@@ -44,24 +55,36 @@ export default function TournamentList() {
     else alert('삭제 실패');
   };
 
-  // 픽 마감: 회원들이 지금부터 픽을 못 넣게 한다. 이미 낸 픽은 그대로 남는다.
-  const handleTogglePicks = async (t) => {
-    const closed = isPickClosed(t);
+  /* 개인전·단체전을 따로 마감한다.
+     개인전은 오늘 끝났는데 단체전은 며칠 뒤인 식이라 한 번에 닫으면 안 된다.
+     이미 제출된 픽은 어느 쪽이든 그대로 남는다. */
+  const handleGroupPicks = async (t, group) => {
+    const divs   = groupDivs(t, group);
+    const name   = group === 'team' ? '단체전' : '개인전';
+    const closed = allClosed(divs);
+    const action = closed ? 'reopen' : 'close';
+
     const msg = closed
-      ? `"${t.name}" 픽 마감을 해제합니다.\n회원들이 다시 픽을 넣거나 바꿀 수 있게 됩니다.\n\n※ 원래 잡아둔 마감 시각은 복원되지 않고 '마감 미정'이 됩니다.`
-      : `"${t.name}" 픽을 지금 즉시 마감합니다.\n회원들이 더 이상 픽을 넣거나 바꿀 수 없습니다.\n\n이미 제출된 픽은 그대로 유지됩니다.`;
+      ? `"${t.name}" ${name} 픽을 다시 엽니다.\n대상: ${divs.map((d) => d.label).join(', ')}\n\n다른 부문은 그대로입니다.`
+      : `"${t.name}" ${name} 픽을 지금 마감합니다.\n대상: ${divs.map((d) => d.label).join(', ')}\n\n다른 부문은 그대로이고, 이미 낸 픽은 유지됩니다.`;
     if (!window.confirm(msg)) return;
 
-    setBusyId(t.id);
+    setBusyId(`${t.id}:${group}`);
     try {
-      const res = await adminPost(`/tournaments/${t.id}/${closed ? 'reopen' : 'close'}-picks`);
+      const res = await adminPost(`/tournaments/${t.id}/divisions/pick-deadline`, { group, action });
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({}));
-        alert(error ?? (closed ? '마감 해제 실패' : '픽 마감 실패'));
+        alert(error ?? `${name} 픽 ${closed ? '재개' : '마감'} 실패`);
         return;
       }
-      const updated = await res.json();
-      setList((prev) => prev.map((x) => (x.id === t.id ? { ...x, ...updated } : x)));
+      // 서버가 건 값을 그대로 반영 (마감=지금, 재개=무기한)
+      const stamp = action === 'close' ? new Date().toISOString() : FOREVER;
+      setList((prev) => prev.map((x) => x.id !== t.id ? x : {
+        ...x,
+        divisions: (x.divisions ?? []).map((d) => GROUPS[group].includes(d.division_type)
+          ? { ...d, pick_deadline: stamp, picks_closed: action === 'close' }
+          : d),
+      }));
     } finally {
       setBusyId(null);
     }
@@ -139,16 +162,26 @@ export default function TournamentList() {
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {isPickClosed(t) ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium border border-ink-200 text-ink-400">
-                        마감
-                      </span>
-                    ) : t.pick_deadline ? (
-                      <span className="text-xs text-ink-600 tabular-nums" title={`마감 예정: ${fmtDeadline(t.pick_deadline)}`}>
-                        {fmtDeadline(t.pick_deadline)}
-                      </span>
+                    {(t.divisions ?? []).length === 0 ? (
+                      isPickClosed(t)
+                        ? <span className="text-xs text-ink-400">마감</span>
+                        : <span className="text-xs text-ink-400">{t.pick_deadline ? fmtDeadline(t.pick_deadline) : '부문 없음'}</span>
                     ) : (
-                      <span className="text-xs text-ink-400">마감 미정</span>
+                      <div className="flex flex-col gap-0.5">
+                        {['individual', 'team'].map((g) => {
+                          const divs = groupDivs(t, g);
+                          if (!divs.length) return null;
+                          const closed = allClosed(divs);
+                          return (
+                            <span key={g} className="text-[11px] whitespace-nowrap">
+                              <span className="text-ink-400">{g === 'team' ? '단체' : '개인'} </span>
+                              <span className={closed ? 'text-ink-400' : 'text-ink font-semibold'}>
+                                {closed ? '마감' : '픽 가능'}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{t.match_count}</td>
@@ -172,24 +205,30 @@ export default function TournamentList() {
                         <Users size={12} />
                         회원 픽
                       </button>
-                      <button
-                        onClick={() => handleTogglePicks(t)}
-                        disabled={busyId === t.id}
-                        title={
-                          isPickClosed(t)
-                            ? `마감됨: ${fmtDeadline(t.pick_deadline)} — 누르면 다시 픽 가능`
-                            : '지금 즉시 픽을 마감합니다'
-                        }
-                        className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full
-                                    transition-colors disabled:opacity-40 ${
-                          isPickClosed(t)
-                            ? 'text-ink-400 border border-ink-200 hover:border-ink hover:text-ink'
-                            : 'text-ink border border-ink-200 hover:border-ink'
-                        }`}
-                      >
-                        {isPickClosed(t) ? <Unlock size={12} /> : <Lock size={12} />}
-                        {busyId === t.id ? '처리 중' : isPickClosed(t) ? '픽 재개' : '픽 마감'}
-                      </button>
+                      {['individual', 'team'].map((g) => {
+                        const divs = groupDivs(t, g);
+                        if (!divs.length) return null;
+                        const name   = g === 'team' ? '단체전' : '개인전';
+                        const closed = allClosed(divs);
+                        const busy   = busyId === `${t.id}:${g}`;
+                        return (
+                          <button
+                            key={g}
+                            onClick={() => handleGroupPicks(t, g)}
+                            disabled={busy}
+                            title={`${divs.map((d) => d.label).join(', ')} — ${closed ? '누르면 다시 픽 가능' : '지금 즉시 마감'}`}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full
+                                        transition-colors disabled:opacity-40 ${
+                              closed
+                                ? 'text-ink-400 border border-ink-200 hover:border-ink hover:text-ink'
+                                : 'text-ink border border-ink-200 hover:border-ink'
+                            }`}
+                          >
+                            {closed ? <Unlock size={12} /> : <Lock size={12} />}
+                            {busy ? '처리 중' : closed ? `${name} 재개` : `${name} 마감`}
+                          </button>
+                        );
+                      })}
                       <button
                         onClick={() => navigate(`/admin/tournaments/${t.id}/picks`)}
                         className="flex items-center gap-1 text-xs text-ink border border-ink-200

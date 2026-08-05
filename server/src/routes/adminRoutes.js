@@ -537,6 +537,24 @@ router.get('/tournaments', async (_req, res) => {
       FROM tournaments t
       ORDER BY t.start_date DESC
     `);
+
+    // 개인전/단체전 마감 버튼을 그리려면 부문별 상태가 필요하다
+    for (const t of rows) {
+      const { rows: divs } = await db.execute({
+        sql: `SELECT division_type, label,
+                     COALESCE(pick_deadline, ?) AS pick_deadline
+              FROM tournament_divisions WHERE tournament_id = ?
+              ORDER BY sort_order, id`,
+        args: [t.pick_deadline ?? null, t.id],
+      });
+      t.divisions = divs.map((d) => ({
+        division_type: d.division_type,
+        label:         d.label,
+        pick_deadline: d.pick_deadline,
+        picks_closed:  !!d.pick_deadline && Date.now() > new Date(d.pick_deadline).getTime(),
+      }));
+    }
+
     res.json(rows);
   } catch (e) { serverError(res, e); }
 });
@@ -655,6 +673,42 @@ router.post('/tournaments/:id/reopen-picks', async (req, res) => {
 
 // 무기한 열림. 먼 미래 시각으로 두면 기존 시각 비교 로직을 그대로 쓸 수 있다.
 const FOREVER = '9999-12-31T23:59:59.000Z';
+
+/* 개인전/단체전 묶음 처리.
+   부문 하나씩 누르지 않고 '개인전 마감' '단체전 마감'으로 한 번에 건다. */
+const GROUP_TYPES = {
+  individual: ['male_individual', 'female_individual'],
+  team:       ['male_team', 'female_team'],
+};
+
+// POST /api/admin/tournaments/:id/divisions/pick-deadline
+// body: { group: 'individual'|'team', action: 'close'|'reopen' }
+router.post('/tournaments/:id/divisions/pick-deadline', async (req, res) => {
+  try {
+    const { group, action } = req.body ?? {};
+    const types = GROUP_TYPES[group];
+    if (!types) return res.status(400).json({ error: "group은 'individual' 또는 'team'이어야 합니다." });
+    if (!['close', 'reopen'].includes(action))
+      return res.status(400).json({ error: "action은 'close' 또는 'reopen'이어야 합니다." });
+
+    const { rows: divs } = await db.execute({
+      sql: `SELECT id, label FROM tournament_divisions
+            WHERE tournament_id = ? AND division_type IN (${types.map(() => '?').join(',')})`,
+      args: [req.params.id, ...types],
+    });
+    if (!divs.length)
+      return res.status(404).json({ error: `${group === 'team' ? '단체전' : '개인전'} 부문이 없습니다.` });
+
+    const value = action === 'close' ? new Date().toISOString() : FOREVER;
+    for (const d of divs) {
+      await db.execute({
+        sql: 'UPDATE tournament_divisions SET pick_deadline = ? WHERE id = ?',
+        args: [value, d.id],
+      });
+    }
+    res.json({ group, action, changed: divs.length, labels: divs.map((d) => d.label) });
+  } catch (e) { serverError(res, e); }
+});
 
 // POST /api/admin/divisions/:id/close-picks — 이 부문만 즉시 마감
 router.post('/divisions/:id/close-picks', async (req, res) => {
