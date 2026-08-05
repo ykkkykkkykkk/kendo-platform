@@ -62,25 +62,31 @@ router.get('/:slug/draw', async (req, res) => {
                    bm.match_number, bm.round_depth, bm.is_group_final, bm.is_final,
                    bm.status, bm.score_a, bm.score_b,
                    bm.a_participant_id, bm.b_participant_id, bm.winner_participant_id,
-                   pa.name AS a_name, pa.slug AS a_slug, dpa.seed_number AS a_seed, ta.name AS a_team,
-                   pb.name AS b_name, pb.slug AS b_slug, dpb.seed_number AS b_seed, tb.name AS b_team,
+                   -- 단체전은 선수가 아니라 팀이 참가자다(dp.team_id). 그때는 팀 이름을 쓴다.
+                   COALESCE(pa.name, dta.name) AS a_name, pa.slug AS a_slug,
+                   dpa.seed_number AS a_seed, ta.name AS a_team,
+                   COALESCE(pb.name, dtb.name) AS b_name, pb.slug AS b_slug,
+                   dpb.seed_number AS b_seed, tb.name AS b_team,
                    ma.match_number AS a_from_number, ma.group_label AS a_from_group,
                    ma.is_group_final AS a_from_is_group_final,
                    mb.match_number AS b_from_number, mb.group_label AS b_from_group,
                    mb.is_group_final AS b_from_is_group_final,
-                   pw.name AS winner_name, pw.slug AS winner_slug
+                   COALESCE(pw.name, dtw.name) AS winner_name, pw.slug AS winner_slug
             FROM bracket_matches bm
             JOIN tournament_divisions td ON td.id = bm.division_id
             LEFT JOIN division_participants dpa ON dpa.id = bm.a_participant_id
             LEFT JOIN players pa ON pa.id = dpa.player_id
             LEFT JOIN teams   ta ON ta.id = pa.team_id
+            LEFT JOIN teams   dta ON dta.id = dpa.team_id
             LEFT JOIN division_participants dpb ON dpb.id = bm.b_participant_id
             LEFT JOIN players pb ON pb.id = dpb.player_id
             LEFT JOIN teams   tb ON tb.id = pb.team_id
+            LEFT JOIN teams   dtb ON dtb.id = dpb.team_id
             LEFT JOIN bracket_matches ma ON ma.id = bm.a_from_match_id
             LEFT JOIN bracket_matches mb ON mb.id = bm.b_from_match_id
             LEFT JOIN division_participants dpw ON dpw.id = bm.winner_participant_id
             LEFT JOIN players pw ON pw.id = dpw.player_id
+            LEFT JOIN teams   dtw ON dtw.id = dpw.team_id
             WHERE td.tournament_id = ?
             ORDER BY td.sort_order, bm.group_label, bm.match_number`,
       args: [tournament.id],
