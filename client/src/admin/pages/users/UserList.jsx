@@ -176,7 +176,22 @@ export default function UserList() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-ink-600">{u.dojo_name ?? u.home_dojo ?? '—'}</td>
+                  {/* 도장을 누르면 그 도장 관원만 걸러 본다 */}
+                  <td className="px-4 py-3 text-ink-600">
+                    {u.dojo_name ?? u.home_dojo ? (
+                      <button
+                        onClick={() => {
+                          const name = u.dojo_name ?? u.home_dojo;
+                          setQ(name);
+                          load(name, showSeed, kakao);
+                        }}
+                        title={`${u.dojo_name ?? u.home_dojo} 관원 보기`}
+                        className="underline decoration-ink-200 underline-offset-2 hover:text-ink hover:decoration-ink"
+                      >
+                        {u.dojo_name ?? u.home_dojo}
+                      </button>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{u.dan_grade ? `${u.dan_grade}단` : '—'}</td>
                   <td className="px-4 py-3 text-ink-600">{u.favorite_team ?? '—'}</td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{u.follow_count}</td>

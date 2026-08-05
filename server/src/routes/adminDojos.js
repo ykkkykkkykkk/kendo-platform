@@ -245,6 +245,35 @@ router.post('/users/:id/change-dojo', async (req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+// ── B-3. 요청 반려 (도장은 그대로 두고 요청만 지움) ──────────────
+router.post('/users/:id/dojo-request/dismiss', async (req, res) => {
+  try {
+    await db.execute({
+      sql: 'UPDATE users SET dojo_change_requested_at = NULL WHERE id = ?', args: [req.params.id],
+    });
+    res.json({ success: true });
+  } catch (e) { serverError(res, e); }
+});
+
+// ── B-3. 무소속 처리 ─────────────────────────────────────────────
+// '도장 없음'으로 바꿔달라는 요청이 실제로 들어온다(해외 거주, 잘못 등록 등).
+// change-dojo는 이름을 받아 도장을 만들기 때문에 이 경우를 처리할 수 없다.
+router.post('/users/:id/dojo-request/none', async (req, res) => {
+  try {
+    const { rows: [me] } = await db.execute({
+      sql: 'SELECT dojo_id FROM users WHERE id = ?', args: [req.params.id],
+    });
+    if (!me) return res.status(404).json({ error: '회원을 찾을 수 없습니다.' });
+
+    await db.execute({
+      sql: 'UPDATE users SET dojo_id = NULL, dojo_change_requested_at = NULL WHERE id = ?',
+      args: [req.params.id],
+    });
+    if (me.dojo_id) await recalcDojoScore(me.dojo_id);
+    res.json({ success: true });
+  } catch (e) { serverError(res, e); }
+});
+
 // ── B-4. 초청권 목록 ─────────────────────────────────────────────
 router.get('/invitations', async (req, res) => {
   try {

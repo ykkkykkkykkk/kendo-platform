@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck,
+  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home,
 } from 'lucide-react';
 import { adminGet } from './adminApi.js';
 
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/admin/players',      label: '선수 관리',  icon: Users },
   { to: '/admin/users',        label: '회원 관리',  icon: UserCircle },
   { to: '/admin/player-claims',label: '선수 신청',  icon: BadgeCheck },
+  { to: '/admin/dojo-requests',label: '도장 요청',  icon: Home },
   { to: '/admin/teams',        label: '팀 관리',    icon: Shield },
   { to: '/admin/tournaments',  label: '대회 관리',  icon: Trophy },
   { to: '/admin/clinics',      label: '클리닉',     icon: Dumbbell },
@@ -24,11 +25,20 @@ export default function AdminLayout({ children, onLogout }) {
   /* 선수 신청은 본인이 기다리고 있는 건이라 쌓여 있으면 바로 보여야 한다.
      화면을 옮길 때마다 다시 세어 승인 직후에도 숫자가 맞는다. */
   const [pendingClaims, setPendingClaims] = useState(0);
+  const [pendingDojos,  setPendingDojos]  = useState(0);
   useEffect(() => {
     adminGet('/player-claims?status=pending')
       .then((d) => setPendingClaims(d?.pending_count ?? 0))
       .catch(() => {});
+    adminGet('/dojo-change-requests')
+      .then((d) => setPendingDojos(Array.isArray(d) ? d.length : 0))
+      .catch(() => {});
   }, [location.pathname]);
+
+  const badgeOf = (to) =>
+    to === '/admin/player-claims' ? pendingClaims
+    : to === '/admin/dojo-requests' ? pendingDojos
+    : 0;
 
   const handleLogout = () => {
     localStorage.removeItem('kendo_admin_token');
@@ -73,12 +83,12 @@ export default function AdminLayout({ children, onLogout }) {
                   <Icon size={16} />
                   {label}
                   {/* 선택된 메뉴는 배경이 라임이라 뱃지도 라임이면 묻힌다 */}
-                  {to === '/admin/player-claims' && pendingClaims > 0 && (
+                  {badgeOf(to) > 0 && (
                     <span className={`ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full
                                       text-[11px] font-bold text-center tabular-nums ${
                       isActive ? 'bg-ink text-lime' : 'bg-lime text-ink'
                     }`}>
-                      {pendingClaims}
+                      {badgeOf(to)}
                     </span>
                   )}
                 </>

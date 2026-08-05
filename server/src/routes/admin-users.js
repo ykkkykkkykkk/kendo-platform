@@ -30,7 +30,8 @@ router.get('/users', async (req, res) => {
     if (!includeSeed) where.push(`NOT ${IS_SEED}`);
     if (kakao === 'linked')   where.push('u.kakao_id IS NOT NULL');
     if (kakao === 'unlinked') where.push('u.kakao_id IS NULL');
-    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ? OR u.username LIKE ?)');
+    // 도장 이름은 dojos 테이블에 있다. home_dojo(자유입력 옛 값)만 보면 도장으로 못 찾는다.
+    if (q) where.push('(u.nickname LIKE ? OR u.phone LIKE ? OR u.home_dojo LIKE ? OR u.username LIKE ? OR d.name LIKE ?)');
 
     const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.username, u.role, u.dan_grade, u.home_dojo,
@@ -54,7 +55,7 @@ router.get('/users', async (req, res) => {
             LEFT JOIN players p ON p.id = u.player_id
             ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
             ORDER BY u.created_at DESC`,
-      args: q ? [like, like, like, like] : [],
+      args: q ? [like, like, like, like, like] : [],
     });
 
     const { rows: [{ n: seedCount }] } = await db.execute(
