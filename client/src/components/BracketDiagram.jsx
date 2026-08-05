@@ -27,24 +27,27 @@ function layoutGroup(matches) {
   const nodes  = [];
   let row = 0;
 
-  /** 위에서 아래로 훑으며 잎(참가자)에 행 번호를 매긴다. */
-  function walk(m) {
+  /* 위에서 아래로 훑으며 잎(참가자)에 행 번호를 매긴다.
+     부전승이면 라운드를 건너뛰므로(1회전 승자가 3회전으로 가는 식)
+     선을 그리려면 '상대 칸'이 아니라 '부모 경기가 있는 칸'까지 이어야 한다.
+     그래서 잎에는 소속 경기의 라운드를, 경기에는 부모의 라운드를 함께 남긴다. */
+  function walk(m, parentDepth) {
     const ys = [];
     for (const key of ['a', 'b']) {
       const side = m[key];
       if (side?.kind === 'from' && byNumber.has(side.number)) {
-        ys.push(walk(byNumber.get(side.number)));
+        ys.push(walk(byNumber.get(side.number), m.round_depth));
       } else {
         const y = row++ * ROW_H + ROW_H / 2;
-        leaves.push({ y, side, matchNumber: m.number });
+        leaves.push({ y, side, depth: m.round_depth });
         ys.push(y);
       }
     }
     const y = (ys[0] + ys[1]) / 2;
-    nodes.push({ m, y, yA: ys[0], yB: ys[1], depth: m.round_depth });
+    nodes.push({ m, y, yA: ys[0], yB: ys[1], depth: m.round_depth, parentDepth });
     return y;
   }
-  walk(root);
+  walk(root, null);
 
   const maxDepth = Math.max(...nodes.map((n) => n.depth), 1);
   return { rows: row, nodes, leaves, maxDepth, rootY: nodes[nodes.length - 1]?.y ?? 0 };
@@ -84,9 +87,10 @@ export default function BracketDiagram({ division, fontScale = 1 }) {
 
     return (
       <g>
-        {/* 참가자 이름 + 이름칸에서 1라운드까지 가로선 */}
+        {/* 참가자 이름 + 이름칸에서 '그 선수가 처음 뛰는 경기'까지 가로선.
+            부전승은 2회전부터 나오므로 1회전 칸까지만 그리면 선이 끊긴다. */}
         {data.leaves.map((lf, i) => {
-          const xEnd = xCol(1);
+          const xEnd = xCol(lf.depth);
           const xStart = isLeft ? xName + NAME_W : xName;
           return (
             <g key={`n${i}`}>
@@ -104,10 +108,11 @@ export default function BracketDiagram({ division, fontScale = 1 }) {
           );
         })}
 
-        {/* 경기: 두 갈래를 세로로 잇고, 다음 라운드로 가로선을 뺀다 */}
+        {/* 경기: 두 갈래를 세로로 잇고, 부모 경기가 있는 칸까지 가로선을 뺀다.
+            조 결승(부모 없음)은 가운데 결승 쪽으로 뺀다. */}
         {data.nodes.map((n) => {
           const x  = xCol(n.depth);
-          const x2 = x + dir * COL_W;
+          const x2 = n.parentDepth ? xCol(n.parentDepth) : x + dir * COL_W;
           return (
             <g key={`m${n.m.number}`}>
               <line x1={x} y1={n.yA} x2={x} y2={n.yB} stroke="#111" strokeWidth="1" />
