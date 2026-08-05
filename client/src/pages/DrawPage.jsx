@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { GroupView, MatchRow } from '../components/DrawList.jsx';
+import BracketDiagram from '../components/BracketDiagram.jsx';
+import BracketZoomModal from '../components/BracketZoomModal.jsx';
 
 /* 대회 슬러그 — 지금은 대회가 하나뿐이라 고정. 여러 개가 되면 목록에서 고르게 바꾼다. */
 const SLUG = '2026';
@@ -14,6 +16,7 @@ export default function DrawPage() {
   const { data, loading, error } = useFetch(() => api.draw(SLUG), [SLUG]);
   const [divIdx, setDivIdx] = useState(0);
   const [segment, setSegment] = useState(0);   // 0,1 = 조 / 2 = 결승
+  const [zoom, setZoom] = useState(false);     // 대진도 확대 보기
 
   const divisions = data?.divisions ?? [];
   const division  = divisions[divIdx] ?? null;
@@ -80,6 +83,23 @@ export default function DrawPage() {
             {division.groups.reduce((n, g) => n + g.matches.length, 0) + (division.final ? 1 : 0)}경기
           </p>
 
+          {/* 종이 대진표와 같은 모양. 폰에서는 글씨가 작아지므로 눌러서 키워 본다.
+              대진이 아직 안 들어온 부문(단체전)은 빈 상자가 뜨지 않게 건너뛴다. */}
+          {division.groups.some((g) => g.matches.length > 0) && (
+            <div className="px-5 mt-4">
+              <button
+                onClick={() => setZoom(true)}
+                className="w-full border border-ink-200 rounded-xl p-2 pressable bg-white"
+                aria-label="대진표 크게 보기"
+              >
+                <BracketDiagram division={division} />
+              </button>
+              <p className="text-center text-[11px] text-ink-400 mt-1.5">
+                대진표를 누르면 크게 볼 수 있어요
+              </p>
+            </div>
+          )}
+
           {/* 조 / 결승 세그먼트 */}
           <div className="px-5 mt-4">
             <div className="flex border border-ink-200 rounded-full overflow-hidden">
@@ -113,6 +133,10 @@ export default function DrawPage() {
             </div>
           )}
         </>
+      )}
+
+      {zoom && division && (
+        <BracketZoomModal division={division} onClose={() => setZoom(false)} />
       )}
     </main>
   );
