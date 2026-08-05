@@ -374,11 +374,16 @@ function SlotSelectionSheet({ participant, picks, isTeam, onSelect, onDismiss })
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onDismiss} />
+      {/* 하단 탭바가 z-50이라 시트도 z-50이면 '취소' 버튼이 탭바에 가려 잘린다.
+          다른 모달과 같은 층(80~90)으로 올리고, 탭바 높이(60)와 홈 인디케이터만큼 아래를 띄운다. */}
+      <div className="fixed inset-0 bg-black/40 z-[80]" onClick={onDismiss} />
 
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile
-                      bg-paper rounded-t-2xl z-50 pb-10 pt-5 px-5"
-           style={{ borderTop: '1.5px solid #111111' }}>
+                      bg-paper rounded-t-2xl z-[85] pt-5 px-5 max-h-[85vh] overflow-y-auto"
+           style={{
+             borderTop: '1.5px solid #111111',
+             paddingBottom: 'calc(60px + env(safe-area-inset-bottom) + 16px)',
+           }}>
         <div className="w-10 h-1 bg-ink-200 rounded-full mx-auto mb-5" />
         <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium text-center mb-1">SELECT RANK</p>
         <p className="text-ink font-bold text-lg text-center mb-5 truncate tracking-tight">{name}</p>
@@ -429,10 +434,10 @@ function SlotSelectionSheet({ participant, picks, isTeam, onSelect, onDismiss })
 function ConfirmModal({ picks, getName, submitting, onConfirm, onCancel }) {
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onCancel} />
+      <div className="fixed inset-0 bg-black/40 z-[80]" onClick={onCancel} />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
                       w-[calc(100%-40px)] max-w-[400px] bg-paper border border-ink
-                      z-50 p-6">
+                      z-[85] p-6">
         <h3 className="text-ink font-bold text-lg text-center mb-1 tracking-tight">픽 확정</h3>
         <p className="text-ink-400 text-xs text-center mb-5">
           확정 후에는 수정할 수 없습니다

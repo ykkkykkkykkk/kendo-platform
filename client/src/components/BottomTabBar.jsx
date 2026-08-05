@@ -16,7 +16,9 @@ export default function BottomTabBar() {
        예전처럼 480px 바가 가운데 떠 있으면, 대진표처럼 넓은 화면에서
        브라켓 한복판을 흰 섬이 가려 내용이 잘린 것처럼 보인다. */
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-paper"
+      /* 모달·바텀시트(z-50 이상)가 항상 탭바 위에 오도록 한 단 아래에 둔다.
+         같은 z-50이면 탭바가 시트 하단 버튼을 가려 잘린 것처럼 보였다. */
+      className="fixed bottom-0 left-0 right-0 z-40 bg-paper"
       style={{ borderTop: '1.5px solid #111111' }}
     >
       <div className="mx-auto w-full max-w-mobile flex" style={{ height: 60 }}>
