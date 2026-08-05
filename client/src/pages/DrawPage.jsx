@@ -202,7 +202,7 @@ export default function DrawPage() {
             <div className="mt-3">
               {/* 좁은 화면에서는 줄여 뭉개지 말고 밀어서 보게 한다.
                   넓은 화면에서는 폭이 남아 한 번에 다 보인다. */}
-              <div className="overflow-x-auto px-5 pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="bracket-wide overflow-x-auto px-5 pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <BracketDiagram
                   division={division}
                   picks={byParticipant}

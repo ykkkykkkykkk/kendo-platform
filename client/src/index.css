@@ -32,6 +32,19 @@ body {
   padding-bottom: 72px;
 }
 
+/* 대진표만 480px 컨테이너 밖으로 빼서 화면 폭을 다 쓴다.
+   폰에서는 그대로 두고(좌우로 밀어서 봄), 큰 화면에서는 한 번에 다 보이게 한다.
+   .mobile-container가 가운데 정렬이라 calc(50% - 50vw)로 정확히 화면 끝까지 나간다. */
+@media (min-width: 820px) {
+  .bracket-wide {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
 /* 가로 스크롤 숨김 */
 .scroll-x {
   overflow-x: auto;
