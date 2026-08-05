@@ -32,6 +32,29 @@ const mmdd = (d) => (d ? d.slice(5).replace('-', '.') : '');
 const picksClosed = (t) =>
   !!t?.pick_deadline && Date.now() > new Date(t.pick_deadline).getTime();
 
+/* 부문 묶음이 전부 단체전이면 '단체전', 전부 개인전이면 '개인전' */
+const kindOf = (divs) =>
+  divs.every((d) => d.division_type?.includes('team'))       ? '단체전'
+  : divs.every((d) => d.division_type?.includes('individual')) ? '개인전'
+  : null;
+
+/* 부문마다 마감이 달라졌으므로 한 줄로 요약한다.
+   null을 주면 D-day나 대회 상태를 그대로 쓴다. */
+function pickStatusText(t) {
+  const divs = t?.divisions ?? [];
+  if (!divs.length) return picksClosed(t) ? '픽 마감' : null;
+
+  const open   = divs.filter((d) => !d.picks_closed);
+  const closed = divs.filter((d) => d.picks_closed);
+  if (!open.length)   return '픽 마감';
+  if (!closed.length) return null;              // 전부 열려 있으면 평소대로
+
+  const openKind = kindOf(open), closedKind = kindOf(closed);
+  return openKind && closedKind
+    ? `${closedKind} 마감 · ${openKind} 픽 가능`
+    : `${open.length}개 부문 픽 가능`;
+}
+
 /* ── 이번 주 경기 카드 (인쇄물 느낌: 1px 룰, 직각) ──────── */
 function MatchCard({ match }) {
   const total    = (match.predict_a_count ?? 0) + (match.predict_b_count ?? 0);
@@ -194,8 +217,8 @@ export default function Home({ onLoginRequest }) {
               <span className="text-ink font-semibold">{mmdd(hero.start_date)}</span>
               <span className="text-ink-600">{hero.venue}</span>
               <span className="flex-1 border-t border-ink" />
-              <span className="text-ink font-bold tracking-tight">
-                {picksClosed(hero) ? '픽 마감' : (dday(hero.start_date) ?? hero.status)}
+              <span className="text-ink font-bold tracking-tight whitespace-nowrap">
+                {pickStatusText(hero) ?? dday(hero.start_date) ?? hero.status}
               </span>
             </div>
           </Link>

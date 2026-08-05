@@ -10,6 +10,26 @@ router.get('/', async (_req, res) => {
     const { rows } = await db.execute(
       `SELECT * FROM tournaments ORDER BY start_date DESC`
     );
+
+    // 부문마다 마감이 다를 수 있다(개인전은 끝났는데 단체전은 며칠 뒤인 식).
+    // 메인 화면이 '개인전 마감 · 단체전 픽 가능'처럼 보여줄 수 있게 요약을 같이 준다.
+    for (const t of rows) {
+      const { rows: divs } = await db.execute({
+        sql: `SELECT division_type, label,
+                     COALESCE(pick_deadline, ?) AS pick_deadline
+              FROM tournament_divisions
+              WHERE tournament_id = ?
+              ORDER BY sort_order, id`,
+        args: [t.pick_deadline ?? null, t.id],
+      });
+      t.divisions = divs.map((d) => ({
+        division_type: d.division_type,
+        label:         d.label,
+        pick_deadline: d.pick_deadline,
+        picks_closed:  !!d.pick_deadline && Date.now() > new Date(d.pick_deadline).getTime(),
+      }));
+    }
+
     res.json(rows);
   } catch (e) {
     serverError(res, e);
