@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
-import { GroupView, MatchRow } from '../components/DrawList.jsx';
 import BracketDiagram from '../components/BracketDiagram.jsx';
 import BracketZoomModal from '../components/BracketZoomModal.jsx';
 
@@ -15,14 +14,10 @@ const SLUG = '2026';
 export default function DrawPage() {
   const { data, loading, error } = useFetch(() => api.draw(SLUG), [SLUG]);
   const [divIdx, setDivIdx] = useState(0);
-  const [segment, setSegment] = useState(0);   // 0,1 = 조 / 2 = 결승
   const [zoom, setZoom] = useState(false);     // 대진도 확대 보기
 
   const divisions = data?.divisions ?? [];
   const division  = divisions[divIdx] ?? null;
-  const segments  = division
-    ? [...division.groups.map((g) => `${g.group}조`), ...(division.final ? ['결승'] : [])]
-    : [];
 
   if (loading) {
     return (
@@ -66,7 +61,7 @@ export default function DrawPage() {
         {divisions.map((d, i) => (
           <button
             key={d.id}
-            onClick={() => { setDivIdx(i); setSegment(0); }}
+            onClick={() => setDivIdx(i)}
             className={`flex-none px-3.5 py-2 rounded-full text-[13px] font-medium transition-all pressable border ${
               i === divIdx ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-600 border-ink-200'
             }`}
@@ -83,9 +78,9 @@ export default function DrawPage() {
             {division.groups.reduce((n, g) => n + g.matches.length, 0) + (division.final ? 1 : 0)}경기
           </p>
 
-          {/* 종이 대진표와 같은 모양. 폰에서는 글씨가 작아지므로 눌러서 키워 본다.
-              대진이 아직 안 들어온 부문(단체전)은 빈 상자가 뜨지 않게 건너뛴다. */}
-          {division.groups.some((g) => g.matches.length > 0) && (
+          {/* 종이 대진표와 같은 모양 하나로만 보여준다.
+              조별 경기 목록을 아래에 또 두면 같은 내용이 두 번 나와 헷갈린다. */}
+          {division.groups.some((g) => g.matches.length > 0) ? (
             <div className="px-5 mt-4">
               <button
                 onClick={() => setZoom(true)}
@@ -98,39 +93,8 @@ export default function DrawPage() {
                 대진표를 누르면 크게 볼 수 있어요
               </p>
             </div>
-          )}
-
-          {/* 조 / 결승 세그먼트 */}
-          <div className="px-5 mt-4">
-            <div className="flex border border-ink-200 rounded-full overflow-hidden">
-              {segments.map((label, i) => (
-                <button
-                  key={label}
-                  onClick={() => setSegment(i)}
-                  className={`flex-1 py-2 text-[12px] font-semibold transition-colors ${
-                    i === segment ? 'bg-ink text-white' : 'bg-paper text-ink-600'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {segment < division.groups.length ? (
-            <div className="px-5 mt-6">
-              <GroupView group={division.groups[segment]} />
-            </div>
           ) : (
-            <div className="px-5 mt-6">
-              <div className="flex items-baseline gap-2 pb-3">
-                <h2 className="text-2xl font-bold text-ink tracking-[-0.03em]">결승</h2>
-                <span className="text-[11px] text-ink-400">A조 우승 vs B조 우승</span>
-              </div>
-              <div className="bg-block rounded-2xl px-4">
-                <MatchRow m={division.final} dark />
-              </div>
-            </div>
+            <p className="px-5 mt-8 text-ink-400 text-sm">이 부문은 아직 대진이 등록되지 않았습니다.</p>
           )}
         </>
       )}
