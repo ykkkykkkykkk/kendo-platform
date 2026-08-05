@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Loader, Search, Trash2, X } from 'lucide-react';
 import { adminGet, adminDelete } from '../../adminApi.js';
 
@@ -25,6 +25,22 @@ export default function UserList() {
   const [detail, setDetail]   = useState(null);
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
+
+  /* 검색 결과에 걸린 도장별 인원. 검색어가 비었으면 세지 않는다(전체 목록엔 의미 없음). */
+  const dojoCounts = useMemo(() => {
+    const term = q.trim().replace(/\s/g, '');
+    if (!term) return [];
+    const tally = new Map();
+    for (const u of users) {
+      const name = u.dojo_name ?? u.home_dojo;
+      if (!name) continue;
+      if (!name.replace(/\s/g, '').includes(term)) continue;   // 도장 이름이 검색어와 맞는 경우만
+      tally.set(name, (tally.get(name) ?? 0) + 1);
+    }
+    return [...tally.entries()]
+      .map(([name, n]) => ({ name, n }))
+      .sort((a, b) => b.n - a.n);
+  }, [users, q]);
 
   const load = useCallback(async (query = '', withSeed = false, kakaoFilter = '') => {
     setLoading(true);
@@ -132,6 +148,23 @@ export default function UserList() {
         </div>
         <button type="submit" className="px-4 py-2 bg-ink text-white text-sm font-medium">검색</button>
       </form>
+
+      {/* 도장으로 검색했으면 그 도장 소속이 몇 명인지 바로 보여준다.
+          이름이 겹쳐 여러 도장이 걸릴 수 있으므로 도장별로 나눠 센다. */}
+      {dojoCounts.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {dojoCounts.map(({ name, n }) => (
+            <span key={name} className="inline-flex items-baseline gap-1.5 border border-ink px-3 py-1.5 text-sm">
+              <span className="font-semibold text-ink">{name}</span>
+              <span className="text-ink-400 text-xs">소속</span>
+              <span className="font-bold text-ink tabular-nums">{n}명</span>
+            </span>
+          ))}
+          {!showSeed && seedCount > 0 && (
+            <span className="text-[11px] text-ink-400 self-center">가라팬 제외</span>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-ink-400 py-12"><Loader size={16} className="animate-spin" /> 불러오는 중…</div>
