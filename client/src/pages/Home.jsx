@@ -27,6 +27,11 @@ function dday(dateStr) {
 /* "2026-06-14" → "06.14" */
 const mmdd = (d) => (d ? d.slice(5).replace('-', '.') : '');
 
+/* 픽이 마감됐는지 — 서버(picks.js)와 같은 판정.
+   마감됐는데도 '예정'이라고 떠 있으면 아직 픽할 수 있는 줄 알게 된다. */
+const picksClosed = (t) =>
+  !!t?.pick_deadline && Date.now() > new Date(t.pick_deadline).getTime();
+
 /* ── 이번 주 경기 카드 (인쇄물 느낌: 1px 룰, 직각) ──────── */
 function MatchCard({ match }) {
   const total    = (match.predict_a_count ?? 0) + (match.predict_b_count ?? 0);
@@ -190,7 +195,7 @@ export default function Home({ onLoginRequest }) {
               <span className="text-ink-600">{hero.venue}</span>
               <span className="flex-1 border-t border-ink" />
               <span className="text-ink font-bold tracking-tight">
-                {dday(hero.start_date) ?? hero.status}
+                {picksClosed(hero) ? '픽 마감' : (dday(hero.start_date) ?? hero.status)}
               </span>
             </div>
           </Link>
