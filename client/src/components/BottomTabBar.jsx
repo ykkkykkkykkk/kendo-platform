@@ -3,8 +3,9 @@ import { NavLink } from 'react-router-dom';
 const tabs = [
   { to: '/',            label: 'HOME', icon: HomeIcon,   end: true  },
   { to: '/feed',        label: 'FEED', icon: FeedIcon,   end: false },
-  { to: '/draw',        label: 'DRAW', icon: DrawIcon,   end: false },
-  { to: '/predictions', label: 'PICK', icon: TargetIcon, end: false },
+  /* 대진표를 보면서 그 자리에서 픽을 하므로 DRAW와 PICK을 한 칸으로 합쳤다.
+     기존 픽 화면(/predictions)은 순위·점수를 보는 용도로 남아 있다. */
+  { to: '/draw',        label: 'PICK', icon: TargetIcon, end: false },
   { to: '/ranking',     label: 'RANK', icon: TrophyIcon, end: false },
   { to: '/teams',       label: 'TEAM', icon: ShieldIcon, end: false },
   // { to: '/shop', label: 'SHOP', icon: BagIcon, end: false },

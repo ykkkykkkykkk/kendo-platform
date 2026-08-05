@@ -50,10 +50,13 @@ router.get('/:slug/draw', async (req, res) => {
     });
     if (!tournament) return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
 
+    // 대진표에서 바로 픽을 하므로 부문별 마감 시각도 함께 준다
     const { rows: divisions } = await db.execute({
-      sql: `SELECT id, division_type, label, participant_count
-            FROM tournament_divisions
-            WHERE tournament_id = ? ORDER BY sort_order, id`,
+      sql: `SELECT td.id, td.division_type, td.label, td.participant_count,
+                   COALESCE(td.pick_deadline, t.pick_deadline) AS pick_deadline
+            FROM tournament_divisions td
+            JOIN tournaments t ON t.id = td.tournament_id
+            WHERE td.tournament_id = ? ORDER BY td.sort_order, td.id`,
       args: [tournament.id],
     });
 
@@ -132,6 +135,8 @@ router.get('/:slug/draw', async (req, res) => {
         division_type:     d.division_type,
         label:             d.label,
         participant_count: d.participant_count,
+        pick_deadline:     d.pick_deadline,
+        picks_closed:      !!d.pick_deadline && Date.now() > new Date(d.pick_deadline).getTime(),
         max_round:         mine.length ? Math.max(...mine.map((m) => m.round_depth)) : 0,
         groups: groupNames.map((g) => {
           const gm = mine.filter((m) => m.group_label === g);
