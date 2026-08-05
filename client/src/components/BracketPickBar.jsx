@@ -64,8 +64,12 @@ export function PickSummaryBar({ picks, nameOf, remainMs, locked, closed, onSubm
   );
 }
 
+/* 부문 마감을 '무기한 열림'으로 둘 때 9999-12-31을 쓴다.
+   그대로 세면 '마감 2912226일'처럼 나오므로 날짜가 터무니없이 멀면 미정으로 본다. */
+const FOREVER_MS = 365 * 24 * 3600 * 1000;
+
 function Countdown({ ms }) {
-  if (ms == null) return <span className="text-[11px] text-ink-400">마감 미정</span>;
+  if (ms == null || ms > FOREVER_MS) return <span className="text-[11px] text-ink-400">마감 미정</span>;
   if (ms <= 0)    return <span className="text-[11px] font-bold text-ink-400">픽 마감</span>;
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
