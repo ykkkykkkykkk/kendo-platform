@@ -5,10 +5,12 @@ import { serverError } from '../utils/apiError.js';
 
 const router = Router();
 
-// ─── 공통 헬퍼: division → tournament pick_deadline 조회 ─────────
+// ─── 공통 헬퍼: division의 실제 마감 시각 ─────────
+// 부문에 마감이 지정돼 있으면 그것이 우선이고, 없으면 대회 설정을 따른다.
+// (개인전은 끝났는데 단체전은 며칠 뒤라 아직 픽을 받아야 하는 경우가 있다)
 async function getDeadline(divisionId) {
   const { rows } = await db.execute({
-    sql:  `SELECT t.pick_deadline
+    sql:  `SELECT COALESCE(td.pick_deadline, t.pick_deadline) AS pick_deadline
            FROM tournament_divisions td
            JOIN tournaments t ON t.id = td.tournament_id
            WHERE td.id = ?`,
@@ -113,11 +115,16 @@ router.get('/tournaments/:id/full', requireAuth, async (req, res) => {
         args: [d.id],
       });
 
+      // 부문 마감이 따로 잡혀 있으면 그게 이 부문의 진짜 마감이다
+      const effectiveDeadline = d.pick_deadline ?? tournament.pick_deadline;
+
       divisionDetails.push({
         id:                d.id,
         division_type:     d.division_type,
         label:             d.label,
         participant_count: d.participant_count,
+        pick_deadline:     effectiveDeadline,
+        picks_closed:      !!effectiveDeadline && Date.now() > new Date(effectiveDeadline).getTime(),
         participants:      participants.map((p) => ({
           id:          p.id,
           seed_number: p.seed_number,
@@ -209,7 +216,7 @@ router.post('/divisions/:id/pick', requireAuth, async (req, res) => {
 
     // division 존재 + 마감 확인
     const { rows: divRows } = await db.execute({
-      sql: `SELECT td.id, t.pick_deadline
+      sql: `SELECT td.id, COALESCE(td.pick_deadline, t.pick_deadline) AS pick_deadline
             FROM tournament_divisions td
             JOIN tournaments t ON t.id = td.tournament_id
             WHERE td.id = ?`,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Trophy, CheckCircle, Loader, Star } from 'lucide-react';
+import { ChevronLeft, Trophy, CheckCircle, Loader, Star, Lock, Unlock } from 'lucide-react';
 import { adminGet, adminPost } from '../../adminApi.js';
 
 const DIVISION_LABELS = {
@@ -17,7 +17,63 @@ const RANKS = [
   { key: 'rank_3rd_b', label: '🥉 3위 B' },
 ];
 
-function DivisionCard({ div, onResultSaved, onFinalized }) {
+/* 부문별 픽 마감.
+   대회 마감은 전체에 걸리는데, 개인전은 오늘 끝났고 단체전은 며칠 뒤인 식으로
+   부문마다 달라야 할 때가 있다. 여기서 이 부문만 열고 닫는다. */
+const FOREVER_YEAR = 9000;   // 9999-12-31 = '무기한 열림' 표식
+
+function PickGate({ div, onChanged }) {
+  const [busy, setBusy] = useState(false);
+
+  const dl     = div.pick_deadline ? new Date(div.pick_deadline) : null;
+  const closed = !!dl && Date.now() > dl.getTime();
+  const forever = !!dl && dl.getFullYear() >= FOREVER_YEAR;
+
+  const label = closed ? '마감됨'
+    : forever ? '픽 열림'
+    : dl ? `~${dl.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+    : '대회 설정 따름';
+
+  const act = async (path, body) => {
+    const what = path === 'close-picks' ? '마감' : '재개';
+    if (!window.confirm(
+      path === 'close-picks'
+        ? `"${div.label}" 픽을 지금 마감합니다.\n이 부문만 막히고 다른 부문은 그대로입니다.\n이미 낸 픽은 유지됩니다.`
+        : `"${div.label}" 픽을 다시 엽니다.\n이 부문만 열리고 다른 부문은 그대로입니다.`
+    )) return;
+    setBusy(true);
+    try {
+      const res = await adminPost(`/divisions/${div.id}/${path}`, body);
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({}));
+        alert(error ?? `픽 ${what} 실패`);
+        return;
+      }
+      onChanged?.(await res.json());
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+        closed ? 'border-ink-200 text-ink-400' : 'border-ink text-ink'
+      }`}>
+        {label}
+      </span>
+      <button
+        onClick={() => act(closed ? 'reopen-picks' : 'close-picks')}
+        disabled={busy}
+        className="flex items-center gap-1 text-[11px] text-ink border border-ink-200
+                   hover:border-ink px-2 py-1 rounded-full transition-colors disabled:opacity-40"
+      >
+        {closed ? <Unlock size={11} /> : <Lock size={11} />}
+        {busy ? '처리 중' : closed ? '픽 재개' : '픽 마감'}
+      </button>
+    </span>
+  );
+}
+
+function DivisionCard({ div, onResultSaved, onFinalized, onDivChanged }) {
   const isTeam       = div.division_type.includes('team');
   const participants = div.participants ?? [];
   const isFinalized  = !!div.is_finalized;
@@ -84,7 +140,8 @@ function DivisionCard({ div, onResultSaved, onFinalized }) {
           {div.label ?? DIVISION_LABELS[div.division_type] ?? div.division_type}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-ink-400">참가 {participants.length}명</span>
+          <span className="text-xs text-ink-400">참가 {participants.length}{isTeam ? '팀' : '명'}</span>
+          <PickGate div={div} onChanged={onDivChanged} />
           {isFinalized && (
             <span className="flex items-center gap-1 text-[10px] font-medium text-ink
                              bg-lime px-2 py-0.5 rounded-full">
@@ -201,6 +258,15 @@ export default function TournamentPickResults() {
     ));
   };
 
+  // 픽 마감/재개 후 서버가 돌려준 부문 값으로 갈아끼운다
+  const handleDivChanged = (updated) => {
+    setDivisions((prev) => prev.map((d) =>
+      d.id === updated.id
+        ? { ...d, own_deadline: updated.pick_deadline, pick_deadline: updated.pick_deadline }
+        : d
+    ));
+  };
+
   const allFinalized = divisions.length > 0 && divisions.every((d) => d.is_finalized);
 
   const handleFinalizeTournament = async () => {
@@ -277,6 +343,7 @@ export default function TournamentPickResults() {
               div={div}
               onResultSaved={handleResultSaved}
               onFinalized={handleFinalized}
+              onDivChanged={handleDivChanged}
             />
           ))}
 

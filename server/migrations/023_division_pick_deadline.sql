@@ -1,0 +1,14 @@
+-- 023: 부문별 픽 마감.
+--
+-- 지금까지 픽 마감은 tournaments.pick_deadline 하나뿐이라 대회 단위로만 열고 닫혔다.
+-- 2026 하계 대회는 개인전이 오늘 진행 중이라 이미 마감됐는데, 단체전은 며칠 뒤라
+-- 아직 픽을 받아야 한다. 대회 단위로는 둘을 다르게 둘 수 없다.
+--
+-- NULL이면 대회 설정(tournaments.pick_deadline)을 그대로 따른다 — 기존 동작 유지.
+-- 값이 있으면 그 부문만 이 시각을 쓴다.
+--
+-- '무기한 열림'은 먼 미래 시각(9999-12-31)으로 표현한다. 그래야 서버·클라이언트의
+-- 기존 시각 비교 로직을 그대로 쓸 수 있고 별도 분기가 생기지 않는다.
+--
+-- 적용: node apply-migration.js 023_division_pick_deadline.sql
+ALTER TABLE tournament_divisions ADD COLUMN pick_deadline TEXT;

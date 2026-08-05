@@ -16,10 +16,15 @@ router.get('/tournaments/:id/divisions', async (req, res) => {
     const { id } = req.params;
 
     const { rows: divisions } = await db.execute({
+      // pick_deadline: 부문에 값이 있으면 그게 우선, 없으면 대회 설정을 따른다.
+      // own_deadline이 있으면 '이 부문만 따로 잡힌 상태'라는 뜻이다.
       sql: `SELECT td.id, td.division_type, td.label, td.sort_order, td.participant_count,
+                   td.pick_deadline AS own_deadline,
+                   COALESCE(td.pick_deadline, t.pick_deadline) AS pick_deadline,
                    dr.rank_1st, dr.rank_2nd, dr.rank_3rd_a, dr.rank_3rd_b,
                    dr.is_finalized, dr.finalized_at
             FROM tournament_divisions td
+            JOIN tournaments t ON t.id = td.tournament_id
             LEFT JOIN division_results dr ON dr.division_id = td.id
             WHERE td.tournament_id = ?
             ORDER BY td.sort_order, td.id`,

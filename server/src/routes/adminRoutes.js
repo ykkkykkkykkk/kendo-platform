@@ -648,6 +648,77 @@ router.post('/tournaments/:id/reopen-picks', async (req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+/* ── 부문별 픽 마감 ──────────────────────────────
+   대회 마감(tournaments.pick_deadline)은 전체에 걸리는데, 개인전은 오늘 진행 중이고
+   단체전은 며칠 뒤인 경우처럼 부문마다 달라야 할 때가 있다.
+   tournament_divisions.pick_deadline이 있으면 그 부문은 그 값을 쓴다(NULL이면 대회 설정). */
+
+// 무기한 열림. 먼 미래 시각으로 두면 기존 시각 비교 로직을 그대로 쓸 수 있다.
+const FOREVER = '9999-12-31T23:59:59.000Z';
+
+// POST /api/admin/divisions/:id/close-picks — 이 부문만 즉시 마감
+router.post('/divisions/:id/close-picks', async (req, res) => {
+  try {
+    const { rows: [d] } = await db.execute({
+      sql: 'SELECT id FROM tournament_divisions WHERE id = ?', args: [req.params.id],
+    });
+    if (!d) return res.status(404).json({ error: '부문을 찾을 수 없습니다.' });
+
+    await db.execute({
+      sql: 'UPDATE tournament_divisions SET pick_deadline = ? WHERE id = ?',
+      args: [new Date().toISOString(), req.params.id],
+    });
+    const { rows: [updated] } = await db.execute({
+      sql: 'SELECT * FROM tournament_divisions WHERE id = ?', args: [req.params.id],
+    });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
+// POST /api/admin/divisions/:id/reopen-picks — 이 부문만 다시 열기
+// body: { deadline } — 지정하면 그 시각까지, 없으면 무기한
+router.post('/divisions/:id/reopen-picks', async (req, res) => {
+  try {
+    const { rows: [d] } = await db.execute({
+      sql: 'SELECT id FROM tournament_divisions WHERE id = ?', args: [req.params.id],
+    });
+    if (!d) return res.status(404).json({ error: '부문을 찾을 수 없습니다.' });
+
+    let deadline = FOREVER;
+    if (req.body?.deadline) {
+      const when = new Date(req.body.deadline);
+      if (Number.isNaN(when.getTime()))
+        return res.status(400).json({ error: '마감 시각 형식이 올바르지 않습니다.' });
+      if (when.getTime() <= Date.now())
+        return res.status(400).json({ error: '이미 지난 시각입니다. 마감하려면 마감 버튼을 쓰세요.' });
+      deadline = when.toISOString();
+    }
+
+    await db.execute({
+      sql: 'UPDATE tournament_divisions SET pick_deadline = ? WHERE id = ?',
+      args: [deadline, req.params.id],
+    });
+    const { rows: [updated] } = await db.execute({
+      sql: 'SELECT * FROM tournament_divisions WHERE id = ?', args: [req.params.id],
+    });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
+// POST /api/admin/divisions/:id/follow-tournament — 부문 설정을 지우고 대회 마감을 따르게 한다
+router.post('/divisions/:id/follow-tournament', async (req, res) => {
+  try {
+    await db.execute({
+      sql: 'UPDATE tournament_divisions SET pick_deadline = NULL WHERE id = ?', args: [req.params.id],
+    });
+    const { rows: [updated] } = await db.execute({
+      sql: 'SELECT * FROM tournament_divisions WHERE id = ?', args: [req.params.id],
+    });
+    if (!updated) return res.status(404).json({ error: '부문을 찾을 수 없습니다.' });
+    res.json(updated);
+  } catch (e) { serverError(res, e); }
+});
+
 /* ════════════════════════════════════════
    매치 조회
 ════════════════════════════════════════ */
