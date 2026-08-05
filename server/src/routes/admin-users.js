@@ -173,19 +173,21 @@ router.get('/picks', async (req, res) => {
   try {
     const tid = req.query.tournament_id;
 
+    // 단체전은 참가자가 선수가 아니라 팀이다(dp.team_id). 그때는 팀 이름을 이름 자리에 쓴다.
     const nameJoin = (alias, col) => `
       LEFT JOIN division_participants ${alias} ON ${alias}.id = tp.${col}
       LEFT JOIN players p_${alias} ON p_${alias}.id = ${alias}.player_id
-      LEFT JOIN teams   t_${alias} ON t_${alias}.id = p_${alias}.team_id`;
+      LEFT JOIN teams   t_${alias} ON t_${alias}.id = p_${alias}.team_id
+      LEFT JOIN teams   dt_${alias} ON dt_${alias}.id = ${alias}.team_id`;
 
     const { rows: picks } = await db.execute({
       sql: `SELECT tp.id, tp.user_id, u.nickname, u.home_dojo,
                    tp.division_id, td.label AS division_label, td.sort_order,
                    tp.score, tp.is_locked, tp.created_at,
-                   p_d1.name AS pick1, t_d1.name AS pick1_team,
-                   p_d2.name AS pick2, t_d2.name AS pick2_team,
-                   p_d3.name AS pick3a, t_d3.name AS pick3a_team,
-                   p_d4.name AS pick3b, t_d4.name AS pick3b_team
+                   COALESCE(p_d1.name, dt_d1.name) AS pick1, t_d1.name AS pick1_team,
+                   COALESCE(p_d2.name, dt_d2.name) AS pick2, t_d2.name AS pick2_team,
+                   COALESCE(p_d3.name, dt_d3.name) AS pick3a, t_d3.name AS pick3a_team,
+                   COALESCE(p_d4.name, dt_d4.name) AS pick3b, t_d4.name AS pick3b_team
             FROM tournament_picks tp
             JOIN users u ON u.id = tp.user_id
             JOIN tournament_divisions td ON td.id = tp.division_id
@@ -201,14 +203,15 @@ router.get('/picks', async (req, res) => {
     // 부문별 1위 픽 집계 — 누가 우승 후보로 많이 뽑혔는지
     const { rows: top } = await db.execute({
       sql: `SELECT td.id AS division_id, td.label AS division_label,
-                   p.name AS player_name, t.name AS team_name, COUNT(*) AS n
+                   COALESCE(p.name, dt.name) AS player_name, t.name AS team_name, COUNT(*) AS n
             FROM tournament_picks tp
             JOIN tournament_divisions td ON td.id = tp.division_id
             JOIN division_participants dp ON dp.id = tp.pick_1st
-            JOIN players p ON p.id = dp.player_id
-            LEFT JOIN teams t ON t.id = p.team_id
+            LEFT JOIN players p ON p.id = dp.player_id
+            LEFT JOIN teams   t ON t.id = p.team_id
+            LEFT JOIN teams   dt ON dt.id = dp.team_id
             ${tid ? 'WHERE td.tournament_id = ?' : ''}
-            GROUP BY td.id, p.id
+            GROUP BY td.id, dp.id
             ORDER BY td.sort_order, n DESC`,
       args: tid ? [tid] : [],
     });
