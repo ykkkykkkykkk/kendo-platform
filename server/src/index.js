@@ -24,6 +24,7 @@ import adminDojosRouter  from './routes/adminDojos.js';
 import inquiriesRouter   from './routes/inquiries.js';
 import questionsRouter    from './routes/questions.js';
 import trackRouter        from './routes/track.js';
+import pushRouter         from './routes/push.js';
 
 import playerClaimsRouter      from './routes/player-claims.js';
 import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
@@ -91,6 +92,7 @@ app.use('/api',                                playerClaimsRouter);
 app.use('/api/admin',       adminLimiter,      adminVideoRouter);
 app.use('/api/me',                             myVideoRouter);
 app.use('/api',                                postsRouter);
+app.use('/api',                                pushRouter);
 app.use('/api/admin',       adminLimiter,      adminDojosRouter);
 app.use('/api',             dojosRouter);
 app.use('/api/me',          meRouter);

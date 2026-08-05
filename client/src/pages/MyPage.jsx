@@ -12,6 +12,7 @@ import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import DojoChangeModal from '../components/DojoChangeModal.jsx';
 import KakaoConnectRow from '../components/KakaoConnectRow.jsx';
 import PlayerClaimRow from '../components/PlayerClaimRow.jsx';
+import PushToggleRow  from '../components/PushToggleRow.jsx';
 import NickLoginModal from '../components/NickLoginModal.jsx';
 import PlayerLoginModal from '../components/PlayerLoginModal.jsx';
 
@@ -361,7 +362,8 @@ export default function MyPage() {
         <KakaoConnectRow />
         {/* 선수 200명 중 계정이 있는 건 소수라, 본인이 여기서 신청하게 한다 */}
         <PlayerClaimRow />
-        <Row label="알림 설정" value="곧 공개" disabled />
+        {/* 잠금화면 알림 — 기기마다 켜야 해서 상태도 기기 기준이다 */}
+        <PushToggleRow />
         <Row label="이용 약관" onClick={() => {}} />
         <Row label="오픈소스 라이선스" onClick={() => {}} />
       </Section>

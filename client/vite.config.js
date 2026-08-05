@@ -8,6 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.svg', 'apple-touch-icon-180x180.png', 'favicon-32.png', 'favicon-16.png'],
+      // 자동 생성 서비스워커에 푸시 수신 처리만 얹는다 (프리캐시는 그대로)
+      workbox: { importScripts: ['/push-listener.js'] },
       manifest: {
         name: '마이너스타',
         short_name: '마이너스타',

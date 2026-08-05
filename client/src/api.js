@@ -36,10 +36,11 @@ export const authPost = (path, body) =>
 export const authGet = (path) =>
   fetch(BASE + path, { headers: authHeaders() }).then((r) => r.json());
 
-export const authDelete = (path) =>
+export const authDelete = (path, body) =>
   fetch(BASE + path, {
     method:  'DELETE',
-    headers: authHeaders(),
+    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...authHeaders() },
+    body:    body !== undefined ? JSON.stringify(body) : undefined,
   });
 
 export const authPut = (path, body) =>
@@ -87,6 +88,8 @@ export const api = {
   playerHeart:   (cid)         => authPost(`/player/comments/${cid}/like`, {}),
   playerReply:   (cid, content)=> authPost(`/player/comments/${cid}/reply`, { content }),
   playerInbox:   ()            => authGet('/player/inbox'),
+  pushKey:       ()            => get('/push/key'),
+  pushTest:      ()            => authPost('/push/test', {}),
   notifications: ()            => authGet('/notifications'),
   readNotifications: (id)      => authPut('/notifications/read', id ? { id } : {}),
 
