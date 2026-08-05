@@ -92,9 +92,10 @@ export default function PredictionTournamentPage() {
           </svg>
         </button>
 
-        {tournament.pick_deadline && (
+        {/* 부문마다 마감이 다를 수 있어 지금 보고 있는 부문 기준으로 센다 */}
+        {(activeDivision?.pick_deadline ?? tournament.pick_deadline) && (
           <span className="text-[11px] font-bold text-ink">
-            <CountdownTimer deadline={tournament.pick_deadline} />
+            <CountdownTimer deadline={activeDivision?.pick_deadline ?? tournament.pick_deadline} />
           </span>
         )}
       </div>
@@ -138,7 +139,7 @@ export default function PredictionTournamentPage() {
           <DivisionTab
             tournamentId={tournament_id}
             division={activeDivision}
-            pickDeadline={tournament.pick_deadline}
+            pickDeadline={activeDivision.pick_deadline ?? tournament.pick_deadline}
             onRefresh={onRefresh}
           />
         ) : null}

@@ -10,6 +10,23 @@ function normalize(name) {
   return name.toLowerCase().replace(/\s+/g, '');
 }
 
+/* 접미사를 뗀 핵심 이름.
+   '강인'과 '강인검도관', '동우'와 '동우검도관'은 같은 도장인데 자유 입력이라
+   따로 만들어져 왔다. 도장 100개 중 72개가 1명짜리가 된 원인이다. */
+function baseName(name) {
+  return normalize(name).replace(/(검도관|검도장|검도교실|검도부|관|장)$/, '');
+}
+
+/** 이름이 사실상 같은 도장들 (핵심 이름 일치) */
+async function findSimilar(name) {
+  const base = baseName(name);
+  if (!base) return [];
+  const { rows } = await db.execute('SELECT id, name, normalized_name, member_count FROM dojos');
+  return rows
+    .filter((d) => baseName(d.name) === base)
+    .sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0));
+}
+
 function daysRemaining(endDate) {
   return Math.max(0, Math.ceil((new Date(endDate) - Date.now()) / 86400000));
 }
@@ -65,14 +82,16 @@ router.get('/dojos/search', async (req, res) => {
     const q = (req.query.q ?? '').trim();
     if (!q) return res.json([]);
 
+    // 접미사를 뗀 이름으로도 찾는다. '강인'을 쳐도 '강인검도관'이 나와야 한다.
     const norm = normalize(q);
+    const base = baseName(q);
     const { rows } = await db.execute({
       sql:  `SELECT id, name, member_count
              FROM dojos
-             WHERE normalized_name LIKE ?
+             WHERE normalized_name LIKE ? ${base ? 'OR normalized_name LIKE ?' : ''}
              ORDER BY member_count DESC
              LIMIT 10`,
-      args: [`%${norm}%`],
+      args: base ? [`%${norm}%`, `%${base}%`] : [`%${norm}%`],
     });
     res.json(rows);
   } catch (e) { serverError(res, e, 'A-1'); }
@@ -82,11 +101,12 @@ router.get('/dojos/search', async (req, res) => {
 // POST /api/dojos/join
 router.post('/dojos/join', requireAuth, async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name?.trim()) return res.status(400).json({ error: '도장 이름을 입력해주세요.' });
+    // dojo_id로 고르는 게 기본. name은 목록에 없는 도장을 새로 만들 때만 쓴다.
+    const { dojo_id, name, create_new } = req.body;
+    if (!dojo_id && !name?.trim())
+      return res.status(400).json({ error: '도장을 골라주세요.' });
 
-    const normName = normalize(name.trim());
-    const userId   = req.user.userId;
+    const userId = req.user.userId;
 
     // 현재 소속 도장 확인
     const { rows: [me] } = await db.execute({
@@ -94,20 +114,39 @@ router.post('/dojos/join', requireAuth, async (req, res) => {
     });
     const prevDojoId = me?.dojo_id ?? null;
 
-    // 도장 조회 or 생성
-    let { rows: [dojo] } = await db.execute({
-      sql: 'SELECT * FROM dojos WHERE normalized_name = ?', args: [normName],
-    });
+    let dojo;
+    if (dojo_id) {
+      const { rows: [found] } = await db.execute({
+        sql: 'SELECT * FROM dojos WHERE id = ?', args: [dojo_id],
+      });
+      if (!found) return res.status(404).json({ error: '그런 도장이 없습니다.' });
+      dojo = found;
+    } else {
+      const normName = normalize(name.trim());
+      const { rows: [exact] } = await db.execute({
+        sql: 'SELECT * FROM dojos WHERE normalized_name = ?', args: [normName],
+      });
+      dojo = exact;
 
-    if (!dojo) {
-      const { lastInsertRowid } = await db.execute({
-        sql:  'INSERT INTO dojos (name, normalized_name) VALUES (?, ?)',
-        args: [name.trim(), normName],
-      });
-      const { rows: [created] } = await db.execute({
-        sql: 'SELECT * FROM dojos WHERE id = ?', args: [Number(lastInsertRowid)],
-      });
-      dojo = created;
+      if (!dojo) {
+        // 이름만 조금 다른 같은 도장이 이미 있으면 새로 만들지 않고 되묻는다.
+        // ('강인'과 '강인검도관'이 따로 생기던 문제)
+        const similar = await findSimilar(name.trim());
+        if (similar.length && !create_new) {
+          return res.status(409).json({
+            error: '이미 등록된 도장이 있습니다. 맞는 도장을 골라주세요.',
+            similar,
+          });
+        }
+        const { lastInsertRowid } = await db.execute({
+          sql:  'INSERT INTO dojos (name, normalized_name) VALUES (?, ?)',
+          args: [name.trim(), normName],
+        });
+        const { rows: [created] } = await db.execute({
+          sql: 'SELECT * FROM dojos WHERE id = ?', args: [Number(lastInsertRowid)],
+        });
+        dojo = created;
+      }
     }
 
     // 이미 같은 도장이면 그냥 반환

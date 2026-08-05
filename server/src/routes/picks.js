@@ -35,13 +35,14 @@ router.get('/tournaments-with-divisions', requireAuth, async (req, res) => {
     for (const t of tournaments) {
       const { rows: divisions } = await db.execute({
         sql: `SELECT td.id, td.division_type, td.label, td.sort_order, td.participant_count,
+                     COALESCE(td.pick_deadline, ?) AS pick_deadline,
                      tp.id AS pick_id, tp.is_locked, tp.score
               FROM tournament_divisions td
               LEFT JOIN tournament_picks tp
                 ON tp.division_id = td.id AND tp.user_id = ?
               WHERE td.tournament_id = ?
               ORDER BY td.sort_order, td.id`,
-        args: [userId, t.id],
+        args: [t.pick_deadline ?? null, userId, t.id],
       });
 
       result.push({
@@ -51,6 +52,8 @@ router.get('/tournaments-with-divisions', requireAuth, async (req, res) => {
           division_type:   d.division_type,
           label:           d.label,
           participant_count: d.participant_count,
+          pick_deadline:   d.pick_deadline,
+          picks_closed:    !!d.pick_deadline && Date.now() > new Date(d.pick_deadline).getTime(),
           my_pick_status:  d.pick_id == null ? 'not_picked'
                            : d.is_locked     ? 'locked'
                                              : 'picked',

@@ -103,7 +103,8 @@ export const api = {
   dojoSearch:   (q)   => get(`/dojos/search?q=${encodeURIComponent(q)}`),
   dojoRanking:  ()    => authGet('/dojos/ranking'),
   myDojo:       ()    => authGet('/dojos/my'),
-  joinDojo:     (name) => authPost('/dojos/join', { name }),
+  // 목록에서 고른 경우 dojo_id, 새로 만드는 경우 { name, create_new: true }
+  joinDojo:     (body) => authPost('/dojos/join', typeof body === 'string' ? { name: body } : body),
   dojoChangeRequest: (body) => authPost('/dojos/change-request', body),
   augustEvent:  ()    => get('/dojos/august-event'),
 

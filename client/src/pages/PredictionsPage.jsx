@@ -13,6 +13,10 @@ function classify(tournaments) {
   const pickable = [], live = [], past = [];
   for (const t of tournaments) {
     if (t.status === '종료') { past.push(t); continue; }
+    // 부문마다 마감이 다를 수 있다. 하나라도 열려 있으면 아직 픽할 수 있는 대회다.
+    // (개인전은 끝났는데 단체전은 며칠 뒤라 아직 받는 경우)
+    const divsOpen = t.divisions?.some((d) => !d.picks_closed);
+    if (divsOpen) { pickable.push(t); continue; }
     const dl = t.pick_deadline ? new Date(t.pick_deadline).getTime() : null;
     if (dl && now > dl) { live.push(t); continue; }
     pickable.push(t);
