@@ -364,6 +364,7 @@ export default function MyPage() {
         <PlayerClaimRow />
         {/* 잠금화면 알림 — 기기마다 켜야 해서 상태도 기기 기준이다 */}
         <PushToggleRow />
+        <Row label="개인정보처리방침" onClick={() => navigate('/privacy')} />
         <Row label="이용 약관" onClick={() => {}} />
         <Row label="오픈소스 라이선스" onClick={() => {}} />
       </Section>
