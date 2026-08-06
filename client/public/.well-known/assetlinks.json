@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "kr.minorstar.twa",
+        "sha256_cert_fingerprints": ["17:12:1A:95:ED:02:AE:13:97:BF:9B:B2:C5:62:4E:CB:9C:62:53:AC:65:7C:D4:82:3B:B8:CD:9A:C4:7F:F2:25"]
+      }
+    }]
