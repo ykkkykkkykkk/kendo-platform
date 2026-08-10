@@ -59,6 +59,18 @@ export default function PrivacyPage() {
         어떤 목적으로 다루는지, 이용자가 어떤 권리를 갖는지 알려드리기 위한 것입니다.
       </p>
 
+      {/* 구글 플레이 심사자가 삭제 절차를 바로 찾을 수 있게 맨 위에 둔다 */}
+      <div className="mt-5 border border-ink rounded-xl px-4 py-3.5">
+        <p className="text-ink font-bold text-[14px]">계정 및 데이터 삭제</p>
+        <p className="text-ink-600 text-[13px] leading-[1.7] mt-1">
+          마이페이지 → 맨 아래 <strong className="text-ink">회원 탈퇴</strong>를 누르면
+          계정과 활동 기록이 즉시 삭제됩니다. 계정을 유지한 채 일부만 지울 수도 있습니다.
+        </p>
+        <a href="/data-deletion" className="inline-block text-[13px] text-ink underline mt-1.5">
+          삭제 방법 자세히 보기 →
+        </a>
+      </div>
+
       <Section n="1" title="수집하는 개인정보 항목">
         <p>서비스는 <strong className="text-ink">회원가입과 서비스 이용에 꼭 필요한 최소한</strong>만 받습니다.
           이름·주민등록번호·주소·결제정보는 받지 않습니다.</p>

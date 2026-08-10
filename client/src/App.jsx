@@ -8,6 +8,7 @@ import NickLoginModal    from './components/NickLoginModal.jsx';
 import KakaoLoginModal   from './components/KakaoLoginModal.jsx';
 import KakaoCallback     from './pages/KakaoCallback.jsx';
 import PrivacyPage       from './pages/PrivacyPage.jsx';
+import DataDeletionPage  from './pages/DataDeletionPage.jsx';
 import { initKakao, kakaoConfigured } from './utils/kakaoSdk.js';
 import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import AugustEventPopup  from './components/AugustEventPopup.jsx';
@@ -91,6 +92,9 @@ export default function App() {
           } />
           <Route path="/privacy" element={
             <PageTransition><PrivacyPage /></PageTransition>
+          } />
+          <Route path="/data-deletion" element={
+            <PageTransition><DataDeletionPage /></PageTransition>
           } />
           <Route path="/oauth/kakao" element={<KakaoCallback />} />
           <Route path="/feed" element={
