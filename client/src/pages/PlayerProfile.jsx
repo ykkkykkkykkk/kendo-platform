@@ -17,6 +17,10 @@ import PlayerAvatar         from '../components/PlayerAvatar.jsx';
 import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
 import InquiryModal        from '../components/InquiryModal.jsx';
 import PlayerQnA           from '../components/PlayerQnA.jsx';
+import CheerCard          from '../components/CheerCard.jsx';
+import TrueFansSection    from '../components/TrueFansSection.jsx';
+import GradeUpModal       from '../components/GradeUpModal.jsx';
+import { CHEER_ENABLED }  from '../featureFlags.js';
 
 function BioText({ text }) {
   const parts = text.split(/([""][^""]*[""])/);
@@ -125,6 +129,7 @@ export default function PlayerProfile({ onLoginRequest }) {
   const [myBookings,    setMyBookings]    = useState(new Set());
   const [profilePhoto,  setProfilePhoto]  = useState(null);
   const [showInquiry,   setShowInquiry]   = useState(false);
+  const [gradeUp,       setGradeUp]       = useState(null);   // 등급 상승 축하 모달용
 
   // 선수 본인 여부
   const isMyProfile = user?.role === 'player' && user?.playerId === player?.id;
@@ -331,6 +336,17 @@ export default function PlayerProfile({ onLoginRequest }) {
       ════════════════════════════════════════ */}
       <div className="px-5 pb-6">
 
+        {/* ── 오늘의 응원 (보류 — featureFlags.CHEER_ENABLED) ── */}
+        {CHEER_ENABLED && (
+          <CheerCard
+            playerId={player.id}
+            playerName={player.name}
+            user={user}
+            onLoginRequest={onLoginRequest}
+            onGradeUp={setGradeUp}
+          />
+        )}
+
         {/* ── 소개 ── */}
         {player.bio && (
           <section className="mt-8">
@@ -426,6 +442,9 @@ export default function PlayerProfile({ onLoginRequest }) {
           )}
         </section>
 
+        {/* ── 찐팬 명단 (보류 — featureFlags.CHEER_ENABLED) ── */}
+        {CHEER_ENABLED && <TrueFansSection playerId={player.id} playerName={player.name} />}
+
         {/* ── 선수 Q&A ── */}
         <PlayerQnA
           slug={player.slug}
@@ -451,6 +470,7 @@ export default function PlayerProfile({ onLoginRequest }) {
 
         <AnimatePresence>
           {showInquiry && <InquiryModal onClose={() => setShowInquiry(false)} />}
+          {CHEER_ENABLED && gradeUp && <GradeUpModal data={gradeUp} onClose={() => setGradeUp(null)} />}
         </AnimatePresence>
 
       </div>

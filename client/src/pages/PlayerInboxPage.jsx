@@ -5,6 +5,8 @@ import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import PostComposer from '../components/PostComposer.jsx';
+import PlayerFanList from '../components/PlayerFanList.jsx';
+import { CHEER_ENABLED } from '../featureFlags.js';
 
 /** 'YYYY-MM-DD HH:MM:SS'(UTC) → '3분 전' */
 function since(s) {
@@ -151,12 +153,15 @@ export default function PlayerInboxPage() {
   const { user } = useAuth();
   const [data, setData]     = useState(null);
   const [loading, setLoad]  = useState(true);
-  const [tab, setTab]       = useState('todo');   // todo | question | comment
+  const [tab, setTab]       = useState('todo');   // todo | question | comment | cheer
+  const [fans, setFans]     = useState(null);    // 나를 응원한 팬 (오늘의 응원)
 
   const load = useCallback(async () => {
     const d = await api.playerInbox();
     setData(d);
     setLoad(false);
+    // 응원 목록은 실패해도 받은편지함을 막지 않는다
+    if (CHEER_ENABLED) api.playerFans().then((f) => { if (f && !f.error) setFans(f); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -195,6 +200,7 @@ export default function PlayerInboxPage() {
     ['todo',     `답할 것 ${todoCount}`],
     ['question', `질문 ${questions.length}`],
     ['comment',  `댓글 ${comments.length}`],
+    ...(CHEER_ENABLED ? [['cheer', `응원 ${fans?.totalCount ?? 0}`]] : []),
   ];
 
   return (
@@ -250,6 +256,8 @@ export default function PlayerInboxPage() {
             </div>
           )
         )}
+
+        {CHEER_ENABLED && tab === 'cheer' && <PlayerFanList data={fans} />}
 
         {tab === 'comment' && (
           comments.length === 0 ? (

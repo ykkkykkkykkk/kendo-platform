@@ -8,13 +8,17 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import './index.css';
 import { keepServiceWorkerFresh } from './swUpdate.js';
+import { initMonitoring } from './monitoring.js';
+import RouteTracker from './RouteTracker.jsx';
 
 keepServiceWorkerFresh();
+initMonitoring();
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
+      <RouteTracker />
       <AuthProvider>
         <ToastProvider>
           <App />

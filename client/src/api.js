@@ -93,6 +93,22 @@ export const api = {
   notifications: ()            => authGet('/notifications'),
   readNotifications: (id)      => authPut('/notifications/read', id ? { id } : {}),
 
+  // 오늘의 응원(하트) · 팬 등급
+  cheerStatus:  (playerId) => authGet(`/cheers/${playerId}/me`),
+  cheer:        (playerId) => authPost('/cheers', { playerId }),
+  trueFans:     (playerId) => get(`/cheers/${playerId}/top`),
+  myCheers:     ()         => authGet('/cheers/mine'),
+  playerFans:   ()         => authGet('/cheers/player/fans'),
+
+  // 자유게시판
+  boardList:          (page = 1)     => get(`/board?page=${page}`),
+  boardCreate:        (body)         => authPost('/board', body),
+  boardDetail:        (id)           => authGet(`/board/${id}`),
+  boardComment:       (id, content, parentId) => authPost(`/board/${id}/comment`, { content, parent_id: parentId }),
+  boardLike:          (id)           => authPost(`/board/${id}/like`, {}),
+  boardReport:        (t, id)        => authPost('/board/report', { target_type: t, target_id: id }),
+  boardDelete:        (id)           => authDelete(`/board/${id}`),
+  boardDeleteComment: (cid)          => authDelete(`/board/comment/${cid}`),
   // 마이페이지
   me:           ()          => authGet('/me'),
   updateMe:     (body)      => authPost('/me', body),

@@ -28,6 +28,9 @@ import PickInputPage             from './pages/PickInputPage.jsx';
 import DrawPage                  from './pages/DrawPage.jsx';
 import FeedPage                  from './pages/FeedPage.jsx';
 import PlayerInboxPage           from './pages/PlayerInboxPage.jsx';
+import BoardPage                from './pages/BoardPage.jsx';
+import BoardWritePage           from './pages/BoardWritePage.jsx';
+import BoardPostPage            from './pages/BoardPostPage.jsx';
 import RankingPage               from './pages/RankingPage.jsx';
 import SearchPage                from './pages/SearchPage.jsx';
 import Shop                from './pages/Shop.jsx';
@@ -102,6 +105,15 @@ export default function App() {
           } />
           <Route path="/player" element={
             <PageTransition><PlayerInboxPage /></PageTransition>
+          } />
+          <Route path="/board" element={
+            <PageTransition><BoardPage onLoginRequest={openLogin} /></PageTransition>
+          } />
+          <Route path="/board/write" element={
+            <PageTransition><BoardWritePage /></PageTransition>
+          } />
+          <Route path="/board/:id" element={
+            <PageTransition><BoardPostPage onLoginRequest={openLogin} /></PageTransition>
           } />
           <Route path="/predictions" element={
             <PageTransition><PredictionsPage onLoginRequest={openLogin} /></PageTransition>

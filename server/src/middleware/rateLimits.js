@@ -29,13 +29,18 @@ export const predictionLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 관리자 API: 1분에 60회 (운영 편의성 우선)
+/* 관리자 API: 1분에 120회.
+ * 사이드바가 화면을 옮길 때마다 배지 숫자용으로 4개 엔드포인트를 조회한다.
+ * 60회였을 때는 1분에 15번만 클릭해도 한도에 닿아 화면이 비어 보였다.
+ * 이 라우터는 이미 ADMIN_TOKEN으로 막혀 있으므로 한도는 폭주 방지용이면 충분하다. */
 export const adminLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 120,
   message: { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // 다른 리미터와 달리 이 탈출구가 없어서 테스트 때 RATE_LIMIT_OFF가 먹지 않았다
+  skip: () => SKIP,
 });
 
 // 방문 기록: 1분에 60회 (한 클라가 페이지 이동마다 핑 — 넉넉하게)
@@ -45,4 +50,15 @@ export const trackLimiter = rateLimit({
   message: { ok: false },
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+// 응원 하트: 1분에 20회.
+// 하루 1회는 DB의 UNIQUE가 이미 막는다. 이건 여러 선수를 연타로 도는 걸 막는 용도다.
+export const cheerLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: '응원이 너무 빠릅니다. 잠시 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => SKIP,
 });

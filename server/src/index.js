@@ -25,10 +25,14 @@ import inquiriesRouter   from './routes/inquiries.js';
 import questionsRouter    from './routes/questions.js';
 import trackRouter        from './routes/track.js';
 import pushRouter         from './routes/push.js';
+import cheersRouter       from './routes/cheers.js';
+import boardRouter        from './routes/board.js';
+import adminBoardRouter   from './routes/admin-board.js';
 
 import playerClaimsRouter      from './routes/player-claims.js';
 import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
-import { authLimiter, predictionLimiter, adminLimiter, trackLimiter } from './middleware/rateLimits.js';
+import { authLimiter, predictionLimiter, adminLimiter, trackLimiter, cheerLimiter } from './middleware/rateLimits.js';
+import { initSentry, Sentry } from './monitoring.js';
 
 /* ── 필수 환경변수 검증 (없으면 서버 시작 거부) ── */
 for (const key of ['JWT_SECRET', 'ADMIN_TOKEN']) {
@@ -37,6 +41,9 @@ for (const key of ['JWT_SECRET', 'ADMIN_TOKEN']) {
     process.exit(1);
   }
 }
+
+/* 에러 추적은 라우트가 붙기 전에 켠다 */
+const sentryOn = initSentry();
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
@@ -100,8 +107,14 @@ app.use('/api',             inquiriesRouter);
 app.use('/api',             questionsRouter);
 app.use('/api',             picksRouter);
 app.use('/api',             trackLimiter,      trackRouter);
+app.use('/api/cheers',      cheerLimiter,      cheersRouter);
+app.use('/api/board',       boardRouter);
+app.use('/api/admin/board', adminLimiter,      adminBoardRouter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+/* Sentry가 먼저 예외를 받아 기록하고, 응답 생성은 아래 핸들러가 한다 */
+if (sentryOn) Sentry.setupExpressErrorHandler(app);
 
 /* ── 글로벌 에러 핸들러 ── */
 app.use((err, _req, res, _next) => {

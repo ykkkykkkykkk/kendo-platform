@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "kr.minorstar.twa",
-        "sha256_cert_fingerprints": ["17:12:1A:95:ED:02:AE:13:97:BF:9B:B2:C5:62:4E:CB:9C:62:53:AC:65:7C:D4:82:3B:B8:CD:9A:C4:7F:F2:25"]
+        "sha256_cert_fingerprints": ["CE:E1:D4:BC:FE:D1:12:D3:87:65:F8:7D:59:83:F2:B7:58:F5:7E:56:DD:23:FC:E3:06:13:22:37:F8:CE:44:A8"]
       }
     }]

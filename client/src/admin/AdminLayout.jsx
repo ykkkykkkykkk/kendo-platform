@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail,
+  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail, MessagesSquare,
 } from 'lucide-react';
 import { adminGet } from './adminApi.js';
 
@@ -17,6 +17,7 @@ const NAV = [
   { to: '/admin/clinics',      label: '클리닉',     icon: Dumbbell },
   { to: '/admin/sponsorships', label: '스폰서',     icon: Star },
   { to: '/admin/questions',    label: 'Q&A',        icon: MessageCircle },
+  { to: '/admin/board',        label: '자유게시판', icon: MessagesSquare },
 ];
 
 export default function AdminLayout({ children, onLogout }) {
@@ -28,6 +29,7 @@ export default function AdminLayout({ children, onLogout }) {
   const [pendingClaims, setPendingClaims] = useState(0);
   const [pendingDojos,  setPendingDojos]  = useState(0);
   const [pendingInq,    setPendingInq]    = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
   useEffect(() => {
     adminGet('/player-claims?status=pending')
       .then((d) => setPendingClaims(d?.pending_count ?? 0))
@@ -39,12 +41,17 @@ export default function AdminLayout({ children, onLogout }) {
     adminGet('/inquiries?status=pending')
       .then((d) => setPendingInq(Array.isArray(d) ? d.length : 0))
       .catch(() => {});
+    // 신고는 쌓이면 바로 봐야 한다. 이미 가려진 것도 해제 판단이 필요하므로 전부 센다.
+    adminGet('/board/reports')
+      .then((d) => setPendingReports(Array.isArray(d) ? d.length : 0))
+      .catch(() => {});
   }, [location.pathname]);
 
   const badgeOf = (to) =>
     to === '/admin/player-claims' ? pendingClaims
     : to === '/admin/dojo-requests' ? pendingDojos
     : to === '/admin/inquiries' ? pendingInq
+    : to === '/admin/board' ? pendingReports
     : 0;
 
   const handleLogout = () => {

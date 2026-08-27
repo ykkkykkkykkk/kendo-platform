@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, MessagesSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
@@ -171,7 +171,15 @@ export default function Home({ onLoginRequest }) {
               MINOR—STAR<span className="align-super text-[10px] font-medium">®</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2 pt-1">
+          {/* 아이콘이 4개라 좁은 폰(360px)에서 제목과 맞닿는다. gap-2면 넘치고 gap-1.5는 여유가 0이라 gap-1로 둔다. */}
+          <div className="flex items-center gap-1 pt-1">
+            <button
+              onClick={() => navigate('/board')}
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable"
+              aria-label="자유게시판"
+            >
+              <MessagesSquare size={16} strokeWidth={1.8} />
+            </button>
             <NotificationBell />
             <button
               onClick={() => navigate('/search')}
@@ -308,6 +316,22 @@ export default function Home({ onLoginRequest }) {
           </div>
         )}
       </section>
+
+      {/* ── 자유게시판 ───────────────────────────────── */}
+      <ScrollReveal delay={0.04}>
+      <section className="px-5 mt-10">
+        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">COMMUNITY</p>
+        <Link to="/board" className="block mt-3 pt-3 pressable" style={{ borderTop: '1.5px solid #111111' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-ink font-bold text-sm">자유게시판</p>
+              <p className="text-ink-400 text-xs mt-1">장비 질문, 대회 후기, 검도 이야기를 나누는 곳</p>
+            </div>
+            <span className="text-ink text-xs font-semibold flex-shrink-0">글 보러가기 →</span>
+          </div>
+        </Link>
+      </section>
+      </ScrollReveal>
 
       {/* ── 강습 일정 ────────────────────────────────── */}
       <ScrollReveal delay={0.05}>

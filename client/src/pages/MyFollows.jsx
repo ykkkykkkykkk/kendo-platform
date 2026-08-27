@@ -6,11 +6,14 @@ import { api } from '../api.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
+import FanGradeBadge from '../components/FanGradeBadge.jsx';
+import { CHEER_ENABLED } from '../featureFlags.js';
 
 export default function MyFollows() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { data, loading, refetch } = useFetch(api.myFollows);
+  const { data: cheers }          = useFetch(CHEER_ENABLED ? api.myCheers : null);   // 선수별 응원 누적·등급 (보류 중이면 조회 안 함)
   const [menuId, setMenuId] = useState(null);
 
   const unfollow = async (playerId) => {
@@ -64,8 +67,14 @@ export default function MyFollows() {
                   <PlayerAvatar slug={p.slug} name={p.name} color={p.color_primary}
                     size={40} profileImageUrl={p.profile_image_url} />
                   <div className="min-w-0">
-                    <p className="text-ink font-bold text-sm truncate">{p.name}</p>
-                    <p className="text-ink-400 text-xs mt-0.5">{p.team_name} · {p.dan_grade}단</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-ink font-bold text-sm truncate">{p.name}</p>
+                      {CHEER_ENABLED && <FanGradeBadge grade={cheers?.[p.id]?.grade} size="sm" />}
+                    </div>
+                    <p className="text-ink-400 text-xs mt-0.5">
+                      {p.team_name} · {p.dan_grade}단
+                      {CHEER_ENABLED && cheers?.[p.id]?.days ? ` · 🔥 ${cheers[p.id].days}일` : ''}
+                    </p>
                   </div>
                 </Link>
                 <button onClick={() => setMenuId(menuId === p.id ? null : p.id)}

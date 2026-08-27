@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
+import FanGradeBadge from '../components/FanGradeBadge.jsx';
+import { CHEER_ENABLED } from '../featureFlags.js';
 import DojoChangeModal from '../components/DojoChangeModal.jsx';
 import KakaoConnectRow from '../components/KakaoConnectRow.jsx';
 import PlayerClaimRow from '../components/PlayerClaimRow.jsx';
@@ -191,6 +193,7 @@ export default function MyPage() {
   const { showToast }  = useToast();
   const { data, loading, refetch } = useFetch(api.me);
   const { data: follows } = useFetch(api.myFollows);
+  const { data: cheers }  = useFetch(CHEER_ENABLED ? api.myCheers : null);   // 선수별 응원 누적·등급 (보류 중이면 조회 안 함)
 
   // 선수 계정 본인 영상. 서버가 토큰의 playerId로 대상을 정하므로 선수 id를 넘기지 않는다.
   const myVideoApi = useMemo(() => ({
@@ -301,8 +304,14 @@ export default function MyPage() {
                 <PlayerAvatar slug={p.slug} name={p.name} color={p.color_primary}
                   size={36} profileImageUrl={p.profile_image_url} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-ink text-sm font-bold truncate">{p.name}</p>
-                  <p className="text-ink-400 text-xs mt-0.5">{p.team_name}{p.dan_grade ? ` · ${p.dan_grade}단` : ''}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-ink text-sm font-bold truncate">{p.name}</p>
+                    {CHEER_ENABLED && <FanGradeBadge grade={cheers?.[p.id]?.grade} size="sm" showLabel={false} />}
+                  </div>
+                  <p className="text-ink-400 text-xs mt-0.5">
+                    {p.team_name}{p.dan_grade ? ` · ${p.dan_grade}단` : ''}
+                    {CHEER_ENABLED && cheers?.[p.id]?.days ? ` · 🔥 ${cheers[p.id].days}일` : ''}
+                  </p>
                 </div>
                 <ChevronRight size={15} className="text-ink-400 flex-none" />
               </Link>

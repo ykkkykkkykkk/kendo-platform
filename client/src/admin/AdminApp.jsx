@@ -23,6 +23,7 @@ import PlayerClaims      from './pages/player-claims/PlayerClaims.jsx';
 import DojoRequests      from './pages/dojos/DojoRequests.jsx';
 import InquiryList      from './pages/inquiries/InquiryList.jsx';
 import QuestionList     from './pages/questions/QuestionList.jsx';
+import BoardAdmin       from './pages/board/BoardAdmin.jsx';
 
 const TOKEN_KEY = 'kendo_admin_token';
 
@@ -70,6 +71,7 @@ export default function AdminApp() {
         <Route path="dojo-requests"                element={<DojoRequests />} />
         <Route path="inquiries"                    element={<InquiryList />} />
         <Route path="questions"                    element={<QuestionList />} />
+        <Route path="board"                        element={<BoardAdmin />} />
       </Routes>
     </AdminLayout>
   );
