@@ -248,7 +248,7 @@ export default function DrawPage() {
                 />
               </div>
               <p className="text-center text-[11px] text-ink-400 mt-1">
-                위아래로 내려서 보세요 · 손가락으로 확대할 수 있어요
+                좌우로 밀어서 보세요 · 손가락으로 확대할 수 있어요
               </p>
             </div>
           ) : (

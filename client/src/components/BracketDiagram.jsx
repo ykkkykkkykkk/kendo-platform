@@ -3,24 +3,20 @@ import { useMemo } from 'react';
 /**
  * 종이 대진표 모양의 토너먼트 도면.
  *
- * 두 조를 **위아래로 쌓는다**. 종이 대진표처럼 좌우로 마주보게 그리면 폭이 두 배가 되어
- * 폰에서는 가로로 밀어야만 읽힌다. 위아래로 쌓으면 폭이 절반이라 한 화면에 들어오고,
- * 폰에서 자연스러운 세로 스크롤로 읽힌다. 각 조는 이름이 왼쪽, 회전이 오른쪽으로 진행하고
- * 두 조 우승자가 오른쪽 끝에서 만나 결승이 된다.
+ * 검도 대회 대진표는 왼쪽 조와 오른쪽 조가 가운데 결승을 향해 마주보는 형태이고,
+ * 선수들이 그 배치에 눈이 익어 있다. 조별 목록으로 풀어 보여주면 같은 정보라도 낯설다.
  *
  * 크기: 자연 크기(px)를 min-width로 두고 부모가 가로 스크롤한다.
+ *   - 폰: 줄여서 뭉개지 않고 자연 크기로 두어 밀어서 본다
+ *   - PC: 폭이 남으므로 100%로 늘어나 한 번에 다 보인다
  * 픽 배지는 SVG 좌표에 고정으로 그리므로 칸 크기가 변하지 않는다(레이아웃이 밀리지 않음).
  */
 
-// 위아래로 쌓으면서 확보한 폭을 실제로 써먹으려면 칸도 같이 줄여야 한다.
-// 이 값이면 5회전짜리 개인전이 400px — 폰 한 화면에 거의 들어온다(좌우 배치일 땐 1046px).
-const ROW_H   = 24;   // 참가자 한 줄 높이
-const COL_W   = 48;   // 라운드 한 칸 폭
-const NAME_W  = 100;  // 이름 칸 폭
-const FINAL_W = 44;   // 오른쪽 끝 결승 칸
-const LABEL_H = 18;   // 조 이름 줄
-const GAP     = 14;   // 두 조 사이 간격
-const PAD     = 8;
+const ROW_H  = 24;   // 참가자 한 줄 높이
+const COL_W  = 62;   // 라운드 한 칸 폭
+const NAME_W = 116;  // 이름 칸 폭
+const CENTER = 54;   // 가운데 결승 칸
+const PAD    = 8;
 
 /* 순위별 표시. 칸 안에 들어가는 크기라 브래킷이 밀리지 않는다. */
 export const RANKS = [
@@ -35,7 +31,7 @@ const rankOf = (key) => RANKS.find((r) => r.key === key);
 function layoutGroup(matches) {
   const byNumber = new Map(matches.map((m) => [m.number, m]));
   const root = matches.find((m) => m.is_group_final) ?? matches[matches.length - 1];
-  if (!root) return { rows: 0, nodes: [], leaves: [], maxDepth: 0, rootY: 0, rootDepth: 1 };
+  if (!root) return { rows: 0, nodes: [], leaves: [], maxDepth: 0, rootY: 0 };
 
   const leaves = [];
   const nodes  = [];
@@ -62,8 +58,7 @@ function layoutGroup(matches) {
   walk(root, null);
 
   const maxDepth = Math.max(...nodes.map((n) => n.depth), 1);
-  const last = nodes[nodes.length - 1];
-  return { rows: row, nodes, leaves, maxDepth, rootY: last?.y ?? 0, rootDepth: last?.depth ?? 1 };
+  return { rows: row, nodes, leaves, maxDepth, rootY: nodes[nodes.length - 1]?.y ?? 0 };
 }
 
 const nameOf = (side) => (side?.kind === 'player' ? (side.name ?? '') : '');
@@ -74,101 +69,117 @@ export default function BracketDiagram({
   onTapTeam,             // (side, event) => void — 없으면 보기 전용
   fontScale = 1,
 }) {
-  const top    = division?.groups?.[0];
-  const bottom = division?.groups?.[1];
+  const left  = division?.groups?.[0];
+  const right = division?.groups?.[1];
 
-  const T = useMemo(() => layoutGroup(top?.matches ?? []),    [top]);
-  const B = useMemo(() => layoutGroup(bottom?.matches ?? []), [bottom]);
+  const L = useMemo(() => layoutGroup(left?.matches ?? []),  [left]);
+  const R = useMemo(() => layoutGroup(right?.matches ?? []), [right]);
 
-  if (!T.rows && !B.rows) return null;
+  if (!L.rows && !R.rows) return null;
 
-  const cols   = Math.max(T.maxDepth, B.maxDepth);
-  const xName  = PAD;
-  const xCol   = (d) => PAD + NAME_W + (d - 1) * COL_W;
-  const xTree  = PAD + NAME_W + cols * COL_W;   // 트리 오른쪽 끝
-  const xJoin  = xTree + FINAL_W / 2;           // 두 조 우승자가 만나는 세로선
-  const width  = xTree + FINAL_W + PAD;
+  const cols   = Math.max(L.maxDepth, R.maxDepth);
+  const halfW  = NAME_W + cols * COL_W;
+  const width  = halfW * 2 + CENTER + PAD * 2;
+  const height = Math.max(L.rows, R.rows) * ROW_H + PAD * 2;
 
-  const yTop    = PAD + LABEL_H;
-  const yBottom = yTop + T.rows * ROW_H + GAP + LABEL_H;
-  const height  = yBottom + B.rows * ROW_H + PAD;
+  const xLeftName  = PAD;
+  const xLeftCol   = (d) => PAD + NAME_W + (d - 1) * COL_W;
+  const xRightName = width - PAD - NAME_W;
+  const xRightCol  = (d) => width - PAD - NAME_W - (d - 1) * COL_W;
 
   const fs   = 10.5 * fontScale;
   const fsNo = 8    * fontScale;
 
-  const Group = ({ data, offsetY }) => (
-    <g>
-      {data.leaves.map((lf, i) => {
-        const y      = lf.y + offsetY;
-        const xEnd   = xCol(lf.depth);
-        const xStart = xName + NAME_W;
-        const pid    = lf.side?.participant_id;
-        const rank   = pid != null ? rankOf(picks[pid]) : null;
-        const tappable = !!onTapTeam && lf.side?.kind === 'player';
+  const Half = ({ data, side }) => {
+    const isLeft = side === 'left';
+    const xName  = isLeft ? xLeftName : xRightName;
+    const xCol   = isLeft ? xLeftCol  : xRightCol;
+    const dir    = isLeft ? 1 : -1;
 
-        return (
-          <g
-            key={`n${i}`}
-            onClick={tappable ? (e) => onTapTeam(lf.side, e) : undefined}
-            style={tappable ? { cursor: 'pointer' } : undefined}
-          >
-            {/* 이름 칸 배경 — 순위를 고른 팀만 칠한다. 칸 크기는 항상 같다. */}
-            {rank && (
-              <rect
-                x={xName} y={y - ROW_H / 2 + 2}
-                width={NAME_W} height={ROW_H - 4}
-                fill={rank.fill} rx="3"
-              />
-            )}
-            {/* 탭 영역 — 배경이 없어도 누를 수 있게 투명 사각형을 깐다 */}
-            {tappable && !rank && (
-              <rect x={xName} y={y - ROW_H / 2 + 2} width={NAME_W} height={ROW_H - 4} fill="transparent" />
-            )}
+    return (
+      <g>
+        {data.leaves.map((lf, i) => {
+          const xEnd   = xCol(lf.depth);
+          const xStart = isLeft ? xName + NAME_W : xName;
+          const pid    = lf.side?.participant_id;
+          const rank   = pid != null ? rankOf(picks[pid]) : null;
+          const tappable = !!onTapTeam && lf.side?.kind === 'player';
 
-            <text
-              x={xStart - 20} y={y + fs * 0.35}
-              textAnchor="end" fontSize={fs}
-              fontWeight={rank ? 'bold' : 'normal'}
-              fill={rank ? rank.text : '#111'}
+          // 이름 칸 배경 — 순위를 고른 팀만 칠한다. 칸 크기는 항상 같다.
+          const boxX = isLeft ? xName : xName;
+          return (
+            <g
+              key={`n${i}`}
+              onClick={tappable ? (e) => onTapTeam(lf.side, e) : undefined}
+              style={tappable ? { cursor: 'pointer' } : undefined}
             >
-              {nameOf(lf.side)}
-            </text>
+              {rank && (
+                <rect
+                  x={boxX} y={lf.y - ROW_H / 2 + 2}
+                  width={NAME_W} height={ROW_H - 4}
+                  fill={rank.fill} rx="3"
+                />
+              )}
+              {/* 탭 영역 — 배경이 없어도 누를 수 있게 투명 사각형을 깐다 */}
+              {tappable && !rank && (
+                <rect x={boxX} y={lf.y - ROW_H / 2 + 2} width={NAME_W} height={ROW_H - 4} fill="transparent" />
+              )}
 
-            {/* 순위 배지 — 칸 안쪽 끝에 붙인다 */}
-            {rank && (
               <text
-                x={xStart - 5} y={y + fsNo * 0.36}
-                textAnchor="end" fontSize={fsNo + 1} fontWeight="bold" fill={rank.text}
+                x={isLeft ? xStart - 20 : xStart + 20}
+                y={lf.y + fs * 0.35}
+                textAnchor={isLeft ? 'end' : 'start'}
+                fontSize={fs}
+                fontWeight={rank ? 'bold' : 'normal'}
+                fill={rank ? rank.text : '#111'}
               >
-                {rank.short}
+                {nameOf(lf.side)}
               </text>
-            )}
 
-            <line x1={xStart} y1={y} x2={xEnd} y2={y} stroke="#111" strokeWidth="1" />
-          </g>
-        );
-      })}
+              {/* 순위 배지 — 칸 안쪽 끝에 붙인다 */}
+              {rank && (
+                <text
+                  x={isLeft ? xStart - 5 : xStart + 5}
+                  y={lf.y + fsNo * 0.36}
+                  textAnchor={isLeft ? 'end' : 'start'}
+                  fontSize={fsNo + 1} fontWeight="bold" fill={rank.text}
+                >
+                  {rank.short}
+                </text>
+              )}
 
-      {data.nodes.map((n) => {
-        const x  = xCol(n.depth);
-        const x2 = n.parentDepth ? xCol(n.parentDepth) : x + COL_W;
-        const y  = n.y + offsetY;
-        return (
-          <g key={`m${n.m.number}`}>
-            <line x1={x} y1={n.yA + offsetY} x2={x} y2={n.yB + offsetY} stroke="#111" strokeWidth="1" />
-            <line x1={x} y1={y} x2={x2} y2={y} stroke="#111" strokeWidth="1" />
-            <rect x={x + 2} y={y - 6} width="14" height="12" fill="#fff" stroke="#111" strokeWidth="0.6" />
-            <text x={x + 9} y={y + fsNo * 0.36} textAnchor="middle" fontSize={fsNo} fill="#111">
-              {n.m.number}
-            </text>
-          </g>
-        );
-      })}
-    </g>
-  );
+              <line x1={xStart} y1={lf.y} x2={xEnd} y2={lf.y} stroke="#111" strokeWidth="1" />
+            </g>
+          );
+        })}
 
-  const tRootY = yTop    + T.rootY;
-  const bRootY = yBottom + B.rootY;
+        {data.nodes.map((n) => {
+          const x  = xCol(n.depth);
+          const x2 = n.parentDepth ? xCol(n.parentDepth) : x + dir * COL_W;
+          return (
+            <g key={`m${n.m.number}`}>
+              <line x1={x} y1={n.yA} x2={x} y2={n.yB} stroke="#111" strokeWidth="1" />
+              <line x1={x} y1={n.y} x2={x2} y2={n.y} stroke="#111" strokeWidth="1" />
+              <rect
+                x={isLeft ? x + 2 : x - 16} y={n.y - 6}
+                width="14" height="12" fill="#fff" stroke="#111" strokeWidth="0.6"
+              />
+              <text
+                x={isLeft ? x + 9 : x - 9} y={n.y + fsNo * 0.36}
+                textAnchor="middle" fontSize={fsNo} fill="#111"
+              >
+                {n.m.number}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  };
+
+  const centerY = height / 2;
+  const ly = L.rootY || centerY;
+  const ry = R.rootY || centerY;
 
   return (
     <svg
@@ -178,29 +189,17 @@ export default function BracketDiagram({
       role="img"
       aria-label={`${division.label} 대진표`}
     >
-      {/* 조 이름 — 위아래로 쌓으면 어느 덩어리가 어느 조인지가 안 보인다 */}
-      {top && (
-        <text x={xName} y={yTop - 6} fontSize={fsNo + 1} fontWeight="bold" fill="#8A8A8A">
-          {top.group}조
-        </text>
-      )}
-      {bottom && (
-        <text x={xName} y={yBottom - 6} fontSize={fsNo + 1} fontWeight="bold" fill="#8A8A8A">
-          {bottom.group}조
-        </text>
-      )}
-
-      {top    && <Group data={T} offsetY={yTop} />}
-      {bottom && <Group data={B} offsetY={yBottom} />}
+      {left  && <Half data={L} side="left" />}
+      {right && <Half data={R} side="right" />}
 
       {division.final && (
         <g>
-          <line x1={xCol(T.rootDepth) + COL_W} y1={tRootY} x2={xJoin} y2={tRootY} stroke="#111" strokeWidth="1" />
-          <line x1={xCol(B.rootDepth) + COL_W} y1={bRootY} x2={xJoin} y2={bRootY} stroke="#111" strokeWidth="1" />
-          <line x1={xJoin} y1={tRootY} x2={xJoin} y2={bRootY} stroke="#111" strokeWidth="1" />
-          <circle cx={xJoin} cy={(tRootY + bRootY) / 2} r={8} fill="#111" />
+          <line x1={xLeftCol(L.maxDepth) + COL_W}  y1={ly} x2={width / 2} y2={ly} stroke="#111" strokeWidth="1" />
+          <line x1={xRightCol(R.maxDepth) - COL_W} y1={ry} x2={width / 2} y2={ry} stroke="#111" strokeWidth="1" />
+          <line x1={width / 2} y1={ly} x2={width / 2} y2={ry} stroke="#111" strokeWidth="1" />
+          <circle cx={width / 2} cy={(ly + ry) / 2} r={8} fill="#111" />
           <text
-            x={xJoin} y={(tRootY + bRootY) / 2 + fsNo * 0.36}
+            x={width / 2} y={(ly + ry) / 2 + fsNo * 0.36}
             textAnchor="middle" fontSize={fsNo} fill="#D8FF3E" fontWeight="bold"
           >
             결
