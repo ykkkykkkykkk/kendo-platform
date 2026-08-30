@@ -6,14 +6,29 @@ import { useToast } from '../context/ToastContext.jsx';
 import BracketDiagram, { RANKS } from '../components/BracketDiagram.jsx';
 import { PickSummaryBar, RankPopover } from '../components/BracketPickBar.jsx';
 
-/* 대회 슬러그 — 지금은 대회가 하나뿐이라 고정. 여러 개가 되면 목록에서 고르게 바꾼다. */
-const SLUG = '2026';
+/* 어느 대회를 먼저 보여줄지. 지금 열려 있는 대회가 먼저다 —
+   종료된 대회를 기본으로 띄우면 픽을 넣을 수 없는 화면이 첫 화면이 된다. */
+const STATUS_ORDER = { 진행: 0, 예정: 1, 종료: 2 };
 
 /* 대진표를 보면서 그 자리에서 우승 예측을 한다.
    따로 픽 화면으로 들어가 명단에서 고르는 것보다, 대진을 보며 고르는 편이 자연스럽다.
    저장은 기존 픽 API를 그대로 쓴다(1등·2등·3등 둘 = 네 자리). */
 export default function DrawPage() {
-  const { data, loading, error } = useFetch(() => api.draw(SLUG), [SLUG]);
+  const { data: tData, loading: tLoading } = useFetch(() => api.tournaments(), []);
+
+  const tournaments = useMemo(() => {
+    const list = Array.isArray(tData) ? tData : [];
+    return [...list].sort((a, b) =>
+      (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3) ||
+      String(b.start_date ?? '').localeCompare(String(a.start_date ?? '')));
+  }, [tData]);
+
+  const [slug, setSlug] = useState(null);
+  useEffect(() => {
+    if (slug == null && tournaments.length) setSlug(tournaments[0].slug);
+  }, [tournaments, slug]);
+
+  const { data, loading, error } = useFetch(slug ? () => api.draw(slug) : null, [slug]);
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -27,6 +42,9 @@ export default function DrawPage() {
 
   const divisions = data?.divisions ?? [];
   const division  = divisions[divIdx] ?? null;
+
+  /* 대회를 바꾸면 부문 번호가 그대로 남아 엉뚱한 부문(또는 없는 부문)을 가리킨다 */
+  useEffect(() => { setDivIdx(0); }, [slug]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -132,7 +150,9 @@ export default function DrawPage() {
     } finally { setSaving(false); }
   };
 
-  if (loading) {
+  // 대회 목록을 받아 슬러그를 정하기 전까지도 스켈레톤이다 —
+  // 여기서 놓치면 '대진표가 없습니다'가 한 번 번쩍이고 지나간다.
+  if (tLoading || (slug == null && tournaments.length > 0) || loading) {
     return (
       <main className="page-body bg-paper min-h-screen px-5 pt-12">
         <div className="h-3 w-16 bg-ink-200 animate-pulse" />
@@ -163,6 +183,24 @@ export default function DrawPage() {
           {data.name}{data.venue && <> · {data.venue}</>}
         </p>
       </header>
+
+      {/* 대회 탭 — 대회가 둘 이상일 때만 보인다 */}
+      {tournaments.length > 1 && (
+        <div className="flex gap-2 px-5 mt-5 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {tournaments.map((t) => (
+            <button
+              key={t.slug}
+              onClick={() => setSlug(t.slug)}
+              className={`flex-none px-3.5 py-2 rounded-full text-[13px] font-medium transition-all pressable border ${
+                t.slug === slug ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-600 border-ink-200'
+              }`}
+            >
+              {t.name}
+              {t.status === '종료' && <span className="ml-1.5 opacity-60">종료</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 부문 탭 */}
       <div className="flex flex-wrap gap-2 px-5 mt-5 mb-3">
@@ -210,7 +248,7 @@ export default function DrawPage() {
                 />
               </div>
               <p className="text-center text-[11px] text-ink-400 mt-1">
-                좌우로 밀어서 보세요 · 손가락으로 확대할 수 있어요
+                위아래로 내려서 보세요 · 손가락으로 확대할 수 있어요
               </p>
             </div>
           ) : (
