@@ -51,22 +51,28 @@ const NOT_BLANK   = "d.name NOT IN ('없음', '무소속', '-')";
 router.get('/dojos/august-event', async (req, res) => {
   try {
     const { rows } = await db.execute({
-      // 응답 필드 이름은 new_members 그대로 둔다 — 배너·팝업이 이 이름으로 읽는다.
+      /* 8월 말까지 가입한 관원만 센다. 총 관원 수로 세면서 상한을 안 두면 9월에도
+         숫자가 계속 늘어 발표한 순위가 나중에 뒤집힌다. 상한을 두면 8월 안에는
+         결과가 지금과 같고(미래 가입자가 있을 리 없다), 9월 1일부터 그대로 굳는다.
+         응답 필드 이름은 new_members 그대로 둔다 — 배너·팝업이 이 이름으로 읽는다. */
       sql: `SELECT d.id, d.name, COUNT(u.id) AS new_members
             FROM dojos d
-            JOIN users u ON u.dojo_id = d.id AND ${NOT_SEED}
+            JOIN users u ON u.dojo_id = d.id
+                        AND date(u.created_at, '+9 hours') <= ?
+                        AND ${NOT_SEED}
             WHERE ${NOT_BLANK}
             GROUP BY d.id
             HAVING new_members > 0
             ORDER BY new_members DESC, d.name`,
-      args: [],
+      args: [EVENT_END],
     });
 
     res.json({
       start_date: EVENT_START,
       end_date:   EVENT_END,
-      // 공동 순위: 같은 인원이면 같은 등수
-      top: rows.slice(0, 3).map((r, i) => ({
+      // 공동 순위: 같은 인원이면 같은 등수.
+      // 5위까지 준다 — 결과 발표 팝업이 등수대로 죽 보여준다.
+      top: rows.slice(0, 5).map((r) => ({
         ...r,
         rank: rows.findIndex((x) => x.new_members === r.new_members) + 1,
       })),
