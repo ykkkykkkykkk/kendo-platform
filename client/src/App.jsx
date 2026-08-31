@@ -14,6 +14,7 @@ import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import AugustEventPopup  from './components/AugustEventPopup.jsx';
 import PlayerLoginModal  from './components/PlayerLoginModal.jsx';
 import IOSInstallBanner  from './components/IOSInstallBanner.jsx';
+import PushSetupSheet    from './components/PushSetupSheet.jsx';
 import PageTransition  from './components/PageTransition.jsx';
 import Toaster         from './components/Toaster.jsx';
 import { Navigate }       from 'react-router-dom';
@@ -150,6 +151,7 @@ export default function App() {
       <IOSInstallBanner />
       <PlayerLinkNotice />
       <AugustEventPopup onRegisterRequest={openLogin} />
+      <PushSetupSheet />
 
       <AnimatePresence>
         {showLogin && !user && (

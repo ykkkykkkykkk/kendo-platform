@@ -8,6 +8,7 @@ import { db } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { normalizeVideoUrl } from '../utils/videoUrl.js';
 import { serverError } from '../utils/apiError.js';
+import { notify } from '../utils/notify.js';
 
 const router = Router();
 
@@ -255,7 +256,7 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
     if (!text) return res.status(400).json({ error: '댓글을 입력해주세요.' });
 
     const { rows: [post] } = await db.execute({
-      sql: 'SELECT id FROM board_posts WHERE id = ?', args: [postId],
+      sql: 'SELECT id, user_id, title FROM board_posts WHERE id = ?', args: [postId],
     });
     if (!post) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
 
@@ -277,6 +278,40 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
     await db.execute({
       sql: 'UPDATE board_posts SET comment_count = comment_count + 1 WHERE id = ?', args: [postId],
     });
+
+    /* 알림 — 글쓴이와, 대댓글이면 원 댓글 작성자에게.
+       내 글에 내가 다는 건 알릴 이유가 없고, 글쓴이와 원 댓글 작성자가 같은 사람이면
+       답글 쪽으로 한 번만 간다(같은 사건으로 두 번 울리지 않게). */
+    const me = req.user.userId;
+    const { rows: [writer] } = await db.execute({
+      sql: 'SELECT nickname FROM users WHERE id = ?', args: [me],
+    });
+    const who     = writer?.nickname ?? '누군가';
+    const snippet = text.length > 30 ? `${text.slice(0, 30)}…` : text;
+    const title   = post.title.length > 20 ? `${post.title.slice(0, 20)}…` : post.title;
+    const link    = `/board/${postId}`;
+    const done    = new Set([me]);
+
+    if (parentId) {
+      const { rows: [parent] } = await db.execute({
+        sql: 'SELECT user_id FROM board_comments WHERE id = ?', args: [parentId],
+      });
+      if (parent && !done.has(parent.user_id)) {
+        done.add(parent.user_id);
+        await notify([parent.user_id], {
+          type: 'board_reply',
+          message: `${who}님이 회원님 댓글에 답했어요 — "${snippet}"`,
+          link,
+        });
+      }
+    }
+    if (!done.has(post.user_id)) {
+      await notify([post.user_id], {
+        type: 'board_comment',
+        message: `${who}님이 "${title}"에 댓글을 남겼어요`,
+        link,
+      });
+    }
 
     res.status(201).json({ id: Number(lastInsertRowid) });
   } catch (e) { serverError(res, e, 'board-comment'); }
