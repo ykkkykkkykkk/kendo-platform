@@ -256,7 +256,7 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
     if (!text) return res.status(400).json({ error: '댓글을 입력해주세요.' });
 
     const { rows: [post] } = await db.execute({
-      sql: 'SELECT id, user_id, title FROM board_posts WHERE id = ?', args: [postId],
+      sql: 'SELECT id, user_id FROM board_posts WHERE id = ?', args: [postId],
     });
     if (!post) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
 
@@ -286,11 +286,11 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
     const { rows: [writer] } = await db.execute({
       sql: 'SELECT nickname FROM users WHERE id = ?', args: [me],
     });
-    const who     = writer?.nickname ?? '누군가';
-    const snippet = text.length > 30 ? `${text.slice(0, 30)}…` : text;
-    const title   = post.title.length > 20 ? `${post.title.slice(0, 20)}…` : post.title;
-    const link    = `/board/${postId}`;
-    const done    = new Set([me]);
+    // 알림엔 무슨 일이 있었는지만 담는다. 댓글 내용이나 글 제목을 미리보기로 넣으면
+    // 잠금화면에 그대로 뜨고, 알림창에서 다 읽어버려 들어올 이유가 없어진다.
+    const who  = writer?.nickname ?? '누군가';
+    const link = `/board/${postId}`;
+    const done = new Set([me]);
 
     if (parentId) {
       const { rows: [parent] } = await db.execute({
@@ -300,7 +300,7 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
         done.add(parent.user_id);
         await notify([parent.user_id], {
           type: 'board_reply',
-          message: `${who}님이 회원님 댓글에 답했어요 — "${snippet}"`,
+          message: `${who}님이 회원님 댓글에 답했어요`,
           link,
         });
       }
@@ -308,7 +308,7 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
     if (!done.has(post.user_id)) {
       await notify([post.user_id], {
         type: 'board_comment',
-        message: `${who}님이 "${title}"에 댓글을 남겼어요`,
+        message: `${who}님이 댓글을 남겼어요`,
         link,
       });
     }

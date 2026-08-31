@@ -97,10 +97,11 @@ export default function PushSetupSheet() {
             </p>
 
             <div className="mt-4">
+              {/* 실제로 푸시가 나가는 것만 적는다. 없는 걸 적어두면 켜놓고 안 온다고 느낀다. */}
               {[
-                ['⏰', '픽 마감 전에 알려드려요', '대회 시작하면 더는 못 넣어요'],
+                ['🥋', '선수가 새 소식을 올리면', '팔로우한 선수 글과 영상을 바로 받아요'],
                 ['💬', '내 글에 댓글이 달리면',   '자유게시판 답글을 놓치지 않아요'],
-                ['🏆', '대회 결과가 나오면',       '내 픽이 몇 점인지 바로 확인해요'],
+                ['❤️', '선수가 내 응원에 답하면', '답글이나 하트를 받으면 알려드려요'],
               ].map(([emoji, title, desc]) => (
                 <div key={title} className="flex gap-2.5 py-2.5 border-t border-ink-200">
                   <span className="text-[15px] leading-6 flex-shrink-0">{emoji}</span>
