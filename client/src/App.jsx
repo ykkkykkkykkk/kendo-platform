@@ -12,6 +12,7 @@ import DataDeletionPage  from './pages/DataDeletionPage.jsx';
 import { initKakao, kakaoConfigured } from './utils/kakaoSdk.js';
 import PlayerLinkNotice  from './components/PlayerLinkNotice.jsx';
 import AugustEventPopup  from './components/AugustEventPopup.jsx';
+import AugustResultPopup from './components/AugustResultPopup.jsx';
 import PlayerLoginModal  from './components/PlayerLoginModal.jsx';
 import IOSInstallBanner  from './components/IOSInstallBanner.jsx';
 import PushSetupSheet    from './components/PushSetupSheet.jsx';
@@ -151,6 +152,7 @@ export default function App() {
       <IOSInstallBanner />
       <PlayerLinkNotice />
       <AugustEventPopup onRegisterRequest={openLogin} />
+      <AugustResultPopup />
       <PushSetupSheet />
 
       <AnimatePresence>
