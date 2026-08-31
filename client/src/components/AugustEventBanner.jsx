@@ -74,7 +74,7 @@ export default function AugustEventBanner({ onLoginRequest }) {
           </div>
 
           <p className="text-white font-bold text-[17px] tracking-[-0.02em] mt-2.5 leading-snug">
-            8월에 관원 가장 많이 모은 도장<br />
+            관원 가장 많이 모은 도장<br />
             <span className="text-lime">죽도 10자루</span> 드려요
           </p>
 
@@ -83,13 +83,13 @@ export default function AugustEventBanner({ onLoginRequest }) {
             {myRank ? (
               <>
                 우리 도장 <span className="text-lime font-semibold">{mine.name}</span>
-                {' '}· 8월 신규 <span className="text-lime font-semibold">{myRank.new_members}명</span>
+                {' '}· 관원 <span className="text-lime font-semibold">{myRank.new_members}명</span>
                 {' '}· 현재 {myRank.rank}위
               </>
             ) : mine ? (
               <>
                 우리 도장 <span className="text-white/80 font-semibold">{mine.name}</span>
-                {' '}· 아직 8월 신규 가입이 없어요. 관원을 초대해보세요
+                {' '}· 아직 등록된 관원이 없어요. 관원을 초대해보세요
               </>
             ) : leader ? (
               <>

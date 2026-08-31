@@ -23,7 +23,7 @@ function inEventPeriod() {
 
 const ROWS = [
   ['기간', '8/1 ~ 8/31'],
-  ['대상', '8월 신규 가입 관원 수'],
+  ['대상', '도장별 총 관원 수'],
   ['발표', '9월 초 도장 랭킹'],
 ];
 
@@ -128,7 +128,7 @@ export default function AugustEventPopup({ onRegisterRequest }) {
               우리 도장<br />다 모여라
             </h2>
             <p className="text-ink-400 text-[12px] leading-[1.55] mt-2">
-              8월 한 달, 가장 많은 관원이<br />가입한 도장에게
+              관원이 가장 많은<br />도장에게
             </p>
 
             {/* 상품 */}
@@ -155,7 +155,7 @@ export default function AugustEventPopup({ onRegisterRequest }) {
               <p className="text-ink-400 text-[11px] mt-3 leading-[1.5]">
                 현재 1위{' '}
                 <span className="text-ink font-semibold">{leader.name}</span>
-                {' '}· 8월 신규{' '}
+                {' '}· 관원{' '}
                 <span className="bg-lime text-ink px-1 font-semibold">{leader.new_members}명</span>
                 {stat.participating_dojos > 1 && (
                   <span className="text-ink-400/70"> · {stat.participating_dojos}개 도장 참여 중</span>

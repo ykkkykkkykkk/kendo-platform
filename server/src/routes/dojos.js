@@ -31,11 +31,13 @@ function daysRemaining(endDate) {
   return Math.max(0, Math.ceil((new Date(endDate) - Date.now()) / 86400000));
 }
 
-/* ── 8월 도장 유입 이벤트 ───────────────────────────────────────
- * 8월 한 달간 신규 가입 관원이 가장 많은 도장에 죽도 10자루.
+/* ── 8월 도장 이벤트 ────────────────────────────────────────────
+ * 관원이 가장 많은 도장에 죽도 10자루.
  *
- * created_at은 datetime('now') 즉 UTC라 그냥 비교하면 한국 시간 기준 8/1 새벽
- * 가입자가 7월로 밀린다. +9시간 해서 KST 날짜로 바꿔 센다.
+ * 원래는 '8월 신규 가입 수'로 셌는데 총 관원 수로 바꿨다(2026-08-31).
+ * 8월 전부터 회원을 모아온 도장이 신규만 세면 오히려 불리해진다.
+ * 기간은 이벤트 노출 기간으로만 남는다 — 집계는 가입 시점을 보지 않는다.
+ *
  * 팔로워 수 채우기용 시드 계정(가라팬)은 실제 가입자가 아니라 제외한다.
  */
 const EVENT_START = '2026-08-01';
@@ -49,16 +51,15 @@ const NOT_BLANK   = "d.name NOT IN ('없음', '무소속', '-')";
 router.get('/dojos/august-event', async (req, res) => {
   try {
     const { rows } = await db.execute({
+      // 응답 필드 이름은 new_members 그대로 둔다 — 배너·팝업이 이 이름으로 읽는다.
       sql: `SELECT d.id, d.name, COUNT(u.id) AS new_members
             FROM dojos d
-            JOIN users u ON u.dojo_id = d.id
-                        AND date(u.created_at, '+9 hours') BETWEEN ? AND ?
-                        AND ${NOT_SEED}
+            JOIN users u ON u.dojo_id = d.id AND ${NOT_SEED}
             WHERE ${NOT_BLANK}
             GROUP BY d.id
             HAVING new_members > 0
             ORDER BY new_members DESC, d.name`,
-      args: [EVENT_START, EVENT_END],
+      args: [],
     });
 
     res.json({
