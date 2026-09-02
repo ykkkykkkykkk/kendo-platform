@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { adminGet } from '../adminApi.js';
 
 function StatTile({ label, value, hint }) {
@@ -146,13 +146,26 @@ export default function Dashboard() {
   const [data,    setData]    = useState(null);
   const [visits,  setVisits]  = useState(null);
   const [loading, setLoading] = useState(true);
+  const [busy,    setBusy]    = useState(false);
+  const [at,      setAt]      = useState(null);   // 마지막으로 불러온 시각
 
-  useEffect(() => {
-    Promise.all([
-      adminGet('/stats').then(setData).catch(console.error),
-      adminGet('/stats/visits').then(setVisits).catch(console.error),
-    ]).finally(() => setLoading(false));
+  /* 페이지를 새로 열지 않고도 지금 숫자를 다시 받는다.
+     방문·앱 접속은 계속 쌓이므로 띄워둔 화면은 금방 옛날 값이 된다. */
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      await Promise.all([
+        adminGet('/stats').then(setData).catch(console.error),
+        adminGet('/stats/visits').then(setVisits).catch(console.error),
+      ]);
+      setAt(new Date());
+    } finally {
+      setBusy(false);
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   if (loading) return (
     <div className="p-8 text-ink-400 text-sm">로딩 중...</div>
@@ -178,14 +191,43 @@ export default function Dashboard() {
 
       {/* 방문자 통계 */}
       <div className="mb-10">
-        <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium mb-3">VISITORS — 방문자 통계</p>
+        <div className="flex items-baseline gap-3 mb-3">
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">VISITORS — 방문자 통계</p>
+          <button
+            onClick={load}
+            disabled={busy}
+            className="text-[11px] text-ink-600 border border-ink-200 rounded-full px-2.5 py-1
+                       hover:border-ink transition-colors disabled:opacity-40"
+          >
+            {busy ? '불러오는 중…' : '새로고침'}
+          </button>
+          {at && (
+            <span className="text-[11px] text-ink-400 tabular-nums">
+              {at.toLocaleTimeString('ko-KR', { hour12: false })} 기준
+            </span>
+          )}
+        </div>
 
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-4 gap-3 mb-3">
           <StatTile label="오늘 순방문자"   value={visits?.today?.uniques} />
           <StatTile label="오늘 조회수"     value={visits?.today?.views} />
           <StatTile label="이번달 순방문자" value={visits?.month?.uniques} />
           <StatTile label="이번달 조회수"   value={visits?.month?.views} />
         </div>
+
+        {/* 앱/웹 — 순방문자 기준. Play Console 설치 수와 달리 실제로 연 사람만 센다 */}
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <StatTile label="오늘 앱 접속"     value={visits?.today?.app_uniques} />
+          <StatTile label="오늘 웹 접속"     value={visits?.today?.web_uniques} />
+          <StatTile label="이번달 앱 접속"   value={visits?.month?.app_uniques} />
+          <StatTile label="이번달 웹 접속"   value={visits?.month?.web_uniques} />
+        </div>
+
+        {visits?.month?.unknown_uniques > 0 && (
+          <p className="text-[11px] text-ink-400 mb-6 -mt-3">
+            이번달 {visits.month.unknown_uniques}명은 앱/웹 구분 기록이 남기 전에 방문해 어느 쪽에도 안 잡힙니다.
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-6">
           <div className="border border-ink-200 p-5">

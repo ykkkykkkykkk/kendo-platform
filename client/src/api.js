@@ -17,10 +17,15 @@ export function trackVisit(path) {
             (Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
       localStorage.setItem('visitor_id', vid);
     }
+    // 앱(홈화면 추가·TWA)으로 열었는지. Play Console의 설치 수는 깔고 안 여는
+    // 사람까지 세므로, 실제로 앱을 쓰는 사람은 이걸로만 알 수 있다.
+    const isApp = window.matchMedia?.('(display-mode: standalone)').matches ||
+                  window.navigator.standalone === true;
+
     fetch(BASE + '/track', {
       method:    'POST',
       headers:   { 'Content-Type': 'application/json' },
-      body:      JSON.stringify({ visitor_id: vid, path }),
+      body:      JSON.stringify({ visitor_id: vid, path, is_app: !!isApp }),
       keepalive: true,
     }).catch(() => {});
   } catch { /* localStorage 차단 등 — 무시 */ }

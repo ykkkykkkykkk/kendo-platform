@@ -123,13 +123,21 @@ router.get('/stats/visits', async (_req, res) => {
         LEFT JOIN page_visits v ON strftime('%Y-%m', v.created_at, '+9 hours') = months.m
         GROUP BY months.m ORDER BY months.m
       `),
+      /* 앱/웹은 순방문자 기준으로 센다. is_app이 NULL인 건 컬럼이 생기기 전 기록이라
+         양쪽 다 빼고 unknown으로 따로 준다 — 웹으로 몰면 앱 비율이 낮게 나온다. */
       db.execute(`
-        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views
+        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views,
+               COUNT(DISTINCT CASE WHEN is_app = 1 THEN visitor_id END) AS app_uniques,
+               COUNT(DISTINCT CASE WHEN is_app = 0 THEN visitor_id END) AS web_uniques,
+               COUNT(DISTINCT CASE WHEN is_app IS NULL THEN visitor_id END) AS unknown_uniques
         FROM page_visits
         WHERE date(created_at, '+9 hours') = date('now', '+9 hours')
       `),
       db.execute(`
-        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views
+        SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views,
+               COUNT(DISTINCT CASE WHEN is_app = 1 THEN visitor_id END) AS app_uniques,
+               COUNT(DISTINCT CASE WHEN is_app = 0 THEN visitor_id END) AS web_uniques,
+               COUNT(DISTINCT CASE WHEN is_app IS NULL THEN visitor_id END) AS unknown_uniques
         FROM page_visits
         WHERE strftime('%Y-%m', created_at, '+9 hours') = strftime('%Y-%m', 'now', '+9 hours')
       `),
