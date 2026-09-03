@@ -90,6 +90,44 @@ router.get('/stats', async (_req, res) => {
   } catch (e) { serverError(res, e); }
 });
 
+/* GET /api/admin/stats/online — 지금 접속 중인 사람.
+ *
+ * last_seen_at은 인증이 붙은 요청에서만, 그것도 3분에 한 번씩만 갱신된다.
+ * 그래서 '지금 이 순간'이 아니라 '최근 10분 안에 움직인 사람'이다.
+ * 비로그인 방문자는 누구인지 알 길이 없어 인원 수만 따로 센다.
+ */
+router.get('/stats/online', async (_req, res) => {
+  try {
+    const WINDOW = '-10 minutes';
+    const [usersR, guestR] = await Promise.all([
+      db.execute({
+        sql: `SELECT u.id, u.nickname, u.role, u.last_seen_at,
+                     COALESCE(d.name, u.home_dojo) AS dojo_name,
+                     p.name AS player_name
+              FROM users u
+              LEFT JOIN dojos   d ON d.id = u.dojo_id
+              LEFT JOIN players p ON p.id = u.player_id
+              WHERE u.last_seen_at IS NOT NULL
+                AND u.last_seen_at > datetime('now', ?)
+              ORDER BY u.last_seen_at DESC`,
+        args: [WINDOW],
+      }),
+      // 로그인 안 한 방문자 — 익명 visitor_id라 인원만 센다
+      db.execute({
+        sql: `SELECT COUNT(DISTINCT visitor_id) AS n FROM page_visits
+              WHERE created_at > datetime('now', ?)`,
+        args: [WINDOW],
+      }),
+    ]);
+
+    res.json({
+      window_minutes: 10,
+      users:  usersR.rows,
+      guests: Number(guestR.rows[0]?.n ?? 0),
+    });
+  } catch (e) { serverError(res, e); }
+});
+
 // GET /api/admin/stats/visits — 방문자 통계 (일별 30일 + 월별 12개월). 시각은 KST(+9h) 기준으로 그룹.
 router.get('/stats/visits', async (_req, res) => {
   try {

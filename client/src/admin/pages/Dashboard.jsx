@@ -142,9 +142,20 @@ function VisitBarChart({ data = [], kind }) {
   );
 }
 
+/* last_seen_at은 SQLite datetime('now') — UTC인데 타임존 표시가 없다.
+   그대로 Date에 넣으면 브라우저가 현지시각으로 읽어 9시간이 어긋난다. */
+function agoText(ts) {
+  if (!ts) return '';
+  const t = new Date(`${String(ts).replace(' ', 'T')}Z`).getTime();
+  if (Number.isNaN(t)) return '';
+  const min = Math.max(0, Math.floor((Date.now() - t) / 60000));
+  return min < 1 ? '방금' : `${min}분 전`;
+}
+
 export default function Dashboard() {
   const [data,    setData]    = useState(null);
   const [visits,  setVisits]  = useState(null);
+  const [online,  setOnline]  = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy,    setBusy]    = useState(false);
   const [at,      setAt]      = useState(null);   // 마지막으로 불러온 시각
@@ -157,6 +168,7 @@ export default function Dashboard() {
       await Promise.all([
         adminGet('/stats').then(setData).catch(console.error),
         adminGet('/stats/visits').then(setVisits).catch(console.error),
+        adminGet('/stats/online').then(setOnline).catch(console.error),
       ]);
       setAt(new Date());
     } finally {
@@ -187,6 +199,46 @@ export default function Dashboard() {
         <StatTile label="등록 선수"     value={stats.players} />
         <StatTile label="진행중 대회"   value={stats.activeTournaments} />
         <StatTile label="총 예측 수"    value={stats.predictions} />
+      </div>
+
+      {/* 현재 접속자 — 새로고침 버튼으로 같이 갱신된다 */}
+      <div className="mb-10">
+        <div className="flex items-baseline gap-3 mb-3">
+          <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">ONLINE — 현재 접속자</p>
+          <span className="text-[11px] text-ink-400">
+            최근 {online?.window_minutes ?? 10}분 · 회원 {online?.users?.length ?? 0}명
+            {online?.guests > 0 && ` · 비로그인 ${online.guests}명`}
+          </span>
+        </div>
+
+        {online?.users?.length ? (
+          <div className="border border-ink-200 divide-y divide-ink-200">
+            {online.users.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-lime flex-none" />
+                <span className="text-ink text-sm font-medium truncate">{u.nickname}</span>
+                {u.role === 'player' && (
+                  <span className="text-[10px] text-ink-600 border border-ink-200 rounded-full px-1.5 py-0.5 flex-none">
+                    선수{u.player_name ? ` · ${u.player_name}` : ''}
+                  </span>
+                )}
+                <span className="text-ink-400 text-xs truncate">{u.dojo_name ?? ''}</span>
+                <span className="flex-1" />
+                <span className="text-ink-400 text-[11px] tabular-nums flex-none">
+                  {agoText(u.last_seen_at)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border border-ink-200 px-4 py-6 text-ink-400 text-sm">
+            최근 {online?.window_minutes ?? 10}분 안에 활동한 회원이 없습니다.
+          </div>
+        )}
+
+        <p className="text-[11px] text-ink-400 mt-2">
+          로그인한 회원만 이름이 뜹니다. 접속 시각은 3분에 한 번 기록돼 그만큼 늦을 수 있습니다.
+        </p>
       </div>
 
       {/* 방문자 통계 */}
