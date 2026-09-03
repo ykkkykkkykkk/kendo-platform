@@ -177,7 +177,25 @@ export default function Dashboard() {
     }
   }, []);
 
+  /* 현재 접속자만 따로, 자주 받는다. 대시보드 전체를 30초마다 부르면
+     집계 쿼리(30일·12개월 방문 통계)까지 매번 다시 도는데 그럴 이유가 없다. */
+  const loadOnline = useCallback(() => {
+    adminGet('/stats/online').then(setOnline).catch(() => {});
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+
+  /* 30초마다 자동 갱신. 탭이 안 보일 때는 쉬고, 다시 보이면 바로 한 번 받는다 —
+     띄워만 두고 다른 창을 보는 동안 계속 조회할 이유가 없다. */
+  useEffect(() => {
+    const tick = () => { if (document.visibilityState === 'visible') loadOnline(); };
+    const id = setInterval(tick, 30_000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [loadOnline]);
 
   if (loading) return (
     <div className="p-8 text-ink-400 text-sm">로딩 중...</div>
@@ -209,6 +227,7 @@ export default function Dashboard() {
             최근 {online?.window_minutes ?? 10}분 · 회원 {online?.users?.length ?? 0}명
             {online?.guests > 0 && ` · 비로그인 ${online.guests}명`}
           </span>
+          <span className="text-[11px] text-ink-400/70">30초마다 자동 갱신</span>
         </div>
 
         {online?.users?.length ? (
