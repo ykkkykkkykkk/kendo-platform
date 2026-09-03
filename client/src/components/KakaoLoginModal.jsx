@@ -50,7 +50,7 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
 
   useEffect(() => {
     if ((step !== 'newPlayer' && step !== 'follow') || roster) return;
-    api.players()
+    api.playersActive()
       .then((r) => setRoster(Array.isArray(r) ? r : (r?.players ?? [])))
       .catch(() => setError('선수 명단을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'));
   }, [step, roster]);
@@ -61,14 +61,15 @@ export default function KakaoLoginModal({ onClose, resumeCode = null }) {
     .filter((p) => p.team_name === teamPick)
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
-  /* 팬 등록 후보: 검색어가 있으면 이름·팀으로 찾고, 없으면 팬이 많은 선수부터 보여준다.
-     처음 온 사람은 누굴 골라야 할지 모르므로 빈 화면 대신 인기순을 깔아준다. */
+  /* 팬 등록 후보: 검색어가 있으면 이름·팀으로 찾고, 없으면 서버가 준 순서를 그대로 쓴다.
+     서버는 선수 계정으로 최근 접속한 순으로 준다(sort=active). 팬 많은 순으로 깔면
+     이미 팬이 많은 선수만 계속 쌓이고, 정작 앱을 쓰는 선수가 아래 묻힌다.
+     팔로우는 그 선수가 실제로 글을 올려야 의미가 있다. */
   const fanTerm = fanQuery.trim().replace(/\s/g, '');
   const fanCandidates = (roster ?? [])
     .filter((p) => !fanTerm
       || p.name?.replace(/\s/g, '').includes(fanTerm)
       || p.team_name?.replace(/\s/g, '').includes(fanTerm))
-    .sort((a, b) => (b.fan_count ?? 0) - (a.fan_count ?? 0))
     .slice(0, 40);
   const toggleFan = (p) =>
     setFanPicks((prev) => prev.some((x) => x.id === p.id)

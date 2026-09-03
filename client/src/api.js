@@ -59,6 +59,8 @@ export const api = {
   teams:       ()     => get('/teams'),
   team:        (slug) => get(`/teams/${slug}`),
   players:     (team) => get(team ? `/players?team=${team}` : '/players'),
+  // 가입 때 팔로우할 선수 고르기 — 선수 계정으로 최근 접속한 순
+  playersActive: ()  => get('/players?sort=active'),
   player:      (slug) => get(`/players/${slug}`),
 
   // 선수 Q&A
