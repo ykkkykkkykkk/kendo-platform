@@ -39,6 +39,11 @@ export default function PushSend() {
   const [userId,    setUserId]    = useState('');
   const [saveInbox, setSaveInbox] = useState(true);
 
+  // 회원 1명(테스트)용 — 회원 번호는 어디에도 안 보이므로 닉네임으로 찾아 고른다
+  const [userQuery,   setUserQuery]   = useState('');
+  const [userResults, setUserResults] = useState([]);
+  const [picked,      setPicked]      = useState(null);
+
   const [confirm, setConfirm] = useState(null);   // { label, userCount, deviceCount }
   const [busy,    setBusy]    = useState(false);
   const [msg,     setMsg]     = useState(null);   // { type: 'ok' | 'err', text }
@@ -63,6 +68,18 @@ export default function PushSend() {
       .catch(() => {});
   }, [target]);
 
+  /* 타이핑마다 부르면 관리자 API 한도(1분 120회)를 혼자 다 먹는다. 멈춘 뒤에만 찾는다. */
+  useEffect(() => {
+    const q = userQuery.trim();
+    if (target !== 'user' || picked || !q) { setUserResults([]); return; }
+    const t = setTimeout(() => {
+      adminGet(`/push/user-search?q=${encodeURIComponent(q)}`)
+        .then((d) => setUserResults(Array.isArray(d) ? d : []))
+        .catch(() => {});
+    }, 400);
+    return () => clearTimeout(t);
+  }, [userQuery, target, picked]);
+
   const query = () => {
     const p = new URLSearchParams({ target });
     if (target === 'player_followers') p.set('playerId', playerId);
@@ -75,6 +92,10 @@ export default function PushSend() {
     setMsg(null);
     if (!title.trim() || !body.trim()) {
       setMsg({ type: 'err', text: '제목과 내용을 모두 입력해주세요.' });
+      return;
+    }
+    if (target === 'user' && !userId) {
+      setMsg({ type: 'err', text: '보낼 회원을 찾아 선택해주세요.' });
       return;
     }
     setBusy(true);
@@ -216,10 +237,44 @@ export default function PushSend() {
 
         {target === 'user' && (
           <div>
-            <label className="text-xs font-medium text-ink-600 mb-1 block">회원 번호</label>
-            <input className={input} value={userId} onChange={(e) => setUserId(e.target.value)}
-                   placeholder="회원 관리 화면의 번호" />
+            <label className="text-xs font-medium text-ink-600 mb-1 block">회원 찾기</label>
+            <input className={input} value={userQuery} onChange={(e) => setUserQuery(e.target.value)}
+                   placeholder="닉네임 또는 아이디" />
             <p className="text-[11px] text-ink-400 mt-1">전체 발송 전에 본인 계정으로 먼저 쏴보는 용도입니다.</p>
+
+            {picked && (
+              <div className="flex items-center gap-2 mt-2 border border-ink px-3 py-2">
+                <span className="text-sm font-semibold text-ink">{picked.nickname}</span>
+                <span className="text-xs text-ink-400">
+                  {picked.devices > 0 ? `알림 켠 기기 ${picked.devices}대` : '알림 안 켬 — 잠금화면에는 안 뜹니다'}
+                </span>
+                <button type="button" onClick={() => { setPicked(null); setUserId(''); }}
+                        className="ml-auto text-ink-400 hover:text-ink text-sm">✕</button>
+              </div>
+            )}
+
+            {!picked && userResults.length > 0 && (
+              <div className="border border-ink-200 mt-2 max-h-52 overflow-auto">
+                {userResults.map((u) => (
+                  <button key={u.id} type="button"
+                    onClick={() => { setPicked(u); setUserId(String(u.id)); setUserResults([]); }}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 border-b border-ink-200
+                               last:border-0 hover:bg-ink-200/30 transition-colors">
+                    <span className="text-sm font-medium text-ink">{u.nickname}</span>
+                    <span className="text-xs text-ink-400">
+                      {u.role === 'player' ? '선수' : (u.dojo_name ?? u.home_dojo ?? '')}
+                    </span>
+                    <span className={`ml-auto text-xs ${u.devices > 0 ? 'text-ink' : 'text-ink-400'}`}>
+                      {u.devices > 0 ? `기기 ${u.devices}대` : '알림 안 켬'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!picked && userQuery.trim() && userResults.length === 0 && (
+              <p className="text-[11px] text-ink-400 mt-2">찾는 회원이 없습니다.</p>
+            )}
           </div>
         )}
 

@@ -40,7 +40,7 @@ async function resolveTargets({ target, playerId, userId }) {
 
   if (target === 'user') {
     const id = Number(userId);
-    if (!id) throw new Error('회원 번호를 입력해주세요.');
+    if (!id) throw new Error('회원을 선택해주세요.');
     const { rows: [u] } = await db.execute({
       sql: 'SELECT id, nickname FROM users WHERE id = ?', args: [id],
     });
@@ -96,6 +96,29 @@ router.get('/push/estimate', async (req, res) => {
     // resolveTargets가 던지는 건 입력이 잘못된 경우다 (없는 선수·회원 등)
     return res.status(400).json({ error: e.message ?? '대상을 확인하지 못했습니다.' });
   }
+});
+
+/* GET /api/admin/push/user-search?q=닉네임 — 테스트 발송 대상 고르기.
+ * 회원 관리 화면에는 회원 번호가 안 보인다. 번호를 외워서 넣으라고 할 수 없으니
+ * 닉네임으로 찾아 고르게 한다. 알림 켠 기기 수를 같이 보여줘야
+ * '보냈는데 안 오는' 계정을 고르는 일이 없다. */
+router.get('/push/user-search', async (req, res) => {
+  try {
+    const q = (req.query.q ?? '').trim();
+    if (!q) return res.json([]);
+    const like = `%${q}%`;
+    const { rows } = await db.execute({
+      sql: `SELECT u.id, u.nickname, u.role, u.home_dojo, d.name AS dojo_name,
+                   (SELECT COUNT(*) FROM push_subscriptions s WHERE s.user_id = u.id) AS devices
+            FROM users u
+            LEFT JOIN dojos d ON d.id = u.dojo_id
+            WHERE ${NOT_SEED} AND (u.nickname LIKE ? OR u.username LIKE ?)
+            ORDER BY devices DESC, u.nickname
+            LIMIT 20`,
+      args: [like, like],
+    });
+    res.json(rows);
+  } catch (e) { serverError(res, e, 'push-user-search'); }
 });
 
 // GET /api/admin/push/broadcasts — 발송 이력
