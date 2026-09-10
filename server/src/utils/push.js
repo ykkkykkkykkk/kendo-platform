@@ -43,42 +43,84 @@ export async function publicKey() {
   return (await getVapid()).publicKey;
 }
 
-/** 구독한 기기로 푸시를 보낸다. 실패해도 본 동작을 막지 않는다. */
-export async function sendPush(userIds, { title, body, link }) {
+// SQLite 바인딩 변수는 999개가 한계다. 전체 발송이면 회원 수가 그걸 넘으므로 잘라서 조회한다.
+const ID_CHUNK = 400;
+
+/** 해당 회원들이 등록한 구독 기기 목록. */
+export async function subscriptionsOf(userIds) {
   const ids = [...new Set(userIds.filter(Boolean))];
-  if (!ids.length) return;
-
-  try {
-    await getVapid();
-  } catch (e) {
-    console.warn('[push] VAPID 준비 실패:', e.message);
-    return;
+  const out = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    const part = ids.slice(i, i + ID_CHUNK);
+    const { rows } = await db.execute({
+      sql: `SELECT id, endpoint, p256dh, auth FROM push_subscriptions
+            WHERE user_id IN (${part.map(() => '?').join(',')})`,
+      args: part,
+    });
+    out.push(...rows);
   }
+  return out;
+}
 
-  const { rows: subs } = await db.execute({
-    sql: `SELECT id, endpoint, p256dh, auth FROM push_subscriptions
-          WHERE user_id IN (${ids.map(() => '?').join(',')})`,
-    args: ids,
-  });
-
-  const payload = JSON.stringify({ title, body, link: link ?? '/' });
-
-  for (const s of subs) {
-    try {
-      await webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        payload,
-      );
-    } catch (e) {
-      // 404/410 = 사용자가 알림을 껐거나 브라우저가 구독을 버린 것. 지워야 계속 재시도하지 않는다.
-      if (e.statusCode === 404 || e.statusCode === 410) {
-        await db.execute({ sql: 'DELETE FROM push_subscriptions WHERE id = ?', args: [s.id] });
-      } else {
-        await db.execute({
-          sql: "UPDATE push_subscriptions SET failed_at = datetime('now') WHERE id = ?", args: [s.id],
-        });
-        console.warn('[push] 발송 실패', e.statusCode, e.message);
-      }
+/** 기기 한 대에 보낸다. 결과를 'sent' | 'removed' | 'failed'로 돌려준다. */
+async function sendOne(sub, payload) {
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      payload,
+    );
+    return 'sent';
+  } catch (e) {
+    // 404/410 = 사용자가 알림을 껐거나 브라우저가 구독을 버린 것. 지워야 계속 재시도하지 않는다.
+    if (e.statusCode === 404 || e.statusCode === 410) {
+      await db.execute({ sql: 'DELETE FROM push_subscriptions WHERE id = ?', args: [sub.id] });
+      return 'removed';
     }
+    await db.execute({
+      sql: "UPDATE push_subscriptions SET failed_at = datetime('now') WHERE id = ?", args: [sub.id],
+    });
+    console.warn('[push] 발송 실패', e.statusCode, e.message);
+    return 'failed';
+  }
+}
+
+/**
+ * 구독한 기기로 푸시를 보내고 결과를 집계해 돌려준다.
+ *
+ * 한 대씩 순서대로 보내면 전체 공지처럼 기기가 수백 대일 때 응답이 한참 걸린다.
+ * 묶음으로 동시에 보내되, 푸시 서비스(FCM/APNs 게이트웨이)가 한꺼번에 몰린 요청을
+ * 거절하지 않도록 동시 개수는 제한한다.
+ */
+export async function sendPushToUsers(userIds, { title, body, link, tag }, { concurrency = 10 } = {}) {
+  const stats = { devices: 0, sent: 0, failed: 0, removed: 0 };
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (!ids.length) return stats;
+
+  await getVapid();
+
+  const subs = await subscriptionsOf(ids);
+  stats.devices = subs.length;
+  if (!subs.length) return stats;
+
+  // tag가 같은 알림은 폰에서 하나로 합쳐진다. 이벤트 알림은 링크가 곧 tag라
+  // 같은 글에 댓글이 여러 개 달려도 알림창이 도배되지 않는다(서비스워커 기본값).
+  // 반대로 공지처럼 하나하나가 다른 소식이면 서버가 고유 tag를 넘겨 덮어쓰지 않게 한다.
+  const payload = JSON.stringify({ title, body, link: link ?? '/', ...(tag ? { tag } : {}) });
+
+  for (let i = 0; i < subs.length; i += concurrency) {
+    const results = await Promise.all(
+      subs.slice(i, i + concurrency).map((s) => sendOne(s, payload)),
+    );
+    for (const r of results) stats[r] += 1;
+  }
+  return stats;
+}
+
+/** 구독한 기기로 푸시를 보낸다. 실패해도 본 동작을 막지 않는다. */
+export async function sendPush(userIds, payload) {
+  try {
+    await sendPushToUsers(userIds, payload);
+  } catch (e) {
+    console.warn('[push] 발송 준비 실패:', e.message);
   }
 }

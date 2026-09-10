@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail, MessagesSquare,
+  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail, MessagesSquare, Bell,
 } from 'lucide-react';
 import { adminGet } from './adminApi.js';
 
@@ -18,6 +18,7 @@ const NAV = [
   { to: '/admin/sponsorships', label: '스폰서',     icon: Star },
   { to: '/admin/questions',    label: 'Q&A',        icon: MessageCircle },
   { to: '/admin/board',        label: '자유게시판', icon: MessagesSquare },
+  { to: '/admin/push',         label: '푸시 발송',  icon: Bell },
 ];
 
 export default function AdminLayout({ children, onLogout }) {

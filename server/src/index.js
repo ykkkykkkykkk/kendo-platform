@@ -28,6 +28,7 @@ import pushRouter         from './routes/push.js';
 import cheersRouter       from './routes/cheers.js';
 import boardRouter        from './routes/board.js';
 import adminBoardRouter   from './routes/admin-board.js';
+import adminPushRouter    from './routes/admin-push.js';
 
 import playerClaimsRouter      from './routes/player-claims.js';
 import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
@@ -95,6 +96,7 @@ app.use('/api/admin',       adminLimiter,      adminPicksRouter);
 app.use('/api/admin',       adminLimiter,      adminBracketRouter);
 app.use('/api/admin',       adminLimiter,      adminUsersRouter);
 app.use('/api/admin',       adminLimiter,      adminPlayerClaimsRouter);
+app.use('/api/admin',       adminLimiter,      adminPushRouter);
 app.use('/api',                                playerClaimsRouter);
 app.use('/api/admin',       adminLimiter,      adminVideoRouter);
 app.use('/api/me',                             myVideoRouter);

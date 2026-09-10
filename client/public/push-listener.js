@@ -11,6 +11,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || '마이너스타';
   const body  = data.body  || '새 소식이 있어요';
   const link  = data.link  || '/';
+  // 관리자 공지처럼 내용이 저마다 다른 알림은 서버가 고유 tag를 보내 합쳐지지 않게 한다
+  const tag   = data.tag   || link;
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -18,7 +20,7 @@ self.addEventListener('push', (event) => {
       icon:  '/pwa-192x192.png',
       badge: '/favicon-32.png',
       // 같은 화면으로 가는 알림은 하나로 합쳐 알림창이 도배되지 않게 한다
-      tag: link,
+      tag,
       renotify: true,
       data: { link },
     })
