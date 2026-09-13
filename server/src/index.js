@@ -29,6 +29,7 @@ import cheersRouter       from './routes/cheers.js';
 import boardRouter        from './routes/board.js';
 import adminBoardRouter   from './routes/admin-board.js';
 import adminPushRouter    from './routes/admin-push.js';
+import homeRouter         from './routes/home.js';
 
 import playerClaimsRouter      from './routes/player-claims.js';
 import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
@@ -102,6 +103,7 @@ app.use('/api/admin',       adminLimiter,      adminVideoRouter);
 app.use('/api/me',                             myVideoRouter);
 app.use('/api',                                postsRouter);
 app.use('/api',                                pushRouter);
+app.use('/api',                                homeRouter);
 app.use('/api/admin',       adminLimiter,      adminDojosRouter);
 app.use('/api',             dojosRouter);
 app.use('/api/me',          meRouter);

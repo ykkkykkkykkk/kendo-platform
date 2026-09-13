@@ -144,4 +144,7 @@ export const api = {
   claimPlayer:  (body) => authPost('/player-claims', body),
   cancelClaim:  ()     => authDelete('/player-claims/me'),
   pastSeasons:  ()    => get('/seasons/past?limit=4'),
+
+  // 홈 대시보드 — 대회·내 점수·도장·응원 선수·최근 글을 한 번에 받는다
+  homeSummary:  ()    => authGet('/home/summary'),
 };
