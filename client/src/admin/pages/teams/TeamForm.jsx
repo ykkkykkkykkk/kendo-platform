@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Save } from 'lucide-react';
 import { adminGet, adminPost, adminPut } from '../../adminApi.js';
+import ImageUploadField from '../../components/ImageUploadField.jsx';
 
 const EMPTY = {
   name: '', slug: '', region: '', founded_year: '',
-  logo_url: '', color_primary: '#111111', championships: '0',
+  logo_url: '', color_primary: '#111111', championships: '0', team_photo_url: '',
 };
 
 function Field({ label, value, onChange, type = 'text', required, ...props }) {
@@ -39,6 +40,7 @@ export default function TeamForm() {
         region:        t.region ?? '',
         founded_year:  String(t.founded_year ?? ''),
         logo_url:      t.logo_url ?? '',
+        team_photo_url: t.team_photo_url ?? '',
         color_primary: t.color_primary ?? '#111111',
         championships: String(t.championships ?? '0'),
       })
@@ -113,6 +115,18 @@ export default function TeamForm() {
                 </div>
                 <span className="text-xs text-ink-400">미리보기</span>
               </div>
+            </div>
+
+            {/* 단체사진 — 팀 페이지 맨 위에 깔린다 */}
+            <div className="col-span-2 pt-2 border-t border-ink-200">
+              <ImageUploadField
+                label="단체사진"
+                hint="팀 페이지 맨 위에 가로 16:9로 깔립니다. 없으면 예전처럼 글씨 헤더로 시작합니다."
+                ratio="16 / 9"
+                width={180}
+                value={form.team_photo_url}
+                onChange={(v) => setForm((f) => ({ ...f, team_photo_url: v }))}
+              />
             </div>
           </div>
         </div>

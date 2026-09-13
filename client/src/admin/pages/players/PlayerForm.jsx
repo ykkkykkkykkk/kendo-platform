@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Save } from 'lucide-react';
 import { adminGet, adminPost, adminPut, adminDelete } from '../../adminApi.js';
 import VideoManager from '../../../components/VideoManager.jsx';
+import ImageUploadField from '../../components/ImageUploadField.jsx';
 
 const POSITIONS  = ['선봉', '이봉', '중견', '부장', '대장'];
 const CATEGORIES = ['죽도', '호구', '도복', '하카마', '기타'];
@@ -20,6 +21,7 @@ const EMPTY_FORM = {
   name: '', name_en: '', slug: '', team_id: '',
   dan_grade: '', birth_year: '', height_cm: '', position: '',
   bio: '', instagram_url: '', youtube_url: '', profile_image_url: '',
+  hero_image_url: '', face_image_url: '', specialty: '',
 };
 
 const EMPTY_GEAR = {
@@ -64,7 +66,10 @@ export default function PlayerForm() {
 
   // 팀 목록 로드
   useEffect(() => {
-    adminGet('/teams').then(setTeams).catch(console.error);
+    // 조회가 실패하면 에러 객체가 온다. 그대로 넣으면 teams.map에서 화면 전체가 죽는다.
+    adminGet('/teams')
+      .then((t) => setTeams(Array.isArray(t) ? t : []))
+      .catch(console.error);
   }, []);
 
   // 수정 모드: 기존 데이터 로드
@@ -86,6 +91,9 @@ export default function PlayerForm() {
           instagram_url:     p.instagram_url ?? '',
           youtube_url:       p.youtube_url ?? '',
           profile_image_url: p.profile_image_url ?? '',
+          hero_image_url:    p.hero_image_url ?? '',
+          face_image_url:    p.face_image_url ?? '',
+          specialty:         p.specialty ?? '',
         });
       }
     });
@@ -241,6 +249,9 @@ export default function PlayerForm() {
             </div>
             <Field label="출생연도"   value={form.birth_year} onChange={set('birth_year')} type="number" placeholder="1990" />
             <Field label="신장 (cm)"  value={form.height_cm}  onChange={set('height_cm')}  type="number" placeholder="178" />
+            <div className="col-span-2">
+              <Field label="주특기" value={form.specialty} onChange={set('specialty')} placeholder="머리치기" maxLength={12} />
+            </div>
           </div>
         </div>
 
@@ -253,6 +264,32 @@ export default function PlayerForm() {
             <div className="col-span-2">
               <Field label="프로필 이미지 URL" value={form.profile_image_url} onChange={set('profile_image_url')} placeholder="https://..." />
             </div>
+          </div>
+        </div>
+
+        {/* ── 프로필 사진 (선수 페이지 상단) ── */}
+        <div className="border border-ink-200 p-6 mb-6">
+          <h2 className="font-semibold text-ink-600 mb-1 pb-2 border-b border-ink-200">프로필 사진</h2>
+          <p className="text-[11px] text-ink-400 mb-5">
+            선수 페이지 맨 위에 쓰이는 사진입니다. 둘 다 없어도 페이지는 나오지만, 있으면 이름이 사진 위에 얹힙니다.
+          </p>
+          <div className="space-y-5">
+            <ImageUploadField
+              label="호구 착용샷 (히어로)"
+              hint="세로 4:5로 잘립니다. 인물이 가운데 오는 세로 사진이 가장 좋습니다."
+              ratio="4 / 5"
+              width={104}
+              value={form.hero_image_url}
+              onChange={(v) => setForm((f) => ({ ...f, hero_image_url: v }))}
+            />
+            <ImageUploadField
+              label="맨얼굴 / 명패"
+              hint="정사각으로 잘립니다. 호구를 벗은 얼굴이 잘 보이는 사진."
+              ratio="1 / 1"
+              width={104}
+              value={form.face_image_url}
+              onChange={(v) => setForm((f) => ({ ...f, face_image_url: v }))}
+            />
           </div>
         </div>
 

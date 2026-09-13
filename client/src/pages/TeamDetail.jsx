@@ -1,10 +1,43 @@
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
+import { teamPhotoSrc } from '../utils/cloudinary.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import TeamLogo from '../components/TeamLogo.jsx';
+
+/* ══════════════════════════════════════════════
+   단체사진 히어로.
+   사진이 있는 팀에만 붙는다 — 없으면 이 영역 자체가 안 나오고
+   페이지는 예전 그대로 헤더부터 시작한다.
+══════════════════════════════════════════════ */
+function TeamPhoto({ team, children }) {
+  const [loaded, setLoaded] = useState(false);
+  const src = teamPhotoSrc(team.team_photo_url);
+
+  return (
+    <div className="relative w-full bg-block overflow-hidden" style={{ aspectRatio: '16 / 9' }}>
+      {!loaded && <div className="absolute inset-0 bg-ink-200 animate-pulse" />}
+      <img
+        src={src}
+        alt={`${team.name} 단체사진`}
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      {/* 이름은 바로 아래 헤드라인이 맡는다. 여기 그라데이션은 사진이 종이 배경으로
+          자연스럽게 떨어지게 하는 용도라, 글씨를 받칠 때보다 훨씬 옅다. */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 45%)' }}
+      />
+      {children}
+    </div>
+  );
+}
 
 export default function TeamDetail() {
   const { slug }   = useParams();
@@ -26,25 +59,30 @@ export default function TeamDetail() {
 
   const players = team.players ?? [];
 
+  const hasPhoto = !!team.team_photo_url;
+
+  /* 사진 위에 얹는 버튼은 사진이 밝든 어둡든 보이도록 흐린 검정을 깐다 */
+  const navBtn = hasPhoto
+    ? 'w-9 h-9 flex items-center justify-center rounded-full bg-black/35 backdrop-blur-sm text-white pressable'
+    : 'w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable';
+
+  const nav = (
+    <div className={`flex items-center justify-between ${
+      hasPhoto ? 'absolute left-5 right-5 top-12 z-10' : 'px-5 pt-12'
+    }`}>
+      <button onClick={() => navigate(-1)} className={navBtn} aria-label="뒤로">
+        <ChevronLeft size={18} />
+      </button>
+      <button onClick={() => navigate('/search')} className={navBtn} aria-label="선수 검색">
+        <Search size={16} strokeWidth={1.8} />
+      </button>
+    </div>
+  );
+
   return (
     <main className="page-body bg-paper min-h-screen">
-      {/* ── 헤더 내비 ── */}
-      <div className="px-5 pt-12 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 pressable"
-          aria-label="뒤로"
-        >
-          <ChevronLeft size={18} className="text-ink" />
-        </button>
-        <button
-          onClick={() => navigate('/search')}
-          className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable"
-          aria-label="선수 검색"
-        >
-          <Search size={16} strokeWidth={1.8} />
-        </button>
-      </div>
+      {/* ── 단체사진 (있는 팀만) ── */}
+      {hasPhoto ? <TeamPhoto team={team}>{nav}</TeamPhoto> : nav}
 
       {/* ── 팀 헤드라인 ── */}
       <header className="px-5 pt-6">

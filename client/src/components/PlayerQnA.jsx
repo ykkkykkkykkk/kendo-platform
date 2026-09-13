@@ -101,7 +101,6 @@ export default function PlayerQnA({ slug, playerId, playerName, onLoginRequest }
     <section className="mt-8">
       <div className="flex items-baseline gap-2 mb-3">
         <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">Q&amp;A</p>
-        <span className="text-[11px] text-ink-400">선수에게 직접 물어보세요 · 하루 1회</span>
       </div>
 
       {/* ── 질문 입력 영역 ── */}

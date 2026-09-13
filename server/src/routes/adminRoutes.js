@@ -214,16 +214,19 @@ router.get('/teams/:id', async (req, res) => {
 
 router.post('/teams', async (req, res) => {
   try {
-    const { name, slug, region, founded_year, logo_url, color_primary, championships } = req.body;
+    const { name, slug, region, founded_year, logo_url, color_primary, championships,
+            team_photo_url } = req.body;
     if (!name?.trim() || !slug?.trim())
       return res.status(400).json({ error: '팀명과 슬러그는 필수입니다.' });
-    const urlErrT = checkUrls(req.body, ['logo_url']);
+    const urlErrT = checkUrls(req.body, ['logo_url', 'team_photo_url']);
     if (urlErrT) return res.status(400).json({ error: urlErrT });
     await db.execute({
-      sql: `INSERT INTO teams (name, slug, region, founded_year, logo_url, color_primary, championships)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO teams (name, slug, region, founded_year, logo_url, color_primary, championships,
+                               team_photo_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [name.trim(), slug.trim(), region || null, founded_year || null,
-             logo_url || null, color_primary || '#0A1F44', championships || 0],
+             logo_url || null, color_primary || '#0A1F44', championships || 0,
+             team_photo_url || null],
     });
     const { rows: [t] } = await db.execute({ sql: 'SELECT * FROM teams WHERE slug = ?', args: [slug.trim()] });
     res.status(201).json(t);
@@ -235,11 +238,16 @@ router.post('/teams', async (req, res) => {
 
 router.put('/teams/:id', async (req, res) => {
   try {
-    const { name, slug, region, founded_year, logo_url, color_primary, championships } = req.body;
+    const { name, slug, region, founded_year, logo_url, color_primary, championships,
+            team_photo_url } = req.body;
+    const urlErrU = checkUrls(req.body, ['logo_url', 'team_photo_url']);
+    if (urlErrU) return res.status(400).json({ error: urlErrU });
     await db.execute({
-      sql: `UPDATE teams SET name=?, slug=?, region=?, founded_year=?, logo_url=?, color_primary=?, championships=? WHERE id=?`,
+      sql: `UPDATE teams SET name=?, slug=?, region=?, founded_year=?, logo_url=?, color_primary=?,
+                             championships=?, team_photo_url=? WHERE id=?`,
       args: [name, slug, region || null, founded_year || null,
-             logo_url || null, color_primary || '#0A1F44', championships || 0, req.params.id],
+             logo_url || null, color_primary || '#0A1F44', championships || 0,
+             team_photo_url || null, req.params.id],
     });
     const { rows: [t] } = await db.execute({ sql: 'SELECT * FROM teams WHERE id = ?', args: [req.params.id] });
     res.json(t);
@@ -415,24 +423,27 @@ router.post('/players', async (req, res) => {
     const {
       name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
       position, bio, instagram_url, youtube_url, profile_image_url,
+      hero_image_url, face_image_url, specialty,
     } = req.body;
 
     if (!name?.trim() || !slug?.trim() || !team_id)
       return res.status(400).json({ error: '이름, 슬러그, 소속팀은 필수입니다.' });
 
-    const urlErr = checkUrls(req.body, ['youtube_url', 'profile_image_url']);
+    const urlErr = checkUrls(req.body, ['youtube_url', 'profile_image_url', 'hero_image_url', 'face_image_url']);
     if (urlErr) return res.status(400).json({ error: urlErr });
 
     await db.execute({
       sql: `INSERT INTO players
               (name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
-               position, bio, instagram_url, youtube_url, profile_image_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               position, bio, instagram_url, youtube_url, profile_image_url,
+               hero_image_url, face_image_url, specialty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name.trim(), name_en || null, slug.trim(), team_id,
         dan_grade || null, birth_year || null, height_cm || null,
         position || null, bio || null, instagram_url || null,
         youtube_url || null, profile_image_url || null,
+        hero_image_url || null, face_image_url || null, specialty?.trim() || null,
       ],
     });
 
@@ -454,22 +465,25 @@ router.put('/players/:id', async (req, res) => {
     const {
       name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
       position, bio, instagram_url, youtube_url, profile_image_url,
+      hero_image_url, face_image_url, specialty,
     } = req.body;
 
-    const urlErrP = checkUrls(req.body, ['youtube_url', 'profile_image_url']);
+    const urlErrP = checkUrls(req.body, ['youtube_url', 'profile_image_url', 'hero_image_url', 'face_image_url']);
     if (urlErrP) return res.status(400).json({ error: urlErrP });
 
     await db.execute({
       sql: `UPDATE players SET
               name = ?, name_en = ?, slug = ?, team_id = ?,
               dan_grade = ?, birth_year = ?, height_cm = ?,
-              position = ?, bio = ?, instagram_url = ?, youtube_url = ?, profile_image_url = ?
+              position = ?, bio = ?, instagram_url = ?, youtube_url = ?, profile_image_url = ?,
+              hero_image_url = ?, face_image_url = ?, specialty = ?
             WHERE id = ?`,
       args: [
         name, name_en || null, slug, team_id,
         dan_grade || null, birth_year || null, height_cm || null,
         position || null, bio || null, instagram_url || null,
         youtube_url || null, profile_image_url || null,
+        hero_image_url || null, face_image_url || null, specialty?.trim() || null,
         req.params.id,
       ],
     });
