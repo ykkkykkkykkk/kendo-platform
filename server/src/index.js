@@ -30,6 +30,7 @@ import boardRouter        from './routes/board.js';
 import adminBoardRouter   from './routes/admin-board.js';
 import adminPushRouter    from './routes/admin-push.js';
 import homeRouter         from './routes/home.js';
+import sitemapRouter      from './routes/sitemap.js';
 
 import playerClaimsRouter      from './routes/player-claims.js';
 import adminPlayerClaimsRouter from './routes/admin-player-claims.js';
@@ -114,6 +115,9 @@ app.use('/api',             trackLimiter,      trackRouter);
 app.use('/api/cheers',      cheerLimiter,      cheersRouter);
 app.use('/api/board',       boardRouter);
 app.use('/api/admin/board', adminLimiter,      adminBoardRouter);
+
+// sitemap.xml — Vercel이 www.minorstar.kr/sitemap.xml 요청을 여기로 넘긴다
+app.use('/', sitemapRouter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 

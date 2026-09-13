@@ -1,0 +1,23 @@
+# 마이너스타 — https://www.minorstar.kr
+#
+# 로그인해야 의미가 있거나 개인 화면인 곳은 크롤링하지 않게 막는다.
+# 선수·팀·게시판처럼 누구나 보는 곳은 열어 둔다.
+
+User-agent: *
+Allow: /
+
+# 관리자 화면
+Disallow: /admin
+
+# 내 정보 · 로그인 후에만 쓸모 있는 화면
+Disallow: /me
+Disallow: /player
+Disallow: /oauth/
+
+# 검색 결과 화면은 내용이 매번 달라 색인할 값이 없다
+Disallow: /search
+
+# API 응답은 사람이 볼 페이지가 아니다
+Disallow: /api/
+
+Sitemap: https://www.minorstar.kr/sitemap.xml

@@ -5,6 +5,14 @@
       "destination": "https://kendo-platform-api.onrender.com/api/:path*"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "https://kendo-platform-api.onrender.com/sitemap.xml"
+    },
+    {
+      "source": "/players/:slug",
+      "destination": "/api/prerender?slug=:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
