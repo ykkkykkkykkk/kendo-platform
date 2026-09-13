@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFetch } from '../hooks/useFetch.js';
 import { api, authPost, authGet, authDelete } from '../api.js';
 import VideoManager from '../components/VideoManager.jsx';
+import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
+import { heroSrc, faceSrc } from '../utils/cloudinary.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { ScrollReveal } from '../components/ScrollReveal.jsx';
@@ -195,6 +197,17 @@ export default function MyPage() {
   const { data: follows } = useFetch(api.myFollows);
   const { data: cheers }  = useFetch(CHEER_ENABLED ? api.myCheers : null);   // 선수별 응원 누적·등급 (보류 중이면 조회 안 함)
 
+  // 지금 올라가 있는 내 사진. 선수 계정일 때만 부른다.
+  const { data: photoData } = useFetch(
+    () => (user?.role === 'player' ? authGet('/players/my/photo') : Promise.resolve(null)),
+    [user?.role],
+  );
+  // 방금 올린 사진은 다시 불러오지 않고 그 자리에서 바꿔 보여준다
+  const [myPhotos, setMyPhotos] = useState({});
+  const myHero = myPhotos.hero_image_url ?? photoData?.hero_image_url ?? null;
+  const myFace = myPhotos.face_image_url ?? photoData?.face_image_url
+                 ?? photoData?.profile_image_url ?? null;
+
   // 선수 계정 본인 영상. 서버가 토큰의 playerId로 대상을 정하므로 선수 id를 넘기지 않는다.
   const myVideoApi = useMemo(() => ({
     list:   ()     => authGet('/me/videos'),
@@ -350,6 +363,53 @@ export default function MyPage() {
       {user?.role === 'player' && (
         <Section label="PLAYER" delay={0.125}>
           <Row label="선수 홈" value="소식 · 질문 · 응원" onClick={() => navigate('/player')} />
+        </Section>
+      )}
+
+      {/* 사진은 선수 페이지의 본체다. 선수가 직접 올릴 수 있어야 실제로 채워진다. */}
+      {user?.role === 'player' && (
+        <Section label="MY PHOTO" delay={0.128}>
+          <div className="px-5 py-4">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <p className="text-[11px] text-ink-400 mb-1.5">호구 착용샷</p>
+                <div className="bg-ink-200/40 border border-ink-200 overflow-hidden mb-2"
+                     style={{ aspectRatio: '4 / 5' }}>
+                  {myHero
+                    ? <img src={heroSrc(myHero, 400)} alt="" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-[11px] text-ink-400">아직 없음</span>
+                      </div>}
+                </div>
+                <ProfilePhotoUpload
+                  field="hero_image_url"
+                  label={myHero ? '바꾸기' : '올리기'}
+                  onSuccess={(url, f) => setMyPhotos((p) => ({ ...p, [f]: url }))}
+                />
+              </div>
+
+              <div className="flex-1">
+                <p className="text-[11px] text-ink-400 mb-1.5">맨얼굴</p>
+                <div className="bg-ink-200/40 border border-ink-200 overflow-hidden mb-2"
+                     style={{ aspectRatio: '4 / 5' }}>
+                  {myFace
+                    ? <img src={faceSrc(myFace, 400)} alt="" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-[11px] text-ink-400">아직 없음</span>
+                      </div>}
+                </div>
+                <ProfilePhotoUpload
+                  field="face_image_url"
+                  label={myFace ? '바꾸기' : '올리기'}
+                  onSuccess={(url, f) => setMyPhotos((p) => ({ ...p, [f]: url }))}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-ink-400 mt-3">
+              올리면 내 선수 페이지에 바로 반영됩니다. 호구 착용샷은 맨 위에 크게,
+              맨얼굴은 이름 아래에 작게 들어갑니다.
+            </p>
+          </div>
         </Section>
       )}
 

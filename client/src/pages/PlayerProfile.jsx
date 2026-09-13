@@ -52,9 +52,9 @@ function SnsBtn({ href, icon: Icon, disabled }) {
    사진이 없는 선수가 아직 대부분이라, 없을 때도 같은 자리에
    같은 크기로 이름이 앉도록 검정 배경과 이니셜로 대체한다.
 ══════════════════════════════════════════════ */
-function Hero({ player, children }) {
+function Hero({ player, heroUrl, children }) {
   const [loaded, setLoaded] = useState(false);
-  const src = heroSrc(player.hero_image_url);
+  const src = heroSrc(heroUrl);
   const sub = [player.team_name, player.position].filter(Boolean).join(' · ');
 
   return (
@@ -189,7 +189,7 @@ export default function PlayerProfile({ onLoginRequest }) {
   const [followLoading, setFollowLoading] = useState(false);
   const [clinics,       setClinics]       = useState([]);
   const [myBookings,    setMyBookings]    = useState(new Set());
-  const [profilePhoto,  setProfilePhoto]  = useState(null);
+  const [photos,        setPhotos]        = useState({});   // 본인이 방금 올린 사진
   const [showInquiry,   setShowInquiry]   = useState(false);
   const [gradeUp,       setGradeUp]       = useState(null);   // 등급 상승 축하 모달용
 
@@ -278,7 +278,12 @@ export default function PlayerProfile({ onLoginRequest }) {
 
   const { gear = [] } = player;
   const fanCount     = (player.fan_count ?? 0) + (followed ? 1 : 0);
-  const currentPhoto = profilePhoto ?? player.face_image_url ?? player.profile_image_url ?? null;
+  /* 선수 본인이 올린 사진을 화면에 바로 반영한다(photos). 히어로가 비어 있으면 화면은
+     이니셜로 떨어지지만, 얼굴 자리는 예전부터 쓰던 프로필 썸네일로 메울 수 있다 —
+     이미 사진을 올려둔 선수들의 얼굴이 새 화면에서 사라지지 않게. */
+  const heroUrl = photos.hero_image_url ?? player.hero_image_url ?? null;
+  const faceUrl = photos.face_image_url ?? player.face_image_url
+                  ?? photos.profile_image_url ?? player.profile_image_url ?? null;
 
   /* 사진 위에 얹는 동그란 버튼 — 사진이 밝든 어둡든 보이게 흐린 검정을 깐다 */
   const heroBtn = 'w-9 h-9 flex items-center justify-center rounded-full bg-black/35 backdrop-blur-sm text-white pressable';
@@ -290,7 +295,7 @@ export default function PlayerProfile({ onLoginRequest }) {
         {/* ════════════════════════════════════════
             1. 히어로 (사진 + 이름) — 내비도 사진 위에 얹는다
         ════════════════════════════════════════ */}
-        <Hero player={player}>
+        <Hero player={player} heroUrl={heroUrl}>
           <div className="absolute left-5 right-5 top-12 flex items-center justify-between">
             <button onClick={() => navigate(-1)} className={heroBtn} aria-label="뒤로">
               <ChevronLeft size={18} />
@@ -321,10 +326,10 @@ export default function PlayerProfile({ onLoginRequest }) {
           {/* ════════════════════════════════════════
               2. 맨얼굴 + 스타일 — 호구를 벗은 얼굴을 한 번 보여준다
           ════════════════════════════════════════ */}
-          {player.face_image_url && (
+          {faceUrl && (
             <section className="pt-5 flex items-center gap-3.5">
               <img
-                src={faceSrc(player.face_image_url)}
+                src={faceSrc(faceUrl)}
                 alt={`${player.name} 선수 얼굴`}
                 loading="lazy"
                 className="flex-none object-cover bg-ink-200"
@@ -334,12 +339,18 @@ export default function PlayerProfile({ onLoginRequest }) {
             </section>
           )}
 
-          {/* 선수 본인이면 자기 사진을 바꿀 수 있다 */}
+          {/* 선수 본인이면 자기 사진을 직접 올린다 — 사진 두 장이 이 화면의 본체다 */}
           {isMyProfile && (
-            <div className="mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
               <ProfilePhotoUpload
-                currentUrl={currentPhoto}
-                onSuccess={(url) => setProfilePhoto(url)}
+                field="hero_image_url"
+                label={heroUrl ? '호구 사진 바꾸기' : '호구 사진 올리기'}
+                onSuccess={(url, f) => setPhotos((p) => ({ ...p, [f]: url }))}
+              />
+              <ProfilePhotoUpload
+                field="face_image_url"
+                label={faceUrl ? '맨얼굴 바꾸기' : '맨얼굴 올리기'}
+                onSuccess={(url, f) => setPhotos((p) => ({ ...p, [f]: url }))}
               />
             </div>
           )}

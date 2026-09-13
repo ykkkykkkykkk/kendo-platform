@@ -6,6 +6,41 @@ import { useToast } from '../context/ToastContext.jsx';
 const CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+/**
+ * 선수 본인 사진 올리기.
+ *
+ * 사진 종류마다 잘리는 비율과 잘 나오는 구도가 다르다(히어로는 세로, 얼굴은 정사각).
+ * 그래서 어떤 사진인지(field)에 따라 권장 규격 안내를 바꿔 보여준다.
+ *
+ * field: 'hero_image_url' | 'face_image_url' | 'profile_image_url'
+ */
+
+const GUIDE = {
+  hero_image_url: {
+    title: '호구 착용샷 올리기',
+    rows: [
+      ['크기', '세로 4:5 (예: 1000×1250px)'],
+      ['구도', '호구를 쓴 전신 또는 상반신'],
+      ['내용', '프로필 맨 위에 크게 깔립니다'],
+    ],
+  },
+  face_image_url: {
+    title: '맨얼굴 사진 올리기',
+    rows: [
+      ['크기', '1:1 정방형 (예: 500×500px)'],
+      ['구도', '호구를 벗은 얼굴이 잘 보이게'],
+      ['내용', '이름 아래 작게 들어갑니다'],
+    ],
+  },
+  profile_image_url: {
+    title: '프로필 사진 변경',
+    rows: [
+      ['크기', '1:1 정방형 (예: 500×500px)'],
+      ['내용', '얼굴이 잘 보이는 선명한 사진'],
+    ],
+  },
+};
+
 function Row({ label, value }) {
   return (
     <div className="flex items-center justify-between">
@@ -15,16 +50,22 @@ function Row({ label, value }) {
   );
 }
 
-export default function ProfilePhotoUpload({ onSuccess }) {
+export default function ProfilePhotoUpload({
+  field = 'profile_image_url',
+  label = '사진 변경',
+  onSuccess,
+}) {
   const { showToast } = useToast();
   const [open,    setOpen]    = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const guide = GUIDE[field] ?? GUIDE.profile_image_url;
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { showToast('이미지 파일만 가능합니다.', 'error'); return; }
-    if (file.size > 5 * 1024 * 1024)    { showToast('5MB 이하만 가능합니다.', 'error'); return; }
+    if (file.size > 10 * 1024 * 1024)   { showToast('10MB 이하만 가능합니다.', 'error'); return; }
 
     setLoading(true);
     try {
@@ -46,12 +87,12 @@ export default function ProfilePhotoUpload({ onSuccess }) {
           'Content-Type':  'application/json',
           'Authorization': `Bearer ${localStorage.getItem('kendo_token')}`,
         },
-        body: JSON.stringify({ profile_image_url: data.secure_url }),
+        body: JSON.stringify({ [field]: data.secure_url }),
       });
       if (!saveRes.ok) throw new Error((await saveRes.json()).error);
 
-      showToast('프로필 사진이 변경됐습니다!', 'success');
-      onSuccess?.(data.secure_url);
+      showToast('사진이 등록됐습니다!', 'success');
+      onSuccess?.(data.secure_url, field);
       setOpen(false);
     } catch (err) {
       showToast(err.message || '업로드 오류', 'error');
@@ -71,7 +112,7 @@ export default function ProfilePhotoUpload({ onSuccess }) {
         className="inline-flex items-center gap-1.5 px-3 py-2 border border-ink
                    rounded-full text-ink text-xs font-medium pressable"
       >
-        <Camera size={12} /> 사진 변경
+        <Camera size={12} /> {label}
       </button>
 
       <AnimatePresence>
@@ -89,7 +130,7 @@ export default function ProfilePhotoUpload({ onSuccess }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-white font-bold text-base">프로필 사진 변경</h3>
+                <h3 className="text-white font-bold text-base">{guide.title}</h3>
                 <button onClick={() => setOpen(false)} className="text-white/40">
                   <X size={18} />
                 </button>
@@ -105,7 +146,7 @@ export default function ProfilePhotoUpload({ onSuccess }) {
                   <label className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer active:bg-white/5 transition-colors mb-4">
                     <ImagePlus size={40} className="mb-3" style={{ color: '#D8FF3E' }} />
                     <p className="text-white font-semibold text-sm">사진을 선택하세요</p>
-                    <p className="text-white/40 text-xs mt-1">탭하여 갤러리에서 선택</p>
+                    <p className="text-white/40 text-xs mt-1">탭하여 촬영하거나 갤러리에서 선택</p>
                     <input
                       type="file"
                       accept="image/*"
@@ -116,10 +157,9 @@ export default function ProfilePhotoUpload({ onSuccess }) {
 
                   <div className="bg-white/5 rounded-xl p-4 space-y-2.5">
                     <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wider mb-1">권장 규격</p>
-                    <Row label="크기" value="1:1 정방형 (예: 500×500px)" />
+                    {guide.rows.map(([k, v]) => <Row key={k} label={k} value={v} />)}
                     <Row label="형식" value="JPG · PNG · HEIF · WEBP" />
-                    <Row label="용량" value="최대 5MB" />
-                    <Row label="내용" value="얼굴이 잘 보이는 선명한 사진" />
+                    <Row label="용량" value="최대 10MB" />
                   </div>
                 </>
               )}

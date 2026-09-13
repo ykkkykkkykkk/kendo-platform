@@ -85,11 +85,49 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// PATCH /api/players/my/photo — 선수 계정 본인 프로필 사진 변경
+/* PATCH /api/players/my/photo — 선수 본인이 자기 사진을 올린다.
+ *
+ * 선수가 202명이라 호구 착용샷을 관리자가 다 찍으러 다닐 수 없다. 프로필이 사진
+ * 중심이 된 이상 사진이 실제로 채워지는 길은 선수 본인뿐이라 세 종류 다 열어 둔다.
+ *   hero    — 호구를 쓴 세로 사진 (프로필 맨 위에 크게 깔린다)
+ *   face    — 호구를 벗은 얼굴
+ *   profile — 목록·명단에 쓰이는 동그란 썸네일
+ * 관리자는 어드민에서 언제든 덮어쓸 수 있다.
+ *
+ * 예전에는 body가 { profile_image_url } 하나뿐이었다. 그 호출도 그대로 받는다.
+ */
+const MY_PHOTO_FIELDS = ['profile_image_url', 'hero_image_url', 'face_image_url'];
+
+// GET /api/players/my/photo — 마이페이지에서 지금 올라가 있는 내 사진을 보여주려고 쓴다
+router.get('/my/photo', requireAuth, async (req, res) => {
+  try {
+    const { rows: [user] } = await db.execute({
+      sql: 'SELECT role, player_id FROM users WHERE id = ?', args: [req.user.userId],
+    });
+    if (!user || user.role !== 'player' || !user.player_id)
+      return res.status(403).json({ error: '선수 계정만 사용할 수 있습니다.' });
+
+    const { rows: [player] } = await db.execute({
+      sql: `SELECT ${MY_PHOTO_FIELDS.join(', ')} FROM players WHERE id = ?`,
+      args: [user.player_id],
+    });
+    res.json(player ?? {});
+  } catch (e) { serverError(res, e); }
+});
+
 router.patch('/my/photo', requireAuth, async (req, res) => {
   try {
-    const { profile_image_url } = req.body;
-    if (!profile_image_url?.trim())
+    const updates = {};
+    for (const f of MY_PHOTO_FIELDS) {
+      const v = req.body?.[f];
+      if (typeof v !== 'string') continue;
+      const url = v.trim();
+      // 빈 문자열은 '지우기'다. 값이 있으면 남의 서버로 링크가 새지 않게 https만 받는다.
+      if (url && !/^https:\/\//i.test(url))
+        return res.status(400).json({ error: '이미지 주소가 올바르지 않습니다.' });
+      updates[f] = url || null;
+    }
+    if (!Object.keys(updates).length)
       return res.status(400).json({ error: '이미지 URL이 필요합니다.' });
 
     // 선수 계정인지 확인
@@ -100,17 +138,27 @@ router.patch('/my/photo', requireAuth, async (req, res) => {
     if (!user || user.role !== 'player' || !user.player_id)
       return res.status(403).json({ error: '선수 계정만 사용할 수 있습니다.' });
 
+    /* 얼굴 사진은 목록에 쓰는 썸네일로도 그대로 쓸 만하다. 썸네일이 아직 비어 있으면
+       같이 채운다 — 얼굴을 올렸는데 명단에는 기본 그림이 남아 있으면 안 올라간 줄 안다. */
+    if (updates.face_image_url && !('profile_image_url' in updates)) {
+      const { rows: [cur] } = await db.execute({
+        sql: 'SELECT profile_image_url FROM players WHERE id = ?', args: [user.player_id],
+      });
+      if (!cur?.profile_image_url) updates.profile_image_url = updates.face_image_url;
+    }
+
+    const cols = Object.keys(updates);
     await db.execute({
-      sql:  'UPDATE players SET profile_image_url = ? WHERE id = ?',
-      args: [profile_image_url.trim(), user.player_id],
+      sql:  `UPDATE players SET ${cols.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+      args: [...cols.map((c) => updates[c]), user.player_id],
     });
 
     const { rows: [player] } = await db.execute({
-      sql: 'SELECT profile_image_url FROM players WHERE id = ?',
+      sql: 'SELECT profile_image_url, hero_image_url, face_image_url FROM players WHERE id = ?',
       args: [user.player_id],
     });
 
-    res.json({ success: true, profile_image_url: player.profile_image_url });
+    res.json({ success: true, ...player });
   } catch (e) { serverError(res, e); }
 });
 
