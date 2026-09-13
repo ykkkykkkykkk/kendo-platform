@@ -9,6 +9,8 @@ import WelcomeModal from '../components/WelcomeModal.jsx';
 import AugustEventBanner from '../components/AugustEventBanner.jsx';
 import KakaoConnectBanner from '../components/KakaoConnectBanner.jsx';
 import NotificationBell from '../components/NotificationBell.jsx';
+import FollowPickerModal from '../components/FollowPickerModal.jsx';
+import { AnimatePresence } from 'framer-motion';
 
 /* ══════════════════════════════════════════════════════════
    홈 = 대시보드.
@@ -188,7 +190,7 @@ function MyNumbers({ data, onLoginRequest }) {
 }
 
 /* ── 4. 내가 응원하는 선수 ─────────────────────────── */
-function Follows({ data }) {
+function Follows({ data, onOpenPicker }) {
   const navigate = useNavigate();
   const follows  = data?.follows ?? [];
   const suggested = data?.suggested ?? [];
@@ -224,12 +226,18 @@ function Follows({ data }) {
             </button>
           ))}
           {!suggested.length && (
-            <button onClick={() => navigate('/search')}
+            <button onClick={onOpenPicker}
                     className="w-full py-2.5 rounded-full bg-ink text-white text-sm font-medium pressable">
               선수 찾아보기
             </button>
           )}
         </div>
+        {suggested.length > 0 && (
+          <button onClick={onOpenPicker}
+                  className="w-full mt-3 py-2.5 rounded-full bg-ink text-white text-sm font-medium pressable">
+            선수 명단에서 고르기
+          </button>
+        )}
       </Card>
     );
   }
@@ -251,7 +259,7 @@ function Follows({ data }) {
           </button>
         ))}
         {/* 더 찾기 — 점선 원으로 '아직 빈 자리'라는 걸 보여준다 */}
-        <button onClick={() => navigate('/search')} className="flex-none w-[60px] pressable">
+        <button onClick={onOpenPicker} className="flex-none w-[60px] pressable">
           <span className="w-14 h-14 rounded-full border border-dashed border-ink-200 flex items-center justify-center mx-auto">
             <Plus size={18} className="text-ink-400" />
           </span>
@@ -276,7 +284,11 @@ export default function Home({ onLoginRequest }) {
   const startWelcome = () => { closeWelcome(); onLoginRequest?.(); };
 
   // 홈에 필요한 값은 한 번에 받는다 (서버에서 묶어 준다)
-  const { data, loading } = useFetch(api.homeSummary, [user?.id]);
+  const { data, loading, refetch } = useFetch(api.homeSummary, [user?.id]);
+
+  // 응원할 선수 고르기 — 가입할 때 보던 그 명단을 그대로 연다
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const closePicker = () => { setPickerOpen(false); refetch(); };
 
   const news = data?.news ?? [];
 
@@ -355,7 +367,7 @@ export default function Home({ onLoginRequest }) {
           {/* ── 3·4. 로그인한 사람에게만 '내 것'을 보여준다 ── */}
           {user && (loading
             ? <><Skeleton className="h-[92px]" /><Skeleton className="h-[124px]" /></>
-            : <><MyNumbers data={data} /><Follows data={data} /></>)}
+            : <><MyNumbers data={data} /><Follows data={data} onOpenPicker={() => setPickerOpen(true)} /></>)}
 
           {/* ── 5. 최근 소식 — 없으면 이 자리는 아예 비운다 ── */}
           {news.length > 0 && (
@@ -400,6 +412,16 @@ export default function Home({ onLoginRequest }) {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {pickerOpen && (
+          <FollowPickerModal
+            open
+            onClose={closePicker}
+            followedIds={(data?.follows ?? []).map((p) => p.id)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }
