@@ -29,7 +29,17 @@ function TeamPhoto({ team, children, onZoom }) {
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
-      {/* 사진 전체가 누르는 자리. 단체사진은 16:9로 잘려 얼굴이 작으니 크게 볼 수 있어야 한다. */}
+      {/* 이름은 바로 아래 헤드라인이 맡는다. 여기 그라데이션은 사진이 종이 배경으로
+          자연스럽게 떨어지게 하는 용도라, 글씨를 받칠 때보다 훨씬 옅다.
+          겹쳐 깔리는 층이므로 탭을 가로채지 않게 pointer-events-none을 반드시 둔다 —
+          이게 없으면 아래 '크게 보기' 버튼이 눌리지 않는다. */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 45%)' }}
+      />
+
+      {/* 사진 전체가 누르는 자리. 단체사진은 16:9로 잘려 얼굴이 작으니 크게 볼 수 있어야 한다.
+          그라데이션보다 뒤에 둬서 위층이 되게 한다. */}
       <button
         type="button"
         onClick={onZoom}
@@ -40,12 +50,8 @@ function TeamPhoto({ team, children, onZoom }) {
                        flex items-center justify-center pointer-events-none">
         <Maximize2 size={14} className="text-white" />
       </span>
-      {/* 이름은 바로 아래 헤드라인이 맡는다. 여기 그라데이션은 사진이 종이 배경으로
-          자연스럽게 떨어지게 하는 용도라, 글씨를 받칠 때보다 훨씬 옅다. */}
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 45%)' }}
-      />
+
+      {/* 뒤로·검색은 사진 버튼보다 위에 있어야 눌린다 */}
       {children}
     </div>
   );
