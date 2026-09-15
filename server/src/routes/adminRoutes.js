@@ -99,6 +99,7 @@ router.get('/stats', async (_req, res) => {
 router.get('/stats/online', async (_req, res) => {
   try {
     const WINDOW = '-10 minutes';
+    const payload = await cached('online', 60_000, async () => {
     const [usersR, guestR] = await Promise.all([
       db.execute({
         sql: `SELECT u.id, u.nickname, u.role, u.last_seen_at,
@@ -120,31 +121,55 @@ router.get('/stats/online', async (_req, res) => {
       }),
     ]);
 
-    res.json({
+    return {
       window_minutes: 10,
       users:  usersR.rows,
       guests: Number(guestR.rows[0]?.n ?? 0),
+    };
     });
+    res.json(payload);
   } catch (e) { serverError(res, e); }
 });
+
+/* 방문 통계는 여러 명이 어드민을 열어도 같은 값이고 1분 사이에 크게 바뀌지 않는다.
+   잠깐 담아 두면 같은 집계를 몇 번씩 다시 돌리지 않는다.
+   (DB 읽기 한도를 태운 주범이라 캐시를 둔다) */
+const statsCache = new Map();
+async function cached(key, ms, make) {
+  const hit = statsCache.get(key);
+  if (hit && Date.now() - hit.at < ms) return hit.data;
+  const data = await make();
+  statsCache.set(key, { at: Date.now(), data });
+  return data;
+}
 
 // GET /api/admin/stats/visits — 방문자 통계 (일별 30일 + 월별 12개월). 시각은 KST(+9h) 기준으로 그룹.
 router.get('/stats/visits', async (_req, res) => {
   try {
+    const payload = await cached('visits', 5 * 60_000, async () => {
     const [dailyR, monthlyR, todayR, monthR] = await Promise.all([
       // 최근 30일 — 방문 없는 날도 0으로 채워 연속 축 유지 (KST 기준)
+      /* created_at을 date()로 감싸 비교하면 인덱스를 못 쓰고 방문 기록 전체를 훑는다.
+         먼저 범위로 잘라(인덱스 사용) 그 안에서만 날짜로 묶는다. */
       db.execute(`
         WITH RECURSIVE days(d) AS (
           SELECT date('now', '+9 hours', '-29 days')
           UNION ALL
           SELECT date(d, '+1 day') FROM days WHERE d < date('now', '+9 hours')
+        ),
+        agg AS (
+          SELECT date(created_at, '+9 hours')  AS d,
+                 COUNT(DISTINCT visitor_id)    AS uniques,
+                 COUNT(id)                     AS views
+          FROM page_visits
+          WHERE created_at >= datetime('now', '+9 hours', 'start of day', '-29 days', '-9 hours')
+          GROUP BY 1
         )
-        SELECT days.d                              AS bucket,
-               COUNT(DISTINCT v.visitor_id)        AS uniques,
-               COUNT(v.id)                         AS views
-        FROM days
-        LEFT JOIN page_visits v ON date(v.created_at, '+9 hours') = days.d
-        GROUP BY days.d ORDER BY days.d
+        SELECT days.d                      AS bucket,
+               COALESCE(agg.uniques, 0)    AS uniques,
+               COALESCE(agg.views, 0)      AS views
+        FROM days LEFT JOIN agg ON agg.d = days.d
+        ORDER BY days.d
       `),
       // 최근 12개월 — 방문 없는 달도 0으로 채움 (KST 기준)
       db.execute(`
@@ -153,13 +178,20 @@ router.get('/stats/visits', async (_req, res) => {
           UNION ALL
           SELECT strftime('%Y-%m', date(m || '-01', '+1 month'))
           FROM months WHERE m < strftime('%Y-%m', 'now', '+9 hours')
+        ),
+        agg AS (
+          SELECT strftime('%Y-%m', created_at, '+9 hours') AS m,
+                 COUNT(DISTINCT visitor_id)                AS uniques,
+                 COUNT(id)                                 AS views
+          FROM page_visits
+          WHERE created_at >= datetime('now', '+9 hours', 'start of month', '-11 months', '-9 hours')
+          GROUP BY 1
         )
-        SELECT months.m                            AS bucket,
-               COUNT(DISTINCT v.visitor_id)        AS uniques,
-               COUNT(v.id)                         AS views
-        FROM months
-        LEFT JOIN page_visits v ON strftime('%Y-%m', v.created_at, '+9 hours') = months.m
-        GROUP BY months.m ORDER BY months.m
+        SELECT months.m                    AS bucket,
+               COALESCE(agg.uniques, 0)    AS uniques,
+               COALESCE(agg.views, 0)      AS views
+        FROM months LEFT JOIN agg ON agg.m = months.m
+        ORDER BY months.m
       `),
       /* 앱/웹은 순방문자 기준으로 센다. is_app이 NULL인 건 컬럼이 생기기 전 기록이라
          양쪽 다 빼고 unknown으로 따로 준다 — 웹으로 몰면 앱 비율이 낮게 나온다. */
@@ -169,7 +201,8 @@ router.get('/stats/visits', async (_req, res) => {
                COUNT(DISTINCT CASE WHEN is_app = 0 THEN visitor_id END) AS web_uniques,
                COUNT(DISTINCT CASE WHEN is_app IS NULL THEN visitor_id END) AS unknown_uniques
         FROM page_visits
-        WHERE date(created_at, '+9 hours') = date('now', '+9 hours')
+        WHERE created_at >= datetime('now', '+9 hours', 'start of day', '-9 hours')
+          AND created_at <  datetime('now', '+9 hours', 'start of day', '+1 day', '-9 hours')
       `),
       db.execute(`
         SELECT COUNT(DISTINCT visitor_id) AS uniques, COUNT(*) AS views,
@@ -177,15 +210,18 @@ router.get('/stats/visits', async (_req, res) => {
                COUNT(DISTINCT CASE WHEN is_app = 0 THEN visitor_id END) AS web_uniques,
                COUNT(DISTINCT CASE WHEN is_app IS NULL THEN visitor_id END) AS unknown_uniques
         FROM page_visits
-        WHERE strftime('%Y-%m', created_at, '+9 hours') = strftime('%Y-%m', 'now', '+9 hours')
+        WHERE created_at >= datetime('now', '+9 hours', 'start of month', '-9 hours')
+          AND created_at <  datetime('now', '+9 hours', 'start of month', '+1 month', '-9 hours')
       `),
     ]);
-    res.json({
+    return {
       daily:   dailyR.rows,
       monthly: monthlyR.rows,
       today:   todayR.rows[0],
       month:   monthR.rows[0],
+    };
     });
+    res.json(payload);
   } catch (e) { serverError(res, e); }
 });
 

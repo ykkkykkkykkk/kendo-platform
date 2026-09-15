@@ -185,11 +185,13 @@ export default function Dashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  /* 30초마다 자동 갱신. 탭이 안 보일 때는 쉬고, 다시 보이면 바로 한 번 받는다 —
-     띄워만 두고 다른 창을 보는 동안 계속 조회할 이유가 없다. */
+  /* 3분마다 자동 갱신. 탭이 안 보일 때는 쉬고, 다시 보이면 바로 한 번 받는다.
+     예전엔 30초였는데, 어드민 탭을 하루 켜두면 그것만으로 하루 2,880번을 조회한다.
+     실제로 이것 때문에 DB 읽기 한도가 터져 사이트 전체가 멈춘 적이 있다.
+     '현재 접속자'는 최근 10분 기준이라 3분이어도 보는 데 지장이 없다. */
   useEffect(() => {
     const tick = () => { if (document.visibilityState === 'visible') loadOnline(); };
-    const id = setInterval(tick, 30_000);
+    const id = setInterval(tick, 180_000);
     document.addEventListener('visibilitychange', tick);
     return () => {
       clearInterval(id);
@@ -227,7 +229,7 @@ export default function Dashboard() {
             최근 {online?.window_minutes ?? 10}분 · 회원 {online?.users?.length ?? 0}명
             {online?.guests > 0 && ` · 비로그인 ${online.guests}명`}
           </span>
-          <span className="text-[11px] text-ink-400/70">30초마다 자동 갱신</span>
+          <span className="text-[11px] text-ink-400/70">3분마다 자동 갱신</span>
         </div>
 
         {online?.users?.length ? (
