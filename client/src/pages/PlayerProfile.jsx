@@ -15,6 +15,7 @@ import { haptic } from '../utils/haptic.js';
 import { heroSrc, faceSrc } from '../utils/cloudinary.js';
 import { SkeletonList } from '../components/Skeleton.jsx';
 import ProfilePhotoUpload  from '../components/ProfilePhotoUpload.jsx';
+import MyGearEditor        from '../components/MyGearEditor.jsx';
 import InquiryModal        from '../components/InquiryModal.jsx';
 import PlayerQnA           from '../components/PlayerQnA.jsx';
 import CheerCard          from '../components/CheerCard.jsx';
@@ -190,6 +191,7 @@ export default function PlayerProfile({ onLoginRequest }) {
   const [clinics,       setClinics]       = useState([]);
   const [myBookings,    setMyBookings]    = useState(new Set());
   const [photos,        setPhotos]        = useState({});   // 본인이 방금 올린 사진
+  const [myGear,        setMyGear]        = useState(null);  // 본인이 방금 고친 장비
   const [showInquiry,   setShowInquiry]   = useState(false);
   const [gradeUp,       setGradeUp]       = useState(null);   // 등급 상승 축하 모달용
 
@@ -276,7 +278,8 @@ export default function PlayerProfile({ onLoginRequest }) {
     </main>
   );
 
-  const { gear = [] } = player;
+  // 본인이 방금 고쳤으면 그 결과를 먼저 쓴다(다시 불러오지 않아도 바뀐 게 보이게)
+  const gear = myGear ?? player.gear ?? [];
   const fanCount     = (player.fan_count ?? 0) + (followed ? 1 : 0);
   /* 선수 본인이 올린 사진을 화면에 바로 반영한다(photos). 히어로가 비어 있으면 화면은
      이니셜로 떨어지지만, 얼굴 자리는 예전부터 쓰던 프로필 썸네일로 메울 수 있다 —
@@ -447,9 +450,14 @@ export default function PlayerProfile({ onLoginRequest }) {
               </div>
             ) : (
               <div className="border border-ink-200 p-5 text-center">
-                <p className="text-ink-400 text-sm">아직 등록된 장비 정보 없음</p>
+                <p className="text-ink-400 text-sm">
+                  {isMyProfile ? '아직 등록한 장비가 없습니다.' : '아직 등록된 장비 정보 없음'}
+                </p>
               </div>
             )}
+
+            {/* 선수 본인이면 여기서 바로 고친다 */}
+            {isMyProfile && <MyGearEditor gear={gear} onChange={setMyGear} />}
           </section>
 
           {/* ── 1:1 클리닉 ── */}
