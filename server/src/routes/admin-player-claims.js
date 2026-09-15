@@ -17,7 +17,7 @@ router.get('/player-claims', async (req, res) => {
     const { rows } = await db.execute({
       sql: `SELECT c.id, c.user_id, c.player_id, c.note, c.status,
                    c.created_at, c.reviewed_at, c.review_note,
-                   u.nickname, u.username, u.role, u.kakao_id, u.last_ip,
+                   u.nickname, u.username, u.role, u.kakao_id,
                    u.created_at AS user_created_at,
                    p.name AS player_name, p.dan_grade, p.slug AS player_slug,
                    t.name AS team_name,

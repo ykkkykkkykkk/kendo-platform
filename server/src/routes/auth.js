@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
 import { findSimilarAccounts } from '../utils/similarNickname.js';
-import { touchLastSeen, clientIp, requireAuth } from '../middleware/auth.js';
+import { touchLastSeen, requireAuth } from '../middleware/auth.js';
 import { serverError } from '../utils/apiError.js';
 
 const router = Router();
@@ -61,8 +61,8 @@ router.post('/register', async (req, res) => {
     }
 
     await db.execute({
-      sql:  'INSERT INTO users (phone, nickname, home_dojo, signup_ip) VALUES (?, ?, ?, ?)',
-      args: [phoneKey, trimmedNick, home_dojo?.trim() || null, clientIp(req)],
+      sql:  'INSERT INTO users (phone, nickname, home_dojo) VALUES (?, ?, ?)',
+      args: [phoneKey, trimmedNick, home_dojo?.trim() || null],
     });
     const { rows: [newUser] } = await db.execute({
       sql:  'SELECT * FROM users WHERE phone = ?',
@@ -71,7 +71,7 @@ router.post('/register', async (req, res) => {
     user = newUser;
   }
 
-  touchLastSeen(user.id, clientIp(req));
+  touchLastSeen(user.id);
 
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: user.role ?? 'fan' },
@@ -101,7 +101,7 @@ router.post('/player-login', async (req, res) => {
   if (!valid)
     return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
 
-  touchLastSeen(user.id, clientIp(req));
+  touchLastSeen(user.id);
 
   const token = jwt.sign(
     { userId: user.id, nickname: user.nickname, role: 'player', playerId: user.player_id },
@@ -201,7 +201,7 @@ async function loginOrChoice(req, res, info) {
     sql: 'SELECT * FROM users WHERE kakao_id = ?', args: [info.kakaoId],
   });
   if (user) {
-    touchLastSeen(user.id, clientIp(req));
+    touchLastSeen(user.id);
     delete user.password_hash;
     return res.json({ token: signFan(user), user });
   }
@@ -254,7 +254,7 @@ router.post('/kakao/signup', async (req, res) => {
       sql: 'SELECT * FROM users WHERE kakao_id = ?', args: [info.kakaoId],
     });
     if (dup) {
-      touchLastSeen(dup.id, clientIp(req));
+      touchLastSeen(dup.id);
       delete dup.password_hash;
       return res.json({ token: signFan(dup), user: dup });
     }
@@ -262,11 +262,10 @@ router.post('/kakao/signup', async (req, res) => {
     const nickname = (req.body?.nickname ?? info.nickname ?? '검도팬').trim().slice(0, 10);
     if (!nickname) return res.status(400).json({ error: '닉네임을 입력해주세요.' });
 
-    const ip = clientIp(req);
     await db.execute({
-      sql: `INSERT INTO users (nickname, home_dojo, kakao_id, signup_ip, last_ip, last_seen_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-      args: [nickname, req.body?.home_dojo?.trim() || null, info.kakaoId, ip, ip],
+      sql: `INSERT INTO users (nickname, home_dojo, kakao_id, last_seen_at)
+            VALUES (?, ?, ?, datetime('now'))`,
+      args: [nickname, req.body?.home_dojo?.trim() || null, info.kakaoId],
     });
     const { rows: [created] } = await db.execute({
       sql: 'SELECT * FROM users WHERE kakao_id = ?', args: [info.kakaoId],
@@ -386,12 +385,11 @@ router.post('/kakao/link', async (req, res) => {
     if (target.kakao_id)
       return res.status(409).json({ error: '이 계정은 이미 다른 카카오 계정에 연결돼 있습니다.' });
 
-    const ip = clientIp(req);
     await db.execute({
       sql: `UPDATE users SET kakao_id = ?, kakao_linked_at = datetime('now'),
-                             last_ip = ?, last_seen_at = datetime('now')
+                             last_seen_at = datetime('now')
             WHERE id = ?`,
-      args: [info.kakaoId, ip, target.id],
+      args: [info.kakaoId, target.id],
     });
     const { rows: [linked] } = await db.execute({
       sql: 'SELECT * FROM users WHERE id = ?', args: [target.id],

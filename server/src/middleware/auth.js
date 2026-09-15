@@ -39,14 +39,16 @@ export function clientIp(req) {
  */
 const TOUCH_EVERY = '-3 minutes';
 
-export function touchLastSeen(userId, ip = null) {
+/* IP는 더 이상 남기지 않는다. 어드민에서 보여주던 자리를 없앴고, 중복 가입을
+   가려내는 데 실제로 쓰지 않았다. 안 쓰는 개인정보는 갖고 있지 않는 편이 낫다.
+   접속 시각만 남긴다. */
+export function touchLastSeen(userId) {
   if (!userId) return;
   db.execute({
-    sql: `UPDATE users SET last_seen_at = datetime('now'),
-                           last_ip = COALESCE(?, last_ip)
+    sql: `UPDATE users SET last_seen_at = datetime('now')
           WHERE id = ?
             AND (last_seen_at IS NULL OR last_seen_at < datetime('now', ?))`,
-    args: [ip, userId, TOUCH_EVERY],
+    args: [userId, TOUCH_EVERY],
   }).catch(() => { /* 접속 기록 실패가 요청을 막을 이유는 없다 */ });
 }
 
@@ -58,7 +60,7 @@ export function requireAuth(req, res, next) {
   const token = header.slice(7);
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
-    touchLastSeen(req.user.userId, clientIp(req));
+    touchLastSeen(req.user.userId);
     next();
   } catch {
     res.status(401).json({ error: '유효하지 않은 토큰입니다.' });

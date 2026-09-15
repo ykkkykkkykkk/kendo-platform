@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Loader, Search, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader, Search, Trash2, X } from 'lucide-react';
 import { adminGet, adminDelete } from '../../adminApi.js';
 
 /**
@@ -11,6 +11,13 @@ function seenAt(s) {
   if (Number.isNaN(d.getTime())) return s;
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** 정렬용 시각(ms). 기록이 없거나 못 읽으면 null. seenAt과 같은 UTC 해석을 쓴다. */
+function seenTime(s) {
+  if (!s) return null;
+  const t = Date.parse(String(s).replace(' ', 'T') + 'Z');
+  return Number.isNaN(t) ? null : t;
 }
 
 /* 검색어가 걸린 부분을 라임으로 칠한다.
@@ -52,6 +59,7 @@ export default function UserList() {
   const [detail, setDetail]   = useState(null);
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
+  const [seenSort, setSeenSort] = useState(null);  // null(원래 순서) | 'desc'(최신순) | 'asc'(오래된순)
 
   /* 검색 결과에 걸린 도장별 인원. 검색어가 비었으면 세지 않는다(전체 목록엔 의미 없음). */
   const dojoCounts = useMemo(() => {
@@ -68,6 +76,16 @@ export default function UserList() {
       .map(([name, n]) => ({ name, n }))
       .sort((a, b) => b.n - a.n);
   }, [users, q]);
+
+  /* 마지막 접속 정렬. 기록 없는 회원은 방향과 상관없이 늘 아래로 민다. */
+  const rows = useMemo(() => {
+    if (!seenSort) return users;
+    return [...users].sort((a, b) => {
+      const x = seenTime(a.last_seen_at), y = seenTime(b.last_seen_at);
+      if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
+      return seenSort === 'desc' ? y - x : x - y;
+    });
+  }, [users, seenSort]);
 
   // 화면에 칠할 검색어 (지금 목록을 만든 검색어)
   const term = q.trim().replace(/\s/g, '');
@@ -238,15 +256,29 @@ export default function UserList() {
                 <th className="px-4 py-3 font-medium">응원팀</th>
                 <th className="px-4 py-3 font-medium">팔로우</th>
                 <th className="px-4 py-3 font-medium">픽</th>
-                <th className="px-4 py-3 font-medium">마지막 접속</th>
+                {/* 누르면 최신순 → 오래된순 → 원래 순서로 돈다 */}
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setSeenSort((s) => (s === 'desc' ? 'asc' : s === 'asc' ? null : 'desc'))}
+                    title={seenSort === 'desc' ? '최신 접속순 — 누르면 오래된순' : seenSort === 'asc' ? '오래된 접속순 — 누르면 원래 순서' : '누르면 최신 접속순'}
+                    className={`flex items-center gap-1 tracking-wider transition-colors ${
+                      seenSort ? 'text-ink font-semibold' : 'text-ink-400 hover:text-ink'
+                    }`}
+                  >
+                    마지막 접속
+                    {seenSort === 'desc' ? <ArrowDown size={12} />
+                      : seenSort === 'asc' ? <ArrowUp size={12} />
+                      : <ArrowUpDown size={12} className="opacity-50" />}
+                  </button>
+                </th>
                 <th className="px-4 py-3 font-medium">카카오</th>
-                <th className="px-4 py-3 font-medium">접속 IP</th>
                 <th className="px-4 py-3 font-medium">가입일</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {rows.map((u) => (
                 <tr key={u.id} className="border-b border-ink-200 last:border-0 hover:bg-ink-200/20">
                   <td className="px-4 py-3">
                     <button onClick={() => openDetail(u.id)} className="font-semibold text-ink hover:underline">
@@ -299,24 +331,6 @@ export default function UserList() {
                       ? <span className="text-[10px] bg-[#FEE500] text-[#3C1E1E] px-1.5 py-0.5 font-bold">연결됨</span>
                       : <span className="text-ink-400">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-xs whitespace-nowrap">
-                    {u.last_ip ? (
-                      <>
-                        <span className="font-mono text-ink-600">{u.last_ip}</span>
-                        {/* 같은 IP를 쓰는 계정이 있으면 중복 가입일 수 있다 (가족·도장 공용일 수도 있음) */}
-                        {u.same_ip_count > 0 && (
-                          <span
-                            title="같은 IP를 쓰는 다른 계정이 있습니다. 닉네임을 눌러 확인하세요."
-                            className="ml-1.5 text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold"
-                          >
-                            +{u.same_ip_count}
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-ink-400">기록 없음</span>
-                    )}
-                  </td>
                   <td className="px-4 py-3 text-ink-400 text-xs tabular-nums">{(u.created_at ?? '').slice(0, 10)}</td>
                   <td className="px-4 py-3">
                     <button
@@ -356,12 +370,6 @@ export default function UserList() {
                   <p className="text-ink-600">단 · {detail.dan_grade ? `${detail.dan_grade}단` : '—'}</p>
                   <p className="text-ink-600">응원팀 · {detail.favorite_team ?? '—'}</p>
                   <p className="text-ink-600">
-                    접속 IP · <span className="font-mono">{detail.last_ip ?? '기록 없음'}</span>
-                    {detail.signup_ip && detail.signup_ip !== detail.last_ip && (
-                      <span className="text-ink-400 text-xs"> (가입 시 {detail.signup_ip})</span>
-                    )}
-                  </p>
-                  <p className="text-ink-600">
                     카카오 · {detail.kakao_id
                       ? <span className="bg-[#FEE500] text-[#3C1E1E] px-1.5 py-0.5 text-xs font-bold">연결됨</span>
                       : <span className="text-ink-400">미연결</span>}
@@ -372,28 +380,6 @@ export default function UserList() {
                   <p className="text-ink-400 text-xs">가입 {detail.created_at}</p>
                 </div>
 
-                {/* 같은 IP 계정 — 중복 가입 판별용. 겹친다고 무조건 같은 사람은 아니다 */}
-                {detail.same_ip?.length > 0 && (
-                  <div className="px-5 pb-4">
-                    <h3 className="text-[11px] font-bold tracking-wider text-ink-400 mb-2">
-                      같은 IP를 쓰는 계정 {detail.same_ip.length}개
-                    </h3>
-                    {detail.same_ip.map((s) => (
-                      <div key={s.id} className="flex items-center gap-2 py-1.5 border-t border-ink-200 text-sm">
-                        <span className="text-ink font-medium">{s.nickname}</span>
-                        {s.username && <span className="text-[11px] text-ink-400 font-mono">{s.username}</span>}
-                        {s.role !== 'fan' && (
-                          <span className="text-[10px] bg-lime text-ink px-1.5 py-0.5 font-bold">{s.role}</span>
-                        )}
-                        <span className="flex-1" />
-                        <span className="text-ink-400 text-xs tabular-nums">{(s.created_at ?? '').slice(0, 10)}</span>
-                      </div>
-                    ))}
-                    <p className="text-ink-400 text-[11px] mt-2">
-                      같은 집·도장·통신사에서 접속하면 겹칠 수 있습니다. 중복 가입 확인용 참고 자료입니다.
-                    </p>
-                  </div>
-                )}
 
                 <div className="px-5 pb-4">
                   <h3 className="text-[11px] font-bold tracking-wider text-ink-400 mb-2">

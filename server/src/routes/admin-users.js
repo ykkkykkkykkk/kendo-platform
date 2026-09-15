@@ -51,13 +51,7 @@ router.get('/users', async (req, res) => {
     const { rows: users } = await db.execute({
       sql: `SELECT u.id, u.nickname, u.phone, u.username, u.role, u.dan_grade, u.home_dojo,
                    u.created_at, u.last_seen_at, u.player_id,
-                   u.last_ip, u.signup_ip, u.kakao_id, u.kakao_linked_at,
-                   -- 같은 IP를 쓰는 다른 계정 수. 중복 가입을 가려낼 단서로 쓴다.
-                   -- 가족이나 같은 도장에서 접속하면 자연스럽게 겹칠 수 있으니 참고용이다.
-                   (SELECT COUNT(*) FROM users o
-                     WHERE o.id != u.id
-                       AND o.last_ip IS NOT NULL
-                       AND o.last_ip = u.last_ip) AS same_ip_count,
+                   u.kakao_id, u.kakao_linked_at,
                    ${IS_SEED} AS is_seed,
                    t.name  AS favorite_team,
                    d.name  AS dojo_name,
@@ -125,14 +119,7 @@ router.get('/users/:id', async (req, res) => {
       args: [id],
     });
 
-    // 같은 IP를 쓰는 다른 계정 — 중복 가입인지 눈으로 확인하라고 목록으로 준다
-    const { rows: sameIp } = user.last_ip ? await db.execute({
-      sql: `SELECT id, nickname, username, role, created_at, last_seen_at
-            FROM users WHERE id != ? AND last_ip = ? ORDER BY created_at`,
-      args: [id, user.last_ip],
-    }) : { rows: [] };
-
-    res.json({ ...user, follows, picks, same_ip: sameIp });
+    res.json({ ...user, follows, picks });
   } catch (e) { serverError(res, e, 'admin-user-detail'); }
 });
 
