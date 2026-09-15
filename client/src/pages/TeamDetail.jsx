@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search } from 'lucide-react';
+import { ChevronLeft, Search, Maximize2 } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { teamPhotoSrc } from '../utils/cloudinary.js';
+import PhotoZoomModal from '../components/PhotoZoomModal.jsx';
 import { SkeletonList } from '../components/Skeleton.jsx';
 import PlayerAvatar from '../components/PlayerAvatar.jsx';
 import TeamLogo from '../components/TeamLogo.jsx';
@@ -13,7 +14,7 @@ import TeamLogo from '../components/TeamLogo.jsx';
    사진이 있는 팀에만 붙는다 — 없으면 이 영역 자체가 안 나오고
    페이지는 예전 그대로 헤더부터 시작한다.
 ══════════════════════════════════════════════ */
-function TeamPhoto({ team, children }) {
+function TeamPhoto({ team, children, onZoom }) {
   const [loaded, setLoaded] = useState(false);
   const src = teamPhotoSrc(team.team_photo_url);
 
@@ -28,6 +29,17 @@ function TeamPhoto({ team, children }) {
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
+      {/* 사진 전체가 누르는 자리. 단체사진은 16:9로 잘려 얼굴이 작으니 크게 볼 수 있어야 한다. */}
+      <button
+        type="button"
+        onClick={onZoom}
+        aria-label={`${team.name} 단체사진 크게 보기`}
+        className="absolute inset-0 w-full h-full"
+      />
+      <span className="absolute right-4 bottom-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm
+                       flex items-center justify-center pointer-events-none">
+        <Maximize2 size={14} className="text-white" />
+      </span>
       {/* 이름은 바로 아래 헤드라인이 맡는다. 여기 그라데이션은 사진이 종이 배경으로
           자연스럽게 떨어지게 하는 용도라, 글씨를 받칠 때보다 훨씬 옅다. */}
       <div
@@ -43,6 +55,7 @@ export default function TeamDetail() {
   const { slug }   = useParams();
   const navigate   = useNavigate();
   const { data: team, loading } = useFetch(() => api.team(slug), [slug]);
+  const [zoom, setZoom] = useState(false);   // 단체사진 크게 보기
 
   if (loading) return (
     <main className="page-body bg-paper px-5 pt-14">
@@ -82,7 +95,7 @@ export default function TeamDetail() {
   return (
     <main className="page-body bg-paper min-h-screen">
       {/* ── 단체사진 (있는 팀만) ── */}
-      {hasPhoto ? <TeamPhoto team={team}>{nav}</TeamPhoto> : nav}
+      {hasPhoto ? <TeamPhoto team={team} onZoom={() => setZoom(true)}>{nav}</TeamPhoto> : nav}
 
       {/* ── 팀 헤드라인 ── */}
       <header className="px-5 pt-6">
@@ -150,6 +163,15 @@ export default function TeamDetail() {
           </div>
         )}
       </section>
+
+      {zoom && team.team_photo_url && (
+        <PhotoZoomModal
+          src={team.team_photo_url}
+          alt={`${team.name} 단체사진`}
+          caption={team.name}
+          onClose={() => setZoom(false)}
+        />
+      )}
     </main>
   );
 }

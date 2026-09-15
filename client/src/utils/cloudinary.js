@@ -28,3 +28,7 @@ export const faceSrc = (url, w = 200) =>
 /** 팀 단체사진 — 가로 16:9. 여러 명이 서 있어 얼굴 기준으로 몰면 한쪽이 잘린다. */
 export const teamPhotoSrc = (url, w = 1200) =>
   transform(url, `c_fill,g_auto,ar_16:9,w_${w},q_auto,f_auto`);
+
+/** 원본 비율 그대로, 너무 큰 것만 줄여서. 확대해서 볼 때 쓴다(자르지 않는다). */
+export const fullSrc = (url, w = 1600) =>
+  transform(url, `c_limit,w_${w},q_auto,f_auto`);
