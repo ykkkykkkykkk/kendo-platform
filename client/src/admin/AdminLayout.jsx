@@ -5,6 +5,40 @@ import {
 } from 'lucide-react';
 import { adminGet } from './adminApi.js';
 
+/* 어드민 API가 실패하면 화면에 알린다.
+   예전에는 무슨 오류든 목록이 '데이터 없음'으로만 보여서, 토큰이 풀린 건지
+   요청 한도에 걸린 건지 서버가 죽은 건지 화면만 봐서는 알 수 없었다. */
+const ERROR_HINT = {
+  0:   '서버에 연결하지 못했습니다. 인터넷 연결을 확인해주세요.',
+  429: '요청이 너무 많습니다. 1분 뒤에 새로고침해주세요.',
+  500: '서버 오류입니다. 잠시 후 다시 시도해주세요.',
+  503: '서버가 깨어나는 중입니다. 20초쯤 뒤에 새로고침해주세요.',
+};
+
+function ApiErrorBanner() {
+  const [err, setErr] = useState(null);
+  useEffect(() => {
+    const on = (e) => setErr(e.detail);
+    window.addEventListener('admin-api-error', on);
+    return () => window.removeEventListener('admin-api-error', on);
+  }, []);
+  if (!err) return null;
+  return (
+    <div className="bg-red-50 border-b border-red-200 px-6 py-3 flex items-start gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-red-700">
+          데이터를 불러오지 못했습니다 (오류 {err.status || '연결 실패'})
+        </p>
+        <p className="text-xs text-red-600 mt-0.5">
+          {ERROR_HINT[err.status] ?? err.message ?? '잠시 후 다시 시도해주세요.'}
+          <span className="text-red-400"> · {err.path}</span>
+        </p>
+      </div>
+      <button onClick={() => setErr(null)} className="text-red-400 hover:text-red-600 text-sm">✕</button>
+    </div>
+  );
+}
+
 const NAV = [
   { to: '/admin',              label: '대시보드',   icon: LayoutDashboard, end: true },
   { to: '/admin/players',      label: '선수 관리',  icon: Users },
@@ -127,6 +161,7 @@ export default function AdminLayout({ children, onLogout }) {
 
       {/* 메인 콘텐츠 */}
       <main className="flex-1 overflow-auto">
+        <ApiErrorBanner />
         {children}
       </main>
     </div>
