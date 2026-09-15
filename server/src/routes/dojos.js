@@ -253,29 +253,43 @@ router.get('/dojos/ranking', async (req, res) => {
       args: [],
     });
 
-    const ranking = await Promise.all(ranked.map(async (d, i) => {
-      // 상위 기여자 3명
-      const { rows: topUsers } = await db.execute({
-        sql: `SELECT u.nickname, COALESCE(SUM(tp.score), 0) AS score
-              FROM users u
-              LEFT JOIN tournament_picks tp ON tp.user_id = u.id
-                AND tp.created_at >= ?
-                AND tp.created_at <= ?
-              WHERE u.dojo_id = ?
-              GROUP BY u.id
-              ORDER BY score DESC LIMIT 3`,
+    /* 상위 기여자 3명.
+       예전에는 도장마다 따로 물어봤다(50개면 조회 50번). 도장이 늘수록 그대로 늘어나
+       방문자 통계와 같은 함정이었다. 한 번에 뽑아 도장별로 나눈다. */
+    const ids = ranked.map((d) => d.id);
+    const byDojo = new Map(ids.map((id) => [id, []]));
+
+    if (ids.length) {
+      const { rows: tops } = await db.execute({
+        sql: `WITH scored AS (
+                SELECT u.dojo_id, u.nickname, COALESCE(SUM(tp.score), 0) AS score
+                FROM users u
+                LEFT JOIN tournament_picks tp ON tp.user_id = u.id
+                  AND tp.created_at >= ?
+                  AND tp.created_at <= ?
+                WHERE u.dojo_id IN (${ids.map(() => '?').join(',')})
+                GROUP BY u.id
+              )
+              SELECT dojo_id, nickname FROM (
+                SELECT dojo_id, nickname,
+                       ROW_NUMBER() OVER (PARTITION BY dojo_id ORDER BY score DESC) AS rn
+                FROM scored
+              ) WHERE rn <= 3
+              ORDER BY dojo_id, rn`,
         args: [season?.start_date ?? '2000-01-01',
                (season?.end_date ?? '2099-12-31') + ' 23:59:59',
-               d.id],
+               ...ids],
       });
-      return {
-        rank:             i + 1,
-        dojo_id:          d.id,
-        name:             d.name,
-        member_count:     d.member_count,
-        total_score:      d.total_score,
-        top_contributors: topUsers.map((u) => u.nickname),
-      };
+      for (const t of tops) byDojo.get(t.dojo_id)?.push(t.nickname);
+    }
+
+    const ranking = ranked.map((d, i) => ({
+      rank:             i + 1,
+      dojo_id:          d.id,
+      name:             d.name,
+      member_count:     d.member_count,
+      total_score:      d.total_score,
+      top_contributors: byDojo.get(d.id) ?? [],
     }));
 
     // 내 도장 위치
