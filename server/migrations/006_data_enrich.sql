@@ -8,46 +8,46 @@ PRAGMA foreign_keys = ON;
 -- 1. 선수 상세정보 업데이트 (여자부 주요 선수)
 -- ============================================================
 
-UPDATE players SET dan_grade=7, birth_year=1998, position='대장',  bio='경주시청 에이스. 정확한 머리 기술과 강인한 체력이 무기.' WHERE slug='jeong-hyeonji';
-UPDATE players SET dan_grade=6, birth_year=2000, position='부장',  bio='빠른 발놀림과 날카로운 허리 기술이 특기.' WHERE slug='kim-yujeong';
-UPDATE players SET dan_grade=6, birth_year=2001, position='중견',  bio='경주시청 중견. 안정적인 경기 운영이 강점.' WHERE slug='baek-dasom';
-UPDATE players SET dan_grade=5, birth_year=2003, position='이봉',  bio='젊은 기대주. 공격적인 스타일.' WHERE slug='jeon-seyeong';
-UPDATE players SET dan_grade=7, birth_year=1997, position='선봉',  bio='베테랑 선봉. 첫판을 지배하는 압도적인 기세.' WHERE slug='kim-mijin';
+UPDATE players SET dan_grade=7, birth_year=1998, bio='경주시청 에이스. 정확한 머리 기술과 강인한 체력이 무기.' WHERE slug='jeong-hyeonji';
+UPDATE players SET dan_grade=6, birth_year=2000, bio='빠른 발놀림과 날카로운 허리 기술이 특기.' WHERE slug='kim-yujeong';
+UPDATE players SET dan_grade=6, birth_year=2001, bio='경주시청 중견. 안정적인 경기 운영이 강점.' WHERE slug='baek-dasom';
+UPDATE players SET dan_grade=5, birth_year=2003, bio='젊은 기대주. 공격적인 스타일.' WHERE slug='jeon-seyeong';
+UPDATE players SET dan_grade=7, birth_year=1997, bio='베테랑 선봉. 첫판을 지배하는 압도적인 기세.' WHERE slug='kim-mijin';
 
-UPDATE players SET dan_grade=7, birth_year=1996, position='대장',  bio='충남체육회 대장. 풍부한 실전 경험과 냉철한 판단력.' WHERE slug='bak-sieun';
-UPDATE players SET dan_grade=6, birth_year=1999, position='부장',  bio='변칙 기술과 카운터가 특기인 올라운더.' WHERE slug='gong-subin';
-UPDATE players SET dan_grade=6, birth_year=2001, position='중견',  bio='꼼꼼한 수비와 효율적인 공격을 겸비.' WHERE slug='yang-hyewon';
+UPDATE players SET dan_grade=7, birth_year=1996, bio='충남체육회 대장. 풍부한 실전 경험과 냉철한 판단력.' WHERE slug='bak-sieun';
+UPDATE players SET dan_grade=6, birth_year=1999, bio='변칙 기술과 카운터가 특기인 올라운더.' WHERE slug='gong-subin';
+UPDATE players SET dan_grade=6, birth_year=2001, bio='꼼꼼한 수비와 효율적인 공격을 겸비.' WHERE slug='yang-hyewon';
 
-UPDATE players SET dan_grade=7, birth_year=1995, position='대장',  bio='화성시청 에이스. 전국 대회 다수 우승 경력.' WHERE slug='han-haneul';
-UPDATE players SET dan_grade=6, birth_year=2000, position='중견',  bio='탄탄한 기본기와 지구력이 강점.' WHERE slug='kim-hyewon';
-UPDATE players SET dan_grade=5, birth_year=2003, position='이봉',  bio='신예 돌풍. 과감한 공격으로 주목받는 선수.' WHERE slug='jo-yubin';
+UPDATE players SET dan_grade=7, birth_year=1995, bio='화성시청 에이스. 전국 대회 다수 우승 경력.' WHERE slug='han-haneul';
+UPDATE players SET dan_grade=6, birth_year=2000, bio='탄탄한 기본기와 지구력이 강점.' WHERE slug='kim-hyewon';
+UPDATE players SET dan_grade=5, birth_year=2003, bio='신예 돌풍. 과감한 공격으로 주목받는 선수.' WHERE slug='jo-yubin';
 
-UPDATE players SET dan_grade=7, birth_year=1997, position='대장',  bio='탐솔라 에이스. 독보적인 기술 완성도.' WHERE slug='choi-juwon';
-UPDATE players SET dan_grade=6, birth_year=1999, position='중견',  bio='안정적인 경기 운영과 강한 멘탈.' WHERE slug='jeong-seohyeon';
+UPDATE players SET dan_grade=7, birth_year=1997, bio='탐솔라 에이스. 독보적인 기술 완성도.' WHERE slug='choi-juwon';
+UPDATE players SET dan_grade=6, birth_year=1999, bio='안정적인 경기 운영과 강한 멘탈.' WHERE slug='jeong-seohyeon';
 
-UPDATE players SET dan_grade=7, birth_year=1996, position='대장',  bio='충북체육회 간판. 국가대표 출신의 실력자.' WHERE slug='lee-chanju';
-UPDATE players SET dan_grade=6, birth_year=2000, position='부장',  bio='파워풀한 타격과 빠른 선제 공격.' WHERE slug='bak-nayeong';
+UPDATE players SET dan_grade=7, birth_year=1996, bio='충북체육회 간판. 국가대표 출신의 실력자.' WHERE slug='lee-chanju';
+UPDATE players SET dan_grade=6, birth_year=2000, bio='파워풀한 타격과 빠른 선제 공격.' WHERE slug='bak-nayeong';
 
 -- ============================================================
 -- 2. 선수 상세정보 업데이트 (남자부 주요 선수)
 -- ============================================================
 
-UPDATE players SET dan_grade=8, birth_year=1990, position='대장',  bio='광명시청 대장. 8단 고수. 대한민국 최정상급 기량을 보유한 레전드.' WHERE slug='lee-hojin';
-UPDATE players SET dan_grade=7, birth_year=1994, position='부장',  bio='넓은 간격과 빠른 머리치기가 일품.' WHERE slug='nam-useok';
-UPDATE players SET dan_grade=7, birth_year=1996, position='중견',  bio='균형 잡힌 공수로 팀의 중심을 잡는 선수.' WHERE slug='song-yeongjun';
-UPDATE players SET dan_grade=6, birth_year=1999, position='이봉',  bio='기세가 넘치는 돌진형 스타일.' WHERE slug='kim-jonghun';
-UPDATE players SET dan_grade=8, birth_year=1988, position='선봉',  bio='전국 최고 수준의 선봉. 첫판을 무조건 가져간다는 평판.' WHERE slug='jeong-jonghyeon';
+UPDATE players SET dan_grade=8, birth_year=1990, bio='광명시청 대장. 8단 고수. 대한민국 최정상급 기량을 보유한 레전드.' WHERE slug='lee-hojin';
+UPDATE players SET dan_grade=7, birth_year=1994, bio='넓은 간격과 빠른 머리치기가 일품.' WHERE slug='nam-useok';
+UPDATE players SET dan_grade=7, birth_year=1996, bio='균형 잡힌 공수로 팀의 중심을 잡는 선수.' WHERE slug='song-yeongjun';
+UPDATE players SET dan_grade=6, birth_year=1999, bio='기세가 넘치는 돌진형 스타일.' WHERE slug='kim-jonghun';
+UPDATE players SET dan_grade=8, birth_year=1988, bio='전국 최고 수준의 선봉. 첫판을 무조건 가져간다는 평판.' WHERE slug='jeong-jonghyeon';
 
-UPDATE players SET dan_grade=8, birth_year=1989, position='대장',  bio='달서구청 대장. 국가대표 출신. 연간 10개 이상 타이틀을 보유한 전설.' WHERE slug='ju-yeonu';
-UPDATE players SET dan_grade=7, birth_year=1993, position='부장',  bio='정교한 코테 기술과 냉철한 경기 운영.' WHERE slug='jeong-songyun';
-UPDATE players SET dan_grade=7, birth_year=1995, position='중견',  bio='화력과 지구력을 겸비한 다재다능한 선수.' WHERE slug='kim-jinok';
+UPDATE players SET dan_grade=8, birth_year=1989, bio='달서구청 대장. 국가대표 출신. 연간 10개 이상 타이틀을 보유한 전설.' WHERE slug='ju-yeonu';
+UPDATE players SET dan_grade=7, birth_year=1993, bio='정교한 코테 기술과 냉철한 경기 운영.' WHERE slug='jeong-songyun';
+UPDATE players SET dan_grade=7, birth_year=1995, bio='화력과 지구력을 겸비한 다재다능한 선수.' WHERE slug='kim-jinok';
 
-UPDATE players SET dan_grade=7, birth_year=1992, position='대장',  bio='광주북구청 간판. 날카로운 도발과 역습이 특기.' WHERE slug='kim-heonyeong';
-UPDATE players SET dan_grade=7, birth_year=1994, position='중견',  bio='안정적인 수비와 반격이 돋보이는 선수.' WHERE slug='kim-heonsu';
+UPDATE players SET dan_grade=7, birth_year=1992, bio='광주북구청 간판. 날카로운 도발과 역습이 특기.' WHERE slug='kim-heonyeong';
+UPDATE players SET dan_grade=7, birth_year=1994, bio='안정적인 수비와 반격이 돋보이는 선수.' WHERE slug='kim-heonsu';
 
-UPDATE players SET dan_grade=8, birth_year=1991, position='대장',  bio='용인시청 에이스. 압도적인 피지컬과 기술의 조화.' WHERE slug='jo-jinyong';
-UPDATE players SET dan_grade=7, birth_year=1993, position='부장',  bio='전략적 경기 운영으로 팀을 이끄는 핵심 선수.' WHERE slug='shin-wangjun';
-UPDATE players SET dan_grade=7, birth_year=1996, position='중견',  bio='화끈한 공격 스타일로 팬들의 사랑을 받는 선수.' WHERE slug='lee-jinhyeok';
+UPDATE players SET dan_grade=8, birth_year=1991, bio='용인시청 에이스. 압도적인 피지컬과 기술의 조화.' WHERE slug='jo-jinyong';
+UPDATE players SET dan_grade=7, birth_year=1993, bio='전략적 경기 운영으로 팀을 이끄는 핵심 선수.' WHERE slug='shin-wangjun';
+UPDATE players SET dan_grade=7, birth_year=1996, bio='화끈한 공격 스타일로 팬들의 사랑을 받는 선수.' WHERE slug='lee-jinhyeok';
 
 -- ============================================================
 -- 3. player_stats (선수 전적) 입력

@@ -458,7 +458,7 @@ router.post('/players', async (req, res) => {
   try {
     const {
       name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
-      position, bio, instagram_url, youtube_url, profile_image_url,
+      bio, instagram_url, youtube_url, profile_image_url,
       hero_image_url, face_image_url, specialty,
     } = req.body;
 
@@ -471,13 +471,13 @@ router.post('/players', async (req, res) => {
     await db.execute({
       sql: `INSERT INTO players
               (name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
-               position, bio, instagram_url, youtube_url, profile_image_url,
+               bio, instagram_url, youtube_url, profile_image_url,
                hero_image_url, face_image_url, specialty)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name.trim(), name_en || null, slug.trim(), team_id,
         dan_grade || null, birth_year || null, height_cm || null,
-        position || null, bio || null, instagram_url || null,
+        bio || null, instagram_url || null,
         youtube_url || null, profile_image_url || null,
         hero_image_url || null, face_image_url || null, specialty?.trim() || null,
       ],
@@ -500,7 +500,7 @@ router.put('/players/:id', async (req, res) => {
   try {
     const {
       name, name_en, slug, team_id, dan_grade, birth_year, height_cm,
-      position, bio, instagram_url, youtube_url, profile_image_url,
+      bio, instagram_url, youtube_url, profile_image_url,
       hero_image_url, face_image_url, specialty,
     } = req.body;
 
@@ -511,13 +511,13 @@ router.put('/players/:id', async (req, res) => {
       sql: `UPDATE players SET
               name = ?, name_en = ?, slug = ?, team_id = ?,
               dan_grade = ?, birth_year = ?, height_cm = ?,
-              position = ?, bio = ?, instagram_url = ?, youtube_url = ?, profile_image_url = ?,
+              bio = ?, instagram_url = ?, youtube_url = ?, profile_image_url = ?,
               hero_image_url = ?, face_image_url = ?, specialty = ?
             WHERE id = ?`,
       args: [
         name, name_en || null, slug, team_id,
         dan_grade || null, birth_year || null, height_cm || null,
-        position || null, bio || null, instagram_url || null,
+        bio || null, instagram_url || null,
         youtube_url || null, profile_image_url || null,
         hero_image_url || null, face_image_url || null, specialty?.trim() || null,
         req.params.id,

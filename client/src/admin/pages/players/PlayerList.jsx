@@ -104,7 +104,7 @@ export default function PlayerList() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1.5px solid #111111' }}>
-                {['ID','이름','소속팀','단증','포지션','출생연도','신장','전적',''].map((h) => (
+                {['ID','이름','소속팀','단증','출생연도','신장','전적',''].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-ink-400 uppercase tracking-[0.15em] whitespace-nowrap">
                     {h}
                   </th>
@@ -118,13 +118,6 @@ export default function PlayerList() {
                   <td className="px-4 py-3 font-semibold text-ink">{p.name}</td>
                   <td className="px-4 py-3 text-ink-600">{p.team_name}</td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{p.dan_grade}단</td>
-                  <td className="px-4 py-3">
-                    {p.position && (
-                      <span className="text-[11px] px-2 py-0.5 border border-ink-200 text-ink-600 font-medium">
-                        {p.position}
-                      </span>
-                    )}
-                  </td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{p.birth_year ?? '—'}</td>
                   <td className="px-4 py-3 text-ink-600 tabular-nums">{p.height_cm ? `${p.height_cm}cm` : '—'}</td>
                   <td className="px-4 py-3 text-ink-600 text-xs tabular-nums">

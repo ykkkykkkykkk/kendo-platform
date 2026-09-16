@@ -56,7 +56,7 @@ function SnsBtn({ href, icon: Icon, disabled }) {
 function Hero({ player, heroUrl, children }) {
   const [loaded, setLoaded] = useState(false);
   const src = heroSrc(heroUrl);
-  const sub = [player.team_name, player.position].filter(Boolean).join(' · ');
+  const sub = player.team_name ?? '';
 
   return (
     <div className="relative w-full bg-block overflow-hidden" style={{ aspectRatio: '4 / 5' }}>
@@ -363,7 +363,7 @@ export default function PlayerProfile({ onLoginRequest }) {
           ════════════════════════════════════════ */}
           <div className="flex gap-2 mt-5">
             <Chip label="단증" value={player.dan_grade ? `${player.dan_grade}단` : '—'} />
-            <Chip label="주특기" value={player.specialty || player.position || '—'} />
+            <Chip label="주특기" value={player.specialty || '—'} />
             <Chip label="팬" value={`${fanCount.toLocaleString()}명`} accent />
           </div>
 

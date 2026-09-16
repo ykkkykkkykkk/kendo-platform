@@ -5,7 +5,6 @@ import { adminGet, adminPost, adminPut, adminDelete } from '../../adminApi.js';
 import VideoManager from '../../../components/VideoManager.jsx';
 import ImageUploadField from '../../components/ImageUploadField.jsx';
 
-const POSITIONS  = ['선봉', '이봉', '중견', '부장', '대장'];
 const CATEGORIES = ['죽도', '호구', '도복', '하카마', '기타'];
 
 // 인스타 입력값을 아이디(핸들)로 정규화: URL/@/공백 제거. 빈 값이면 '' 반환.
@@ -19,7 +18,7 @@ function normInstaHandle(v) {
 
 const EMPTY_FORM = {
   name: '', name_en: '', slug: '', team_id: '',
-  dan_grade: '', birth_year: '', height_cm: '', position: '',
+  dan_grade: '', birth_year: '', height_cm: '',
   bio: '', instagram_url: '', youtube_url: '', profile_image_url: '',
   hero_image_url: '', face_image_url: '', specialty: '',
 };
@@ -86,7 +85,6 @@ export default function PlayerForm() {
           dan_grade:         String(p.dan_grade ?? ''),
           birth_year:        String(p.birth_year ?? ''),
           height_cm:         String(p.height_cm ?? ''),
-          position:          p.position ?? '',
           bio:               p.bio ?? '',
           instagram_url:     p.instagram_url ?? '',
           youtube_url:       p.youtube_url ?? '',
@@ -234,17 +232,6 @@ export default function PlayerForm() {
               >
                 <option value="">선택</option>
                 {[4,5,6,7,8,9].map((d) => <option key={d} value={d}>{d}단</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-ink-600 mb-1 block">포지션</label>
-              <select
-                value={form.position}
-                onChange={set('position')}
-                className="w-full border border-ink-200 px-4 py-3 text-sm text-ink focus:outline-none focus:border-ink transition-colors"
-              >
-                <option value="">선택</option>
-                {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <Field label="출생연도"   value={form.birth_year} onChange={set('birth_year')} type="number" placeholder="1990" />

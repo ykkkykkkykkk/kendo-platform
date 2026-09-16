@@ -73,7 +73,7 @@ function buildMeta(player) {
   const title = `${player.name}${team ? ` - ${team}` : ''} 검도 선수 | 마이너스타`;
 
   // 있는 것만 이어 붙인다. 빈 값이 들어가 "  · " 같은 자국이 남지 않게.
-  const facts = [team && `${team} 소속`, dan, player.position].filter(Boolean).join(' · ');
+  const facts = [team && `${team} 소속`, dan].filter(Boolean).join(' · ');
   const extra = [
     player.specialty && `주특기 ${player.specialty}`,
     player.stats?.total_matches > 0 &&
@@ -92,7 +92,6 @@ function buildBody(player, meta) {
   const rows = [
     ['소속', player.team_name],
     ['단증', player.dan_grade && `${player.dan_grade}단`],
-    ['포지션', player.position],
     ['주특기', player.specialty],
     ['전적', player.stats?.total_matches > 0 &&
              `${player.stats.wins ?? 0}승 ${player.stats.losses ?? 0}패 (${player.stats.total_matches}경기)`],
