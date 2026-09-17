@@ -27,7 +27,8 @@ function ApiErrorBanner() {
     <div className="bg-red-50 border-b border-red-200 px-6 py-3 flex items-start gap-3">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-red-700">
-          데이터를 불러오지 못했습니다 (오류 {err.status || '연결 실패'})
+          {err.write ? '요청을 처리하지 못했습니다' : '데이터를 불러오지 못했습니다'}
+          {' '}(오류 {err.status || '연결 실패'})
         </p>
         <p className="text-xs text-red-600 mt-0.5">
           {ERROR_HINT[err.status] ?? err.message ?? '잠시 후 다시 시도해주세요.'}

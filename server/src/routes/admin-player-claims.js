@@ -50,6 +50,22 @@ router.post('/player-claims/:id/approve', async (req, res) => {
       sql: 'SELECT * FROM player_claims WHERE id = ?', args: [req.params.id],
     });
     if (!claim) return res.status(404).json({ error: '신청을 찾을 수 없습니다.' });
+
+    /* 이미 승인된 신청을 또 승인하는 건 실패가 아니다. 버튼이 두 번 눌렸거나 목록이 낡았을 뿐이고,
+       결과는 이미 원하던 상태다. 409로 답하면 운영자에게는 빨간 오류로 보이는데 정작 전환은
+       되어 있어서, 뭐가 잘못된 건지 확인하러 DB를 봐야 했다. 같은 결과면 그냥 성공으로 답한다. */
+    if (claim.status === 'approved') {
+      const { rows: [already] } = await db.execute({
+        sql: `SELECT u.id, u.nickname, u.role, u.player_id, p.name AS player_name, t.name AS team_name
+              FROM users u
+              LEFT JOIN players p ON p.id = u.player_id
+              LEFT JOIN teams t   ON t.id = p.team_id
+              WHERE u.id = ?`,
+        args: [claim.user_id],
+      });
+      if (already?.player_id === claim.player_id)
+        return res.json({ approved: true, already: true, user: already });
+    }
     if (claim.status !== 'pending')
       return res.status(409).json({ error: '이미 처리된 신청입니다.' });
 
@@ -101,6 +117,8 @@ router.post('/player-claims/:id/reject', async (req, res) => {
       sql: 'SELECT status FROM player_claims WHERE id = ?', args: [req.params.id],
     });
     if (!claim) return res.status(404).json({ error: '신청을 찾을 수 없습니다.' });
+    // 승인과 같은 이유로, 이미 거절된 걸 또 거절하면 그냥 성공으로 답한다
+    if (claim.status === 'rejected') return res.json({ rejected: true, already: true });
     if (claim.status !== 'pending')
       return res.status(409).json({ error: '이미 처리된 신청입니다.' });
 

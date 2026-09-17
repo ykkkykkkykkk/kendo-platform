@@ -16,9 +16,9 @@ const req = (method, path, body) =>
 /* 조회가 실패해도 화면은 '데이터 없음'만 보여줬다. 그래서 토큰이 풀렸는지,
    요청 한도에 걸렸는지, 서버가 죽었는지 화면만 봐서는 알 수가 없었다.
    실패를 알려서 AdminLayout이 띄우게 한다. */
-function report(status, path, message) {
+function report(status, path, message, write = false) {
   window.dispatchEvent(new CustomEvent('admin-api-error', {
-    detail: { status, path, message },
+    detail: { status, path, message, write },
   }));
 }
 
@@ -42,10 +42,17 @@ export const adminGet = (path) =>
   });
 
 /* 쓰기 요청은 호출한 쪽이 res.ok를 직접 보고 처리한다(기존 그대로).
-   여기서는 알림만 얹는다. */
-const withReport = (p, path) => p.then((r) => {
+   여기서는 알림만 얹는다.
+
+   본문은 호출한 쪽이 res.json()으로 다시 읽으므로 복제해서 본다 — 원본을 읽어버리면
+   호출한 쪽에서 스트림이 이미 소비됐다며 터진다. 서버가 보낸 사유를 그대로 띄우지 않으면
+   배너에 '잠시 후 다시 시도해주세요' 같은 조회용 문구만 남아 무슨 일인지 알 수 없다. */
+const withReport = (p, path) => p.then(async (r) => {
   if (r.status === 401) handleUnauthorized();
-  else if (!r.ok) report(r.status, path, null);
+  else if (!r.ok) {
+    const data = await r.clone().json().catch(() => ({}));
+    report(r.status, path, data?.error, true);
+  }
   return r;
 });
 

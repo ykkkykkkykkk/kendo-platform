@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader, Check, X, Heart } from 'lucide-react';
 import { adminGet, adminPost } from '../../adminApi.js';
 
@@ -26,6 +26,12 @@ export default function PlayerClaims() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy]     = useState(null);
   const [err, setErr]       = useState('');
+  const [notice, setNotice] = useState('');
+
+  /* 처리 중인 신청 id. busy(state)만으로는 두 번 눌리는 걸 못 막는다 —
+     확인창(window.confirm)이 떠 있는 동안에는 setBusy가 아직 안 돌았고,
+     창을 닫는 순간 밀려 있던 두 번째 클릭이 그대로 들어온다. ref는 즉시 반영된다. */
+  const inFlight = useRef(new Set());
 
   const load = useCallback(async (status) => {
     setLoading(true);
@@ -38,22 +44,31 @@ export default function PlayerClaims() {
   useEffect(() => { load(tab); }, [tab, load]);
 
   const act = async (c, kind) => {
-    const label = kind === 'approve' ? '승인' : '거절';
-    const note = kind === 'reject'
-      ? window.prompt(`'${c.nickname}'님의 ${c.player_name} 신청을 거절합니다.\n사유를 적으면 본인에게 보입니다. (선택)`) ?? ''
-      : '';
-    if (kind === 'approve' && !window.confirm(
-      `'${c.nickname}'님을 ${c.player_name}(${c.team_name ?? '팀 없음'}) 선수 계정으로 전환할까요?\n` +
-      `이 회원의 팔로우 ${c.follow_count}건·픽 ${c.pick_count}건은 그대로 유지됩니다.`
-    )) return;
+    if (inFlight.current.has(c.id)) return;
+    inFlight.current.add(c.id);
 
-    setBusy(c.id); setErr('');
     try {
-      const res  = await adminPost(`/player-claims/${c.id}/${kind}`, { note });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? `${label} 실패`);
-      await load(tab);
-    } catch (e) { setErr(e.message); } finally { setBusy(null); }
+      const label = kind === 'approve' ? '승인' : '거절';
+      const note = kind === 'reject'
+        ? window.prompt(`'${c.nickname}'님의 ${c.player_name} 신청을 거절합니다.\n사유를 적으면 본인에게 보입니다. (선택)`) ?? ''
+        : '';
+      if (kind === 'approve' && !window.confirm(
+        `'${c.nickname}'님을 ${c.player_name}(${c.team_name ?? '팀 없음'}) 선수 계정으로 전환할까요?\n` +
+        `이 회원의 팔로우 ${c.follow_count}건·픽 ${c.pick_count}건은 그대로 유지됩니다.`
+      )) return;
+
+      setBusy(c.id); setErr(''); setNotice('');
+      try {
+        const res  = await adminPost(`/player-claims/${c.id}/${kind}`, { note });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? `${label} 실패`);
+        // 서버가 '이미 그 상태였다'고 알려주면 오류가 아니라 안내로 보여준다
+        if (data.already) setNotice(`이미 ${label}된 신청입니다. 목록을 새로 불러왔습니다.`);
+        await load(tab);
+      } catch (e) { setErr(e.message); } finally { setBusy(null); }
+    } finally {
+      inFlight.current.delete(c.id);
+    }
   };
 
   return (
@@ -69,6 +84,7 @@ export default function PlayerClaims() {
       </p>
 
       {err && <p className="mb-4 px-3 py-2 border border-red-300 bg-red-50 text-red-700 text-[12px]">{err}</p>}
+      {notice && <p className="mb-4 px-3 py-2 border border-ink-200 bg-ink-200/20 text-ink-600 text-[12px]">{notice}</p>}
 
       <div className="flex mb-4">
         {TABS.map(([v, label]) => (
