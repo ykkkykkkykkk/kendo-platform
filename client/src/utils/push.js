@@ -17,6 +17,14 @@ export const isIOS = () =>
 export const isStandalone = () =>
   window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
+/* 기기 종류. 안드로이드 앱(TWA)도 결국 같은 웹푸시를 쓰지만, 어디서 켰는지는 남겨둔다.
+   TWA는 standalone으로 뜨므로 사파리 탭과 구분된다. */
+export const platformOf = () => {
+  if (isIOS()) return 'ios';
+  if (/android/i.test(navigator.userAgent)) return 'android';
+  return 'web';
+};
+
 export const pushPermission = () =>
   pushSupported() ? Notification.permission : 'unsupported';
 
@@ -56,7 +64,7 @@ export async function enablePush() {
     });
   }
 
-  const res = await authPost('/push/subscribe', sub.toJSON());
+  const res = await authPost('/push/subscribe', { ...sub.toJSON(), platform: platformOf() });
   if (!res.ok) throw new Error('알림 등록에 실패했습니다.');
   return true;
 }

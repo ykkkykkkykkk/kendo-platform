@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import BambooPlant from '../components/BambooPlant.jsx';
 import ShinaiRequestModal from '../components/ShinaiRequestModal.jsx';
+import { useNotifyPrompt } from '../context/NotifyPromptContext.jsx';
 
 const LIME = '#D8FF3E';
 
@@ -81,6 +82,7 @@ export default function BambooPage() {
   const navigate = useNavigate();
   const { user }  = useAuth();
   const { showToast } = useToast();
+  const { askNotify } = useNotifyPrompt();
 
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,6 +114,8 @@ export default function BambooPage() {
         : `물 +${d.amount}`, 'success');
       if (d.stage > before) setCelebrate(d.stage);
       load();
+      // 내일도 물을 주려면 알림이 있어야 한다
+      askNotify(1400);
     } catch (e) {
       showToast(e.message, 'error');
     } finally { setWatering(false); }

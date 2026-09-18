@@ -4,6 +4,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { useToast } from '../context/ToastContext.jsx';
 import CountdownTimer from '../components/CountdownTimer.jsx';
+import { useNotifyPrompt } from '../context/NotifyPromptContext.jsx';
 
 /* ── 상수 ─────────────────────────────────────────────────── */
 const DIV_FULL = {
@@ -29,6 +30,7 @@ export default function PickInputPage() {
   const [params]     = useSearchParams();
   const deadline     = params.get('deadline');
   const { showToast } = useToast();
+  const { askNotify } = useNotifyPrompt();
 
   const { data: divData,  loading: loadingDiv  } = useFetch(() => api.divisionParticipants(division_id), [division_id]);
   const { data: existingPick, loading: loadingPick } = useFetch(() => api.myPick(division_id), [division_id]);
@@ -107,6 +109,8 @@ export default function PickInputPage() {
       if (!lockRes.ok) throw new Error(lockData.error ?? '확정 실패');
 
       showToast('픽이 확정됐습니다!');
+      // 이 앱이 뭘 해주는지 방금 알게 된 순간이라 알림 승낙률이 가장 높다
+      askNotify();
       navigate(`/predictions/${tournament_id}`, { replace: true });
     } catch (e) {
       showToast(e.message, 'error');

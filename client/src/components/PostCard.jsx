@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Trash2, Send, PlayCircle } from 'lucide-react';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import PlayerAvatar from './PlayerAvatar.jsx';
+import { useNotifyPrompt } from '../context/NotifyPromptContext.jsx';
 
 /** 'YYYY-MM-DD HH:MM:SS'(UTC) → '3분 전' */
 function since(s) {
@@ -81,6 +82,7 @@ function CommentRow({ c, canPlayerAct, playerName, onHeart, onReply }) {
 export default function PostCard({ post, onChanged, onLoginRequest }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { askNotify } = useNotifyPrompt();
   const [liked, setLiked]   = useState(!!post.liked);
   const [likes, setLikes]   = useState(post.like_count);
   const [open, setOpen]     = useState(false);
@@ -120,7 +122,11 @@ export default function PostCard({ post, onChanged, onLoginRequest }) {
     setBusy(true);
     try {
       const res = await api.addComment(post.id, text.trim());
-      if (res.ok) { setText(''); await loadComments(); onChanged?.(); }
+      if (res.ok) {
+        setText(''); await loadComments(); onChanged?.();
+        // 답글이 오면 알림으로 받고 싶어지는 자리다
+        askNotify();
+      }
     } finally { setBusy(false); }
   }
 

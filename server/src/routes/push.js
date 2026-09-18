@@ -18,17 +18,22 @@ router.get('/push/key', async (_req, res) => {
 // POST /api/push/subscribe — 구독 등록 (같은 기기면 계정만 갱신)
 router.post('/push/subscribe', requireAuth, async (req, res) => {
   try {
-    const { endpoint, keys } = req.body ?? {};
+    const { endpoint, keys, platform } = req.body ?? {};
     if (!endpoint || !keys?.p256dh || !keys?.auth)
       return res.status(400).json({ error: '구독 정보가 올바르지 않습니다.' });
 
+    // 기기 종류. 안내 문구와 통계에 쓴다. 모르는 값이 와도 저장만 하지 않는다.
+    const plat = ['web', 'android', 'ios'].includes(platform) ? platform : null;
+
     await db.execute({
-      sql: `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
-            VALUES (?, ?, ?, ?)
+      sql: `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, platform, updated_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(endpoint) DO UPDATE SET
               user_id = excluded.user_id, p256dh = excluded.p256dh,
-              auth = excluded.auth, failed_at = NULL`,
-      args: [req.user.userId, endpoint, keys.p256dh, keys.auth],
+              auth = excluded.auth, failed_at = NULL,
+              platform = COALESCE(excluded.platform, push_subscriptions.platform),
+              updated_at = datetime('now')`,
+      args: [req.user.userId, endpoint, keys.p256dh, keys.auth, plat],
     });
     res.json({ ok: true });
   } catch (e) { serverError(res, e, 'push-subscribe'); }

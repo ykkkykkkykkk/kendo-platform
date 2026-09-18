@@ -7,6 +7,7 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { BambooProvider } from './context/BambooContext.jsx';
+import { NotifyPromptProvider } from './context/NotifyPromptContext.jsx';
 import './index.css';
 import { keepServiceWorkerFresh } from './swUpdate.js';
 import { initMonitoring } from './monitoring.js';
@@ -23,7 +24,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <ToastProvider>
           <BambooProvider>
-            <App />
+            <NotifyPromptProvider>
+              <App />
+            </NotifyPromptProvider>
           </BambooProvider>
         </ToastProvider>
       </AuthProvider>
