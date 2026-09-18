@@ -7,6 +7,7 @@ import { api } from '../api.js';
 import { faceSrc } from '../utils/cloudinary.js';
 import BambooCard from '../components/BambooCard.jsx';
 import WaterBadge from '../components/WaterBadge.jsx';
+import InviteCodeBanner from '../components/InviteCodeBanner.jsx';
 import WelcomeModal from '../components/WelcomeModal.jsx';
 import AugustEventBanner from '../components/AugustEventBanner.jsx';
 import KakaoConnectBanner from '../components/KakaoConnectBanner.jsx';
@@ -334,6 +335,8 @@ export default function Home({ onLoginRequest }) {
 
         <AugustEventBanner onLoginRequest={onLoginRequest} />
         <KakaoConnectBanner />
+        {/* 초대 코드는 가입 24시간 안에만 넣을 수 있다. 넣을 수 있는 사람에게만 뜬다. */}
+        <InviteCodeBanner />
 
         <div className="px-5 pt-6 pb-6 space-y-3">
 

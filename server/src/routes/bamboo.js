@@ -153,6 +153,19 @@ router.get('/bamboo', requireAuth, async (req, res) => {
     // 정산으로 물이 늘었을 수 있다
     const finalWater = inviteResult?.rewarded ? await sumWater(userId, p.cycle) : water;
 
+    /* 아직 코드를 넣을 수 있는가 — 가입 24시간 이내이고, 이미 넣은 적이 없어야 한다. */
+    const { rows: [me] } = await db.execute({
+      sql: `SELECT u.created_at,
+                   (SELECT COUNT(*) FROM invites WHERE invitee_id = u.id) AS used
+            FROM users u WHERE u.id = ?`,
+      args: [userId],
+    });
+    const ageHours = me
+      ? (Date.now() - Date.parse(`${String(me.created_at).replace(' ', 'T')}Z`)) / 3600000
+      : Infinity;
+    const canEnter  = Number(me?.used ?? 0) === 0 && ageHours < LIMITS.inviteCodeHours;
+    const hoursLeft = Math.max(0, Math.ceil(LIMITS.inviteCodeHours - ageHours));
+
     const streak = p.streak_days ?? 0;
     res.json({
       enabled:  true,
@@ -166,6 +179,10 @@ router.get('/bamboo', requireAuth, async (req, res) => {
         min_days:  LIMITS.inviteMinDays,
         min_attendance: INVITE_MIN_ATTENDANCE,
         monthly_max: LIMITS.invitePerMonth,
+        /* 지금 코드를 넣을 수 있는 사람인지. 화면이 이걸 보고 가입 직후에만 안내를 띄운다.
+           24시간을 넘기면 영영 못 넣으므로, 스스로 /bamboo까지 찾아 들어오길 기다리면 늦는다. */
+        can_enter:  canEnter,
+        hours_left: canEnter ? hoursLeft : 0,
       },
       water: finalWater,
       goal:     GOAL,
