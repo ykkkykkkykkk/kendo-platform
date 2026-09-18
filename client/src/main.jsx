@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
+import { BambooProvider } from './context/BambooContext.jsx';
 import './index.css';
 import { keepServiceWorkerFresh } from './swUpdate.js';
 import { initMonitoring } from './monitoring.js';
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <RouteTracker />
       <AuthProvider>
         <ToastProvider>
-          <App />
+          <BambooProvider>
+            <App />
+          </BambooProvider>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

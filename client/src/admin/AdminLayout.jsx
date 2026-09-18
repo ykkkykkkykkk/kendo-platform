@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail, MessagesSquare, Bell,
+  LayoutDashboard, Users, UserCircle, Shield, Trophy, Dumbbell, Star, MessageCircle, LogOut, BadgeCheck, Home, Mail, MessagesSquare, Bell, Droplets,
 } from 'lucide-react';
 import { adminGet } from './adminApi.js';
 
@@ -45,6 +45,7 @@ const NAV = [
   { to: '/admin/players',      label: '선수 관리',  icon: Users },
   { to: '/admin/users',        label: '회원 관리',  icon: UserCircle },
   { to: '/admin/player-claims',label: '선수 신청',  icon: BadgeCheck },
+  { to: '/admin/bamboo',      label: '대나무·죽도', icon: Droplets },
   { to: '/admin/dojo-requests',label: '도장 요청',  icon: Home },
   { to: '/admin/inquiries',   label: '문의',      icon: Mail },
   { to: '/admin/teams',        label: '팀 관리',    icon: Shield },

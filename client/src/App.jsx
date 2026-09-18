@@ -4,6 +4,7 @@ import { trackVisit } from './api.js';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext.jsx';
 import BottomTabBar    from './components/BottomTabBar.jsx';
+import WaterBadge      from './components/WaterBadge.jsx';
 import NickLoginModal    from './components/NickLoginModal.jsx';
 import KakaoLoginModal   from './components/KakaoLoginModal.jsx';
 import KakaoCallback     from './pages/KakaoCallback.jsx';
@@ -39,6 +40,7 @@ import Shop                from './pages/Shop.jsx';
 import Debug               from './pages/Debug.jsx';
 import MyPage              from './pages/MyPage.jsx';
 import MyFollows           from './pages/MyFollows.jsx';
+import BambooPage          from './pages/BambooPage.jsx';
 
 export default function App() {
   const { user }   = useAuth();
@@ -92,6 +94,9 @@ export default function App() {
           } />
           <Route path="/tournaments" element={<Navigate to="/predictions" replace />} />
           <Route path="/tournaments/:slug" element={<Navigate to="/predictions" replace />} />
+          <Route path="/bamboo" element={
+            <PageTransition><BambooPage /></PageTransition>
+          } />
           <Route path="/draw" element={
             <PageTransition><DrawPage /></PageTransition>
           } />
@@ -147,6 +152,9 @@ export default function App() {
         </Routes>
       </AnimatePresence>
 
+      {/* 물방울 배지는 모든 화면에 뜬다. 홈에서는 헤더 안에 들어가 있으므로 여기서는 빼고,
+          나머지 화면에서는 탭바 바로 위에 띄운다 — 각 화면의 헤더 버튼과 겹치지 않는 자리다. */}
+      {location.pathname !== '/' && location.pathname !== '/bamboo' && <WaterBadge floating />}
       <BottomTabBar />
       <Toaster />
       <IOSInstallBanner />

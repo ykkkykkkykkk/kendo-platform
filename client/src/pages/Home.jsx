@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../api.js';
 import { faceSrc } from '../utils/cloudinary.js';
+import BambooCard from '../components/BambooCard.jsx';
+import WaterBadge from '../components/WaterBadge.jsx';
 import WelcomeModal from '../components/WelcomeModal.jsx';
 import AugustEventBanner from '../components/AugustEventBanner.jsx';
 import KakaoConnectBanner from '../components/KakaoConnectBanner.jsx';
@@ -291,6 +293,8 @@ export default function Home({ onLoginRequest }) {
   const closePicker = () => { setPickerOpen(false); refetch(); };
 
   const news = data?.news ?? [];
+  // 픽을 받는 대회가 있는지 — 홈 카드 순서가 이걸로 갈린다
+  const hasTournament = !!data?.tournament;
 
   return (
     <main className="page-body min-h-screen" style={{ background: '#F7F7F4' }}>
@@ -302,7 +306,7 @@ export default function Home({ onLoginRequest }) {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[10px] tracking-[0.2em] text-ink-400 font-medium">SEASON 26 — KUMDO</p>
-              <h1 className="text-2xl font-bold text-ink tracking-[-0.04em] leading-tight mt-0.5">
+              <h1 className="text-2xl font-bold text-ink tracking-[-0.04em] leading-tight mt-0.5 whitespace-nowrap">
                 MINOR—STAR<span className="align-super text-[10px] font-medium">®</span>
               </h1>
             </div>
@@ -312,6 +316,7 @@ export default function Home({ onLoginRequest }) {
                       aria-label="자유게시판">
                 <MessagesSquare size={16} strokeWidth={1.8} />
               </button>
+              <WaterBadge />
               <NotificationBell />
               <button onClick={() => navigate('/search')}
                       className="w-9 h-9 flex items-center justify-center rounded-full border border-ink-200 text-ink pressable"
@@ -359,12 +364,24 @@ export default function Home({ onLoginRequest }) {
             )}
           </div>
 
-          {/* ── 2. 대회 ── */}
-          {loading
-            ? <Skeleton className="h-[182px]" />
-            : <TournamentCard data={data} user={user} onLoginRequest={onLoginRequest} />}
+          {/* ── 2·3. 대회와 대나무 ──
+              대회가 열려 있으면 픽이 먼저다(제일 크게). 대회가 없는 공백기에는
+              대나무가 이 화면의 주인공이 되고, '다음 대회 준비 중' 안내는 그 아래로 내려간다. */}
+          {loading ? (
+            <Skeleton className="h-[182px]" />
+          ) : hasTournament ? (
+            <>
+              <TournamentCard data={data} user={user} onLoginRequest={onLoginRequest} />
+              <BambooCard />
+            </>
+          ) : (
+            <>
+              <BambooCard big />
+              <TournamentCard data={data} user={user} onLoginRequest={onLoginRequest} />
+            </>
+          )}
 
-          {/* ── 3·4. 로그인한 사람에게만 '내 것'을 보여준다 ── */}
+          {/* ── 4·5. 로그인한 사람에게만 '내 것'을 보여준다 ── */}
           {user && (loading
             ? <><Skeleton className="h-[92px]" /><Skeleton className="h-[124px]" /></>
             : <><MyNumbers data={data} /><Follows data={data} onOpenPicker={() => setPickerOpen(true)} /></>)}

@@ -20,6 +20,7 @@ import SponsorshipList   from './pages/sponsorships/SponsorshipList.jsx';
 import SponsorshipForm   from './pages/sponsorships/SponsorshipForm.jsx';
 import PlayerAccounts    from './pages/player-accounts/PlayerAccounts.jsx';
 import PlayerClaims      from './pages/player-claims/PlayerClaims.jsx';
+import BambooAdmin       from './pages/bamboo/BambooAdmin.jsx';
 import DojoRequests      from './pages/dojos/DojoRequests.jsx';
 import InquiryList      from './pages/inquiries/InquiryList.jsx';
 import QuestionList     from './pages/questions/QuestionList.jsx';
@@ -69,6 +70,7 @@ export default function AdminApp() {
 
         <Route path="player-accounts"              element={<PlayerAccounts />} />
         <Route path="player-claims"                element={<PlayerClaims />} />
+        <Route path="bamboo"                       element={<BambooAdmin />} />
         <Route path="dojo-requests"                element={<DojoRequests />} />
         <Route path="inquiries"                    element={<InquiryList />} />
         <Route path="questions"                    element={<QuestionList />} />

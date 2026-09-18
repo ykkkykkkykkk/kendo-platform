@@ -8,6 +8,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { normalizeVideoUrl } from '../utils/videoUrl.js';
 import { notify, userIdOfPlayer } from '../utils/notify.js';
 import { serverError } from '../utils/apiError.js';
+import { grantForComment, revokeWater } from '../utils/bamboo.js';
 
 const router = Router();
 
@@ -230,7 +231,7 @@ router.post('/posts/:id/comment', requireAuth, async (req, res) => {
     });
     if (!post) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
 
-    await db.execute({
+    const { lastInsertRowid } = await db.execute({
       sql: 'INSERT INTO post_comments (post_id, user_id, content, is_player) VALUES (?, ?, ?, 0)',
       args: [postId, userId, content],
     });
@@ -238,6 +239,12 @@ router.post('/posts/:id/comment', requireAuth, async (req, res) => {
       sql: 'UPDATE posts SET comment_count = (SELECT COUNT(*) FROM post_comments WHERE post_id = ?) WHERE id = ?',
       args: [postId, postId],
     });
+
+    /* 대나무 물. 10자 이상·하루 2회·복붙 제외는 grantForComment가 판단한다.
+       물을 못 받아도 응원 자체는 정상 등록이므로 실패를 삼킨다. */
+    const bamboo = await grantForComment(userId, {
+      commentId: Number(lastInsertRowid), content,
+    }).catch(() => null);
 
     // 글쓴 선수에게 알린다. 본인이 단 댓글이면 보내지 않는다.
     const ownerId = await userIdOfPlayer(post.player_id);
@@ -252,8 +259,36 @@ router.post('/posts/:id/comment', requireAuth, async (req, res) => {
       });
     }
 
-    res.status(201).json({ ok: true });
+    res.status(201).json({ ok: true, bamboo });
   } catch (e) { serverError(res, e, 'comment-create'); }
+});
+
+/* DELETE /api/posts/comments/:id — 내가 쓴 응원 지우기.
+   지금까지는 한 번 남긴 응원을 본인이 지울 방법이 없었다. 대나무가 붙으면서
+   '응원 남기고 물 받고 지우기'가 가능해지므로, 지우는 길과 물을 되돌리는 길을 같이 낸다. */
+router.delete('/posts/comments/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const id     = Number(req.params.id);
+
+    const { rows: [c] } = await db.execute({
+      sql: 'SELECT id, user_id, post_id FROM post_comments WHERE id = ?', args: [id],
+    });
+    if (!c) return res.status(404).json({ error: '응원을 찾을 수 없습니다.' });
+    if (c.user_id !== userId) return res.status(403).json({ error: '본인 응원만 지울 수 있습니다.' });
+
+    await db.execute({ sql: 'DELETE FROM post_comments WHERE parent_id = ?', args: [id] });
+    await db.execute({ sql: 'DELETE FROM post_comments WHERE id = ?', args: [id] });
+    await db.execute({
+      sql: 'UPDATE posts SET comment_count = (SELECT COUNT(*) FROM post_comments WHERE post_id = ?) WHERE id = ?',
+      args: [c.post_id, c.post_id],
+    });
+
+    await revokeWater(userId, { source: 'comment', targetId: id, note: '응원 삭제' })
+      .catch(() => {});
+
+    res.json({ ok: true });
+  } catch (e) { serverError(res, e, 'comment-delete'); }
 });
 
 /* ════════════ 4. 선수 하트 · 답글 ════════════ */

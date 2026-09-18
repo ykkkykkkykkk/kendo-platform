@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { serverError } from '../utils/apiError.js';
+import { grantForPick } from '../utils/bamboo.js';
 
 const router = Router();
 
@@ -261,7 +262,12 @@ router.post('/divisions/:id/pick', requireAuth, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?)`,
       args: [userId, divisionId, pick_1st, pick_2nd, pick_3rd_a, pick_3rd_b],
     });
-    res.status(201).json({ success: true, pick_id: Number(lastInsertRowid) });
+
+    /* 대나무 물. 부문을 처음 픽할 때만이고, 수정은 위에서 이미 돌아갔으므로 여기 오지 않는다.
+       물 때문에 픽 저장이 실패하면 안 되니 따로 감싼다. */
+    const bamboo = await grantForPick(userId, divisionId).catch(() => null);
+
+    res.status(201).json({ success: true, pick_id: Number(lastInsertRowid), bamboo });
   } catch (e) {
     serverError(res, e, 'A-4');
   }

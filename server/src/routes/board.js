@@ -8,6 +8,7 @@ import { db } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { normalizeVideoUrl } from '../utils/videoUrl.js';
 import { serverError } from '../utils/apiError.js';
+import { grantForBoardPost, revokeWater } from '../utils/bamboo.js';
 import { notify } from '../utils/notify.js';
 
 const router = Router();
@@ -110,7 +111,13 @@ router.post('/', requireAuth, async (req, res) => {
       args: [req.user.userId, t, c, imageUrl, videoUrl, videoId],
     });
 
-    res.status(201).json({ id: Number(lastInsertRowid) });
+    // 대나무 물. 20자 이상·하루 1회는 grantForBoardPost가 판단한다(댓글에는 물이 없다).
+    const postId = Number(lastInsertRowid);
+    const bamboo = await grantForBoardPost(req.user.userId, {
+      postId, title: t, content: c,
+    }).catch(() => null);
+
+    res.status(201).json({ id: postId, bamboo });
   } catch (e) { serverError(res, e, 'board-create'); }
 });
 
@@ -153,6 +160,11 @@ router.post('/report', requireAuth, async (req, res) => {
     if (reports >= BLIND_AT) {
       await db.execute({ sql: `UPDATE ${table} SET is_blinded = 1 WHERE id = ?`, args: [target_id] });
       blinded = true;
+      // 신고가 쌓여 가려진 글로 받은 물은 되돌린다(게시판 댓글에는 애초에 물이 없다)
+      if (target_type === 'post')
+        await revokeWater(t.user_id, {
+          source: 'board', targetId: target_id, note: `신고 ${reports}회`,
+        }).catch(() => {});
     }
 
     res.json({ ok: true, reports, blinded });
@@ -380,6 +392,10 @@ router.delete('/:id', async (req, res) => {
       sql: "DELETE FROM board_reports WHERE target_type = 'post' AND target_id = ?", args: [id],
     });
     await db.execute({ sql: 'DELETE FROM board_posts WHERE id = ?', args: [id] });
+
+    // 글을 쓰고 물을 받은 뒤 지우는 걸 막는다. ref_id에 글 id가 들어 있어 그 건만 골라 회수된다.
+    await revokeWater(post.user_id, { source: 'board', targetId: id, note: '글 삭제' })
+      .catch(() => {});
 
     res.json({ ok: true });
   } catch (e) { serverError(res, e, 'board-delete'); }
