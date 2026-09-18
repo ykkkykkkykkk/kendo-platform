@@ -7,10 +7,15 @@
 // 판단은 관리자가 한다.
 import { Router } from 'express';
 import { db } from '../db.js';
+import { requireAdmin } from '../middleware/adminAuth.js';
 import { serverError } from '../utils/apiError.js';
 import { GOAL, LIMITS, kstMonth, getProgress, syncWater } from '../utils/bamboo.js';
 
 const router = Router();
+
+/* 이 라우터는 신청자의 이름·연락처·배송지를 그대로 돌려준다. 인증이 빠지면
+   주소록이 통째로 공개되고, 남의 신청을 아무나 승인할 수 있다. */
+router.use(requireAdmin);
 
 /** 설정값 읽기(월 지급 상한 등). 없으면 기본값. */
 async function setting(key, fallback) {

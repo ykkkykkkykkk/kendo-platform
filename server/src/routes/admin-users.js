@@ -136,6 +136,8 @@ router.delete('/users/:id', async (req, res) => {
     const owned = [
       'follows', 'tournament_picks', 'predictions',
       'clinic_bookings', 'player_comments', 'player_questions', 'inquiries',
+      // 대나무(032) — 빠뜨리면 물을 모은 회원은 삭제 자체가 FK 오류로 막힌다
+      'water_logs', 'bamboo_progress', 'shinai_requests',
     ];
     const removed = {};
     for (const t of owned) {
@@ -149,6 +151,21 @@ router.delete('/users/:id', async (req, res) => {
         }
       } catch { /* 테이블/컬럼이 없으면 무시 */ }
     }
+
+    /* invites는 user_id가 아니라 inviter_id·invitee_id로 회원을 가리켜서 위 반복문이
+       건너뛴다. 남겨두면 FK가 걸려 삭제가 통째로 막힌다. */
+    try {
+      const { rows: [{ n }] } = await db.execute({
+        sql: 'SELECT COUNT(*) AS n FROM invites WHERE inviter_id = ? OR invitee_id = ?',
+        args: [id, id],
+      });
+      if (n > 0) {
+        await db.execute({
+          sql: 'DELETE FROM invites WHERE inviter_id = ? OR invitee_id = ?', args: [id, id],
+        });
+        removed.invites = n;
+      }
+    } catch { /* 테이블이 없으면 무시 */ }
 
     await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [id] });
 

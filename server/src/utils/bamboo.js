@@ -433,12 +433,14 @@ export async function markAttendance(userId) {
     args: [streak, today, userId],
   });
 
-  // 10일마다 보너스. ref_id에 몇 번째 10일인지를 넣어 같은 구간에서 두 번 안 나오게 한다.
+  /* 10일마다 보너스.
+     ref_id는 '몇 번째 10일'이 아니라 '보너스를 받은 날짜'다. 구간 번호를 쓰면
+     연속이 한 번 끊긴 뒤 다시 10일을 채워도 같은 번호라 보너스가 안 나온다
+     (10일 → 끊김 → 다시 10일인데 무보상). 날짜를 쓰면 다시 채운 사람도 받고,
+     하루에 두 번 받을 수는 없으니 어뷰징도 막힌다. */
   let bonus = null;
   if (streak > 0 && streak % LIMITS.streakEvery === 0) {
-    const b = await grantWater(userId, {
-      source: 'streak', refId: `${Math.floor(streak / LIMITS.streakEvery)}`,
-    });
+    const b = await grantWater(userId, { source: 'streak', refId: today });
     if (b.granted) bonus = b.amount;
   }
 
