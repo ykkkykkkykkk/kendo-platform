@@ -29,6 +29,14 @@ function PostRow({ post, first }) {
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-ink font-bold text-[15px] leading-snug tracking-tight line-clamp-2">
+            {/* 고정 공지는 제목 앞에 표시를 붙인다 — 목록에서 왜 맨 위에 있는지 알 수 있게 */}
+            {!!post.is_pinned && (
+              <span className="inline-block align-[2px] mr-1.5 px-1.5 py-0.5 text-[10px] font-bold
+                               text-ink rounded-[3px]"
+                    style={{ background: '#D8FF3E' }}>
+                공지
+              </span>
+            )}
             {post.title}
           </p>
           {post.content && (

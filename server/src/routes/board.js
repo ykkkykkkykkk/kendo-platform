@@ -55,12 +55,14 @@ router.get('/', async (req, res) => {
     const { rows: [c] } = await db.execute('SELECT COUNT(*) AS n FROM board_posts');
     const total = Number(c?.n ?? 0);
 
+    /* 고정 공지가 먼저다. 정렬에만 얹었기 때문에 2페이지부터는 고정 글이 다시 나오지 않는다
+       — 어차피 1페이지 맨 위에 있으므로 중복해서 보여줄 이유가 없다. */
     const { rows } = await db.execute({
       sql: `SELECT b.id, b.title, b.content, b.image_url, b.video_id,
-                   b.like_count, b.comment_count, b.is_blinded, b.created_at,
+                   b.like_count, b.comment_count, b.is_blinded, b.is_pinned, b.created_at,
                    u.nickname, d.name AS dojo_name
             FROM board_posts b ${authorJoin('b')}
-            ORDER BY b.created_at DESC, b.id DESC
+            ORDER BY b.is_pinned DESC, b.created_at DESC, b.id DESC
             LIMIT ? OFFSET ?`,
       args: [PAGE_SIZE, offset],
     });

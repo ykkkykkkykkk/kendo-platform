@@ -59,7 +59,7 @@ router.get('/posts', async (req, res) => {
 
     const { rows } = await db.execute({
       sql: `SELECT b.id, b.title, b.content, b.image_url, b.video_id,
-                   b.like_count, b.comment_count, b.is_blinded, b.created_at,
+                   b.like_count, b.comment_count, b.is_blinded, b.is_pinned, b.created_at,
                    u.nickname, d.name AS dojo_name,
                    (SELECT COUNT(DISTINCT user_id) FROM board_reports
                      WHERE target_type = 'post' AND target_id = b.id) AS report_count
@@ -121,6 +121,27 @@ router.put('/blind', async (req, res) => {
 
     res.json({ ok: true, is_blinded: value });
   } catch (e) { serverError(res, e, 'admin-board-blind'); }
+});
+
+/* PUT /api/admin/board/posts/:id/pin — { pinned: true|false }
+   공지를 목록 맨 위에 붙인다. 운영자가 직접 올리고 내릴 수 있어야 해서 API로 뺐다. */
+router.put('/board/posts/:id/pin', async (req, res) => {
+  try {
+    const id     = Number(req.params.id);
+    const pinned = req.body?.pinned ? 1 : 0;
+
+    const { rows: [post] } = await db.execute({
+      sql: 'SELECT id, title, is_pinned FROM board_posts WHERE id = ?', args: [id],
+    });
+    if (!post) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
+    if (Number(post.is_pinned) === pinned)
+      return res.json({ ok: true, already: true, is_pinned: pinned });
+
+    await db.execute({
+      sql: 'UPDATE board_posts SET is_pinned = ? WHERE id = ?', args: [pinned, id],
+    });
+    res.json({ ok: true, is_pinned: pinned, title: post.title });
+  } catch (e) { serverError(res, e, 'admin-board-pin'); }
 });
 
 export default router;

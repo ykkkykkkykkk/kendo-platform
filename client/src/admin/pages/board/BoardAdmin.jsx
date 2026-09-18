@@ -152,6 +152,12 @@ function Posts({ onChanged }) {
     await load(page); onChanged?.();
   };
 
+  /* 공지 고정. 목록 맨 위에 붙는다 — 규칙 안내처럼 계속 보여야 하는 글에 쓴다. */
+  const setPin = async (id, pinned) => {
+    await adminPut(`/board/posts/${id}/pin`, { pinned });
+    await load();
+  };
+
   const setBlind = async (type, id, blinded, postId) => {
     await adminPut('/board/blind', { target_type: type, target_id: id, blinded });
     if (type === 'comment' && postId) {
@@ -175,6 +181,9 @@ function Posts({ onChanged }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[11px] text-ink-400 tabular-nums">#{p.id}</span>
+                  {!!p.is_pinned && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-lime text-ink">공지 고정</span>
+                  )}
                   {!!p.is_blinded && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 bg-ink text-white">가려짐</span>
                   )}
@@ -198,6 +207,16 @@ function Posts({ onChanged }) {
               </div>
 
               <div className="flex flex-col gap-1.5 flex-none">
+                <button
+                  onClick={() => setPin(p.id, !p.is_pinned)}
+                  className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                    p.is_pinned
+                      ? 'bg-lime hover:bg-lime-dark text-ink'
+                      : 'border border-ink-200 text-ink-600 hover:border-ink'
+                  }`}
+                >
+                  {p.is_pinned ? '고정 해제' : '상단 고정'}
+                </button>
                 <button
                   onClick={() => setBlind('post', p.id, !p.is_blinded)}
                   className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
