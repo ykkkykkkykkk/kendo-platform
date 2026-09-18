@@ -18,11 +18,14 @@ import { enablePush, isIOS, isStandalone } from '../utils/push.js';
 
 const LIME = '#D8FF3E';
 
+/* 실제로 발송되는 알림만 적는다.
+   지키지 못할 약속으로 권한을 받아내면, 아무것도 안 오는 걸 알게 된 사람은
+   알림을 끄는 게 아니라 앱을 지운다. 발송 로직이 생기면 그때 줄을 늘린다. */
 const BENEFITS = [
   '응원한 선수가 답글을 달면 알려드려요',
-  '대진표가 올라오면 바로 알려드려요',
-  '예측 마감 전에 미리 알려드려요',
-  '오늘 물주기를 안 했으면 알려드려요',
+  '선수가 내 응원에 ❤️를 누르면 알려드려요',
+  '응원하는 선수가 새 소식을 올리면 알려드려요',
+  '내 질문에 선수가 답하면 알려드려요',
 ];
 
 export default function NotificationPrompt({ open, onAccept, onLater }) {
