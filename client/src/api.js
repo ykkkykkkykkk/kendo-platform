@@ -11,6 +11,8 @@ const get = (path) => fetch(BASE + path).then((r) => r.json());
 // 실패해도 조용히 무시 — 사용자 경험에 영향 없음.
 export function trackVisit(path) {
   try {
+    // 자동화 브라우저(크롤러·테스트 도구)는 세지 않는다. 서버도 User-Agent로 한 번 더 거른다.
+    if (navigator.webdriver) return;
     let vid = localStorage.getItem('visitor_id');
     if (!vid) {
       vid = (crypto.randomUUID && crypto.randomUUID()) ||

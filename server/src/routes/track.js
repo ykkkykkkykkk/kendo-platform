@@ -3,10 +3,18 @@ import { db } from '../db.js';
 
 const router = Router();
 
+/* 검색엔진 봇은 자바스크립트까지 돌려서 이 핑을 보내는데, 페이지마다 저장소가 비어 있어
+   매번 새 visitor_id로 찍힌다. 사이트맵을 훑는 날엔 선수 페이지 수만큼 방문자가 부풀었다
+   (2026-09-23: 순방문 86명 중 73명이 1페이지짜리 봇). 이름을 밝히는 봇은 세지 않는다. */
+const BOT_UA = /bot|crawl|spider|slurp|yeti|daumoa|bingpreview|facebookexternalhit|kakaotalk-scrap|headlesschrome|lighthouse|chrome-lighthouse|google-inspectiontool|googleother|mediapartners|adsbot|apis-google|feedfetcher|python|curl|wget|axios|node-fetch|go-http|java\//i;
+
 // POST /api/track  body: { visitor_id, path }
 // 비로그인 포함 모든 방문 1건 기록. 익명 visitor_id(클라 localStorage UUID)만 저장, PII 없음.
 router.post('/track', async (req, res) => {
   try {
+    const ua = req.get('user-agent') || '';
+    if (!ua || BOT_UA.test(ua)) return res.json({ ok: true, skipped: 'bot' });
+
     const { visitor_id, path, is_app } = req.body ?? {};
     if (!visitor_id || typeof visitor_id !== 'string' || visitor_id.length < 8 || visitor_id.length > 64) {
       return res.status(400).json({ ok: false });
